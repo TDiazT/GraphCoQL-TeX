@@ -1,23 +1,84 @@
 \documentclass[sigplan,10pt,review]{acmart}\settopmatter{printfolios=true,printccs=false,printacmref=false}
 \usepackage[utf8]{inputenc}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{multicol}
+\usepackage[cache=false]{minted}
+\setminted{fontsize=\footnotesize}
+\usemintedstyle{GQLStyle.py:GQLStyle}
+\usepackage[nounderscore]{syntax}
 
-\title{GraphCoQL : A trustworthy mechanized formalization of GraphQL }
-\author{Tomás}
-\author{Federico}
-\author{Eric}
-\author{Jorge}
-\date{August 2019}
+\newcommand{\mynote}[3]
+    {{\color{#3} \fbox{\bfseries\sffamily\scriptsize#1}
+    {\small$\blacktriangleright$\textsf{\emph{#2}}$\blacktriangleleft$}}~}
+\newcommand{\et}[1]{\mynote{ET}{#1}{purple}}
+\newcommand{\fo}[1]{\mynote{FO}{#1}{red}}
+\newcommand{\td}[1]{\mynote{TD}{#1}{blue}}
+
+\newcommand\mdoubleplus{\mathbin{+\mkern-5mu+}}
+
+\newcommand{\eval}[2]{\llbracket #1 \rrbracket^{#2}_{G}}
+\newcommand{\evalu}[1]{\eval{#1}{u}}
+\newcommand{\evalfilteru}[2]{\eval{\mathit{filter}_{#2}(#1)}{u}}
+\newcommand{\queries}{\overline{\varphi}}
+\newcommand{\subqueries}[1]{\overline{#1}}
+\newcommand{\fkey}{\texttt{f}}
+\newcommand{\fld}{\texttt{f[}\alpha\texttt{]}}
+\newcommand{\nfld}[1]{\fld \texttt{\{}#1\texttt{\}} }
+\newcommand{\ifrag}[2]{\texttt{... on #1}\texttt{\{}#2\texttt{\}}}
+\newcommand{\resp}[1]{\fkey\texttt{:}#1}
+\newcommand{\nval}{\texttt{null}}
+\newcommand{\val}{\texttt{v}}
+
+\title{A Mechanized Formalization of GraphQL}
+\author{Tomás Díaz}
+\affiliation{%
+  \institution{IMFD Chile}
+  \city{Santiago}
+  \country{Chile}
+}
+
+\author{Federico Olmedo}
+\affiliation{%
+  \institution{University of Chile \& IMFD Chile}
+  \department{Computer Science Department (DCC)}
+  \city{Santiago}
+  \country{Chile}
+}
+\author{Éric Tanter}
+\affiliation{%
+  \institution{University of Chile \& IMFD Chile}
+  \department{Computer Science Department (DCC)}
+  \city{Santiago}
+  \country{Chile}
+}
 
 \begin{document}
 
 \maketitle
 
+
+
+\begin{abstract}
+    This is the abstract
+\end{abstract}
+
 \input{introduction.tex}
 \input{background.tex}
 \input{formalization.tex}
 \input{normalization.tex}
+\section{Implementation and Validation}
+LOC, files, man-month, major effort
+
+Examples - Jorge's, Spec, 
+
+Most of the development time was spent in the definition and proofs of normalization. 
+We initially worked on the semantics as specified by \cite{gqlph}
+
 \input{related.tex}
 \input{future.tex}
 \input{conclusions.tex}
 
+\bibliographystyle{acm}
+\bibliography{biblio}
 \end{document}
