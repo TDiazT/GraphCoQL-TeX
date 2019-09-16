@@ -5,7 +5,7 @@
 \usepackage{multicol}
 \usepackage[cache=false]{minted}
 \setminted{fontsize=\footnotesize}
-\usemintedstyle{GQLStyle.py:GQLStyle}
+
 \usepackage[nounderscore]{syntax}
 
 \newcommand{\mynote}[3]
@@ -16,6 +16,10 @@
 \newcommand{\td}[1]{\mynote{TD}{#1}{blue}}
 
 \newcommand\mdoubleplus{\mathbin{+\mkern-5mu+}}
+
+\newcommand{\coql}{\textit{GraphCoQL}}
+\newcommand{\spec}{\textit{Spec}}
+\newcommand{\HP}{\textit{HP}}
 
 \newcommand{\eval}[2]{\llbracket #1 \rrbracket^{#2}_{G}}
 \newcommand{\evalu}[1]{\eval{#1}{u}}
@@ -67,12 +71,12 @@
 \input{background.tex}
 \input{formalization.tex}
 \input{normalization.tex}
-\section{Implementation and Validation}
+\section{Implementation and Validation}\label{sec:valid}
 LOC, files, man-month, major effort
 
-Examples - Jorge's, Spec, 
+Examples - Jorge's, Spec,
 
-Most of the development time was spent in the definition and proofs of normalization. 
+Most of the development time was spent in the definition and proofs of normalization.
 We initially worked on the semantics as specified by \cite{gqlph}
 
 \input{related.tex}
