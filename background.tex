@@ -3,7 +3,7 @@
 \td{Meant to rewrite it but time's up :(}
 
 GraphQL is a framework that provides a common language to define the interface to a service's data and to query it.
-It provides a language to describe how the data is structured and how it can be queried. This is called the schema or type system of the service. The schema consists of types and their fields. Queries may only be performed over these types and their fields. The resolution of each field is defined by the implementors, since GraphQL is not tied to any particular technology. 
+It provides a language to describe how the data is structured and how it can be queried. This is called the schema or type system of the service. The schema consists of types and their fields. Queries may only be performed over these types and their fields. The resolution of each field is defined by the implementors, since GraphQL is not tied to any particular technology.
 
 In the rest of this section, we will introduce GraphQL by means of an example. We will recurrently come back to this example throughout the rest of the paper.\td{Maybe not if we don't have space lol}
 
@@ -15,7 +15,7 @@ Figure \ref{fig:schema_ex} depicts our type system. We define an interface for a
 
 \begin{figure}
     \centering
-    \begin{minted}[fontsize=\footnotesize]{gql.py:GraphqlLexer -x}
+    \begin{minted}[fontsize=\footnotesize]{gql}
     interface Animal {
         name: String
         friends: [Animal]
@@ -33,7 +33,7 @@ Figure \ref{fig:schema_ex} depicts our type system. We define an interface for a
     type Toy {
         chewiness: Float
     }
-    enum Goodness { BESTBOI GOODBOI OKBOI BADBOI } 
+    enum Goodness { BESTBOI GOODBOI OKBOI BADBOI }
     union SearchResult = Dog | Pig | Toy
     type Query {
         goodboi(goodness: Goodness): Animal
@@ -65,7 +65,7 @@ Finally, now that we have defined our type system and data, our developers can p
 
 \subsection*{GraphQL Query and Response}
 
-As previously mentioned, the queries we perform over our system must be over the types and fields defined in the schema. Every query must start by requesting information from the \texttt{Query} type. That means that, in our setting, queries must all start with the \texttt{goodness} or \texttt{search} fields. 
+As previously mentioned, the queries we perform over our system must be over the types and fields defined in the schema. Every query must start by requesting information from the \texttt{Query} type. That means that, in our setting, queries must all start with the \texttt{goodness} or \texttt{search} fields.
 
 In figure \ref{fig:qres_ex}, we can see a query where we asking for all the friends of the \texttt{BESTBOI} in our system. For each friend we ask for their \texttt{name}. The query can be further specified, using fragments, and say that for the \texttt{Dog} friends we want to know their toy's \texttt{chewiness} and for the \texttt{Pig} friends, their \texttt{oink} level. We rename this last selection to \texttt{loudness}. As we can see from this example, queries in GraphQL have a tree structure similar to JSON.
 
@@ -79,7 +79,7 @@ query {
     goodboi(goodnessLevel: BESTBOI) {
         name
         friends {
-            name 
+            name
             |$\ldots$| on Dog {
                 favoriteToy {
                     chewiness
@@ -103,7 +103,7 @@ query {
             {
                 "name": "Marle",
                 "favoriteToy": {
-                    "chewiness": 23                
+                    "chewiness": 23
                 }
             },
             {
@@ -125,6 +125,4 @@ If we wanted to ask another the same query but now without the friends' names, w
 
 With this we conclude our brief introduction to GraphQL and we can now move onto the formalization. We will come back to this example throughout the rest of the paper, illustrating how it can be replicated in our system.
 
-The key points to take from our example are ... 
-
-
+The key points to take from our example are ...
