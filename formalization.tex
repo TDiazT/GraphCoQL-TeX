@@ -134,12 +134,16 @@ Let Dog := Object "Dog" implements [:: "Animal"] {[::
 
 \subsection{GraphQL Data model}
 
-We chose to describe the underlying data model of a GraphQL service as a graph, in the same line as HP. Informally, a GraphQL graph is a directed property graph, with labeled edges and typed nodes. This means that every node has properties (key-value pairs) and a type. Also, every property of a node or label in an edge may also contain a list of arguments (key-value pairs).
+GraphQL is not tied to any particular database technology and implementation. When resolving fields in a query, GraphQL assumes the existence of \textit{resolvers}. These are internal functions defined by the user implementing a GraphQL service. They are not tied to any particular data model and the only requirement is that they must adhere to the schema. Whether they access a database, return static values or even modify existing data, is up to the user\footnote{The \spec{} states that these ``\textit{must always be side effect‐free and idempotent}'' but the definition of a resolver does not actually impose these restrictions.}. This makes reasoning about the semantics hard.
 
-We consider the type $Vals$, representing the values associated to properties or used for arguments. A value in $Vals$ may be a single scalar value or a list of values.
+We choose to follow \HP{}'s approach and define the underlying data model as a graph over which queries are evaluated. With this model, the unspecified resolvers can be instantiated to concrete definitions which allow reasoning over them. The semantics are then described as being implemented over a graph setting. This provides benefits when reasoning about it but also comes with limitations over the results generated. We cover these aspects in Section \ref{subsec:semantics}. It is worth mentioning that the limitations of this model are not described nor discussed in \HP{}.
+
+Informally, a GraphQL graph is a directed property graph, with labeled edges and typed nodes. The graph describes entities with their types and properties, as well as the relationship between them. This means that every node has properties (key-value pairs) and a type. Also, every label in an edge describes the relation between two nodes. Finally, every property or label may also contain a list of arguments (key-value pairs).
+
+We consider the type \Vals, representing the values associated to properties or used for arguments. A value in \Vals{} may be a single scalar value or a list of values.
 
 \begin{definition}
-A GraphQL graph is a structure over $Vals$, with the following elements:
+A GraphQL graph over \Vals is defined by the following elements:
 \begin{itemize}
     \item A root node.
     \item A collection of edges of the form ($u$, \texttt{f[}$\alpha$\texttt{]}, $v$), where $u, v$ are nodes and \texttt{f[}$\alpha$\texttt{]} is a label with arguments (key-value pairs).
@@ -165,7 +169,10 @@ Structure graphQLGraph := GraphQLGraph {
                       }.
 \end{minted}
 
-This definition of graph is completely independent of any GraphQL schema, so we need a way to relate our data to our type system. To this end, we define the notion of \textit{conformance} of a graph. This notion is, in essence, a well-formedness property for graphs with respect to a given schema.
+\td{probably rewrite this paragraph...}
+Our definition is in essence the same as in \HP{} but differs greatly in implementation. \HP{} defines a GraphQL graph in a more ``centralized'' manner. For instance, nodes and field names are defined by sets. Node types are defined by a single function which receives a node identifier and gives its type. Properties are also defined by a single function which receives a node identifier and a field name with arguments. Contrarily, our approach attempts to recreate the structures individually. For instance, a node contains all the information pertaining to itself; its type and its properties. We believe this is a more natural approach to defining the graph from an engineering point of view.
+
+The definition of graph is completely independent of any GraphQL schema, so we need a way to relate the data to the type system. We implement the notion of \textit{conformance}  of a graph as partially described by \HP{}. This notion is, in essence, a well-formedness property for graphs with respect to a given schema. At the moment of development, there was no complete definition of conformance given by \HP{}. However, recently~\cite{olafschema} include and extend this notion using a similar ``decentralized'' approach to define graphs. Their definitions capture more features than we currently implement, such as directives.\td{And variables if I'm correct - should check}
 
 \begin{definition}
 A GraphQL graph \textit{conforms} to a schema $\mathcal{S}$ if it satisfies the following conditions:
@@ -176,8 +183,7 @@ A GraphQL graph \textit{conforms} to a schema $\mathcal{S}$ if it satisfies the 
 \end{itemize}
 \end{definition}
 
-Once again, we can define a structure that encapsulates the notion of a \textit{conformed} graph, by passing it a graph and a proof of its \textit{conformance} to a particular schema. \td{The property of \textit{conformance} is implemented as a boolean predicate.}
-
+This is captured in the following predicate in Coq.
 \begin{minted}{coq}
 Definition is_a_conforming_graph
         (s : wfGraphQLSchema)
@@ -186,15 +192,19 @@ Definition is_a_conforming_graph
         root_type_conforms s g.(root) &&
         edges_conform s g &&
         nodes_conform s g.(nodes).
+\end{minted}
 
-Structure conformedGraph (s : wfGraphQLSchema) :=
+Similarly to GraphQL schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph. It contains a graph and a proof of its \textit{conformance} to a particular schema.
+
+\begin{minted}{coq}
+Record conformedGraph (s : wfGraphQLSchema) :=
             ConformedGraph {
                 graph : graphQLGraph;
                 _ : is_a_conforming_graph s graph
             }.
 \end{minted}
 
-Due to space limitations, we omit a detailed review of \textit{conformance} of nodes and edges. These properties include things such as: every node must have an object type and their properties must be defined in their associated type, or an edge's label must be declared as a field in the source node's type and the target node must have a type compatible to the field's return type, amongst other things.
+Due to space limitations, we omit a detailed review of \textit{conformance} of nodes and edges. The complete definitions can be found in the file \texttt{GraphConformance.v}. These properties include validation rules such as: every node must have an object type and their properties must be defined in their associated type, or an edge's label must be declared as a field in the source node's type and the target node must have a type compatible to the field's return type, among other things.
 
 With both the schema and the underlying data model we can proceed to define GraphQL queries and their semantics.
 
