@@ -7,7 +7,7 @@ In this section we describe our formalization of GraphQL in Coq. We start by def
 
 \td{The definitions consist of around 3700 loc and 1400 of lemmas}.
 
-\subsection{GraphQL Schema}
+\subsection{GraphQL Schema}\label{subsec:schema}
 
 The GraphQL schema is pretty straightforward to define from the grammar of the \spec{}. It consists of a collection of type definitions and a root query operation type. There is, however, a slight ambiguity when the \spec{} refers to the schema, as it is described as being ``\textit{defined in terms of the types and directives it supports as well as the root operation types for each kind of operation}''\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Schema}. It then proceeds to define a structure called \texttt{schema} containing only the root operation types (query, mutation and subscription) and \textit{separately} it defines the type definitions, as well as the directives. The previously quoted definition actually matches the \textit{Type System} structure\footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition}. Our formalization follows the latter but rename it to schema to also match the quoted description.
 
@@ -133,7 +133,7 @@ Let Dog := Object "Dog" implements [:: "Animal"] {[::
 \end{minted}
 \fi
 
-\subsection{GraphQL Data model}
+\subsection{GraphQL Data model}\label{subsec:graph}
 
 GraphQL is not tied to any particular database technology and implementation. When resolving fields in a query, GraphQL assumes the existence of \textit{resolvers}. These are internal functions defined by the user implementing a GraphQL service. They are not tied to any particular data model and the only requirement is that they must adhere to the schema. Whether they access a database, return static values or even modify existing data, is up to the user\footnote{The \spec{} states that these ``\textit{must always be side effect‐free and idempotent}'' but the definition of a resolver does not actually impose these restrictions.}. This makes reasoning about the semantics hard.
 
@@ -211,7 +211,7 @@ With both the schema and the underlying data model we can proceed to define Grap
 
 \subsection{GraphQL Query}
 
-As we mentioned in section \ref{sec:bg}, GraphQL queries are selections over types and fields defined in the schema. A GraphQL query can be seen as a tree structure. Leaf nodes are selections of fields with a scalar return type. Inner nodes can be either selections on fields with an object or abstract return type, or inline fragments which condition when its subqueries are evaluated. For instance, the query in figure \ref{fig:qres_ex} can be depicted as the tree in figure \ref{fig:query_tree}.
+As we mentioned in section \ref{sec:bg}, GraphQL queries are selections over types and fields defined in the schema. A GraphQL query can be seen as a tree structure where leaf nodes are selections of fields with a scalar return type. An inner node can be a selection on fields with an object or abstract return type. Inline fragments that condition when its subqueries are evaluated can also be seen as inner nodes. For instance, the query in Figure \ref{fig:qres_ex} can be depicted as the tree in Figure \ref{fig:query_tree}.
 
 \begin{figure}
     \centering
@@ -220,71 +220,115 @@ As we mentioned in section \ref{sec:bg}, GraphQL queries are selections over typ
     \label{fig:query_tree}
 \end{figure}
 
-Similar to the schema definition, we try to follow the \spec{}'s grammar as close as possible. The grammar can be described as follows\td{It actually is a tiny bit different but unnecessarily... this captures it}:
-\begin{grammar}
-    <Query> ::= <name> \textbf{(} <Arg>* \textbf{)}
-    \alt <alias> \textbf{:} <name> \textbf{(} <Arg>* \textbf{)}
-    \alt <name> \textbf{(} <Arg>* \textbf{)} \textbf{\{} <Query>+ \textbf{\}}
-    \alt <alias> \textbf{:} <name> \textbf{(} <Arg>* \textbf{)} \textbf{\{} <Query>+ \textbf{\}}
-    \alt \textbf{... on} <name> \textbf{\{} <Query>+ \textbf{\}}
+Similar to the schema definition, we try to follow the \spec{}'s grammar as closely as possible. The grammar and implementation can be seen in Figure~\ref{fig:query_def}. There is a lost of information regarding non-emptiness of subqueries, as seen by rule 2 and the constructor \texttt{NestedField}. The reasoning behind this decision is very similar to the one used when implementing type definitions, which is described in Section~\ref{subsec:schema}.
 
-    <Arg> ::= <name> \textbf{:} <value>
-\end{grammar}
+\begin{figure*}
+  \centering
+  \begin{subfigure}{.5\textwidth}
+    \begin{grammar}
+        <Query> ::= <name> \textbf{(} <Arg>* \textbf{)}
+        \alt <alias> \textbf{:} <name> \textbf{(} <Arg>* \textbf{)}
+        \alt <name> \textbf{(} <Arg>* \textbf{)} \textbf{\{} <Query>+ \textbf{\}}
+        \alt <alias> \textbf{:} <name> \textbf{(} <Arg>* \textbf{)} \textbf{\{} <Query>+ \textbf{\}}
+        \alt \textbf{... on} <name> \textbf{\{} <Query>+ \textbf{\}}
 
-And the implementation in GraphCoQL is the following.\td{Not sure how to display this.}
+        <Arg> ::= <name> \textbf{:} <value>
+    \end{grammar}
+    \caption{Grammar of GraphQL queries}
+  \end{subfigure}%
+  \begin{subfigure}{.5\textwidth}
 
-\begin{minted}{coq}
-Inductive Query : Type :=
-| SingleField (name : Name)
-              (arguments : seq (Name * Vals))
+    \begin{minted}{coq}
+    Inductive Query : Type :=
+    | SingleField (name : Name)
+                  (arguments : seq (Name * Vals))
 
-| AliasedField (alias : Name)
-               (name : Name)
-               (arguments : seq (Name * Vals))
+    | AliasedField (alias : Name)
+                   (name : Name)
+                   (arguments : seq (Name * Vals))
 
-| NestedField (name : Name)
-              (arguments : seq (Name * Vals))
-              (subqueries : seq Query)
+    | NestedField (name : Name)
+                  (arguments : seq (Name * Vals))
+                  (subqueries : seq Query)
 
-| NestedAliasedField (alias : Name)
-                     (name : Name)
-                     (arguments : seq (Name * Vals))
-                     (subqueries : seq Query)
+    | NestedAliasedField (alias : Name)
+                         (name : Name)
+                         (arguments : seq (Name * Vals))
+                         (subqueries : seq Query)
 
-| InlineFragment (type_condition : Name)
-                 (subqueries : seq Query).
+    | InlineFragment (type_condition : Name)
+                     (subqueries : seq Query).
+    \end{minted}
+    \caption{Implementation in Coq}
+  \end{subfigure}
+  \caption{Definition of GraphQL queries.}
+  \label{fig:query_def}
+\end{figure*}
+
+
+Both the \spec{} and our formalization differ from \HP{} when defining queries. The main difference is that \HP{} include an additional rule for lists of queries. Their grammar includes a production rule for lists of queries which is at the same level of the other rules. The main issue we found with this approach is that it allows building arbitrary trees instead of just a list of queries. These trees can be flattened to recover the list structure but this represents additional effort when defining functions and reasoning over queries. We believe this is assumed by \HP{} but not explicitly mentioned otherwise.
+
+
+As in the case of well-formedness of schemas or conformance of graphs, queries must go through a validation process. We define the \textit{conformance} of queries based on validation rules scattered throughout the \textit{Validation} section of the \spec{}\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}.
+
+Before defining the validation process, it is very important to address the notion of \textit{type in context} where selections are used. This notion is necessary to validate queries and when transforming queries, as described in Section~\ref{sec:norm}. The type in context is the type over which someone might be requesting information on its fields. For instance, in the following example the field selection \texttt{goodboi} is used in the context of the \texttt{Query} type. However, the type in the case of the field \texttt{name} is not entirely clear. In one case, the type in context is \texttt{Dog}, while in the other the field is used in the context of the \texttt{Pig} type.
+
+\begin{minted}[escapeinside=||, mathescape=true]{gql}
+      query {
+        goodboi {
+          |$\ldots$| on Dog {
+            name
+          }
+          |$\ldots$| on Pig {
+            name
+          }
+        }
+      }
 \end{minted}
 
-\td{PH includes a rule for list of queries at the same level as the other rules. The issue with this is that it allows building arbitrary tree instead of just a list of queries. They can be flattened but it's something they just assume I believe.}
+The importance of this type in context is that fields or inline fragments might be valid in certain cases but not in others. Similarly, a field may have a particular return type in one case and a different one in another type, like in the following example. Both types have an \texttt{age} field, but in one case it returns an integer value while in the other a floating point value. If that field is encountered in a query, it is necessary to know to which type it is being requested.
 
-Before evaluating queries, they must go through a validation process. This is similar to the \textit{well-formedness} of schemas or \textit{conformance} of graphs. Whenever we validate queries, there is always a notion of a type in context. This is the type to which we might be requesting information on its fields\footnote{At top level, this would be the query type.}. Requesting a field might be valid in a certain type but not in others. Similarly, a field may have a particular return type in one case and a different one in another type. Due to space constraints, we do not include the complete definitions.
+\begin{minted}{graphql}
+      type Human {
+        age: Int
+      }
+
+      type Martian {
+        age: Float
+      }
+\end{minted}
+
 
 \begin{definition}
-A GraphQL query $\varphi$ conforms to a schema $\mathcal{S}$ if it satisfies the following conditions:
+A GraphQL query $\varphi$ \textit{conforms} to a schema $\mathcal{S}$ if it satisfies the following conditions:
 \begin{itemize}
-    \item Selections in $\varphi$ are consistent by themselves. This notion includes things such as: if we query a field, then that field is defined in the  type in context and its arguments are defined in the given field, or if it is an inline fragment, then the type condition has to be valid wrt. the type in context.
+    \item Selections in $\varphi$ are consistent.
 
-    \item Field merging between fields is possible. During the evaluation process, fields with the same response name are collected and merged to ensure that they are all executed at the same time. This validation rule checks that it makes sense to merge those fields. The following example illustrates two queries that have the same response name but should not be merged. The first one is accessing the field \texttt{name} while the second is accessing the field \texttt{age} but renaming it to \texttt{name}. Both are selections on different fields of the same type but with the same response name.
-    \begin{minted}{gql.py:GraphqlLexer -x}
-                    query {
-                        name
-                        name:age
-                    }
-    \end{minted}
+    \item Field merging between fields is possible.
+    % During the evaluation process, fields with the same response name are collected and merged to ensure that they are all executed at the same time. This validation rule checks that it makes sense to merge those fields. The following example illustrates two queries that have the same response name but should not be merged. The first one is accessing the field \texttt{name} while the second is accessing the field \texttt{age} but renaming it to \texttt{name}. Both are selections on different fields of the same type but with the same response name.
+    % \begin{minted}{graphql}
+    %                query {
+    %                    name
+    %                    name:age
+    %                }
+    %\end{minted}
 
-    \item Fields with same response name have compatible response shapes. This checks whether two fields with the same response name will produce response values that are consistent to each other. These values should be unambiguous for a user. For instance, the following example\td{These examples look a bit off I think.} shows two queries that produce similar responses but with ambiguous values. In the first one, we ask for dog's \texttt{name}s, which are strings, and in the second for pig's \texttt{age}s, which are integers. We also rename the \texttt{age} value to \texttt{name}. The responses we get will have some cases where \texttt{name} is associated to a string and other where it is associated to integers.
-    \begin{minted}[escapeinside=||,mathescape=true]{gql.py:GraphqlLexer -x}
-                    query {
-                        |$\ldots$| on Dog {
-                            name
-                        }
-                        |$\ldots$| on Pig {
-                            name:age
-                        }
-                    }
-    \end{minted}
+    \item Fields with same response name have compatible response shapes.
+    % This checks whether two fields with the same response name will produce response values that are consistent to each other. These values should be unambiguous for a user. For instance, the following example\td{These examples look a bit off I think.} shows two queries that produce similar responses but with ambiguous values. In the first one, we ask for dog's \texttt{name}s, which are strings, and in the second for pig's \texttt{age}s, which are integers. We also rename the \texttt{age} value to \texttt{name}. The responses we get will have some cases where \texttt{name} is associated to a string and other where it is associated to integers.
+    % \begin{minted}[escapeinside=||,mathescape=true]{graphql}
+    %                query {
+    %                    |$\ldots$| on Dog {
+    %                        name
+    %                    }
+    %                    |$\ldots$| on Pig {
+    %                        name:age
+    %                    }
+    %                }
+    % \end{minted}
 \end{itemize}
 \end{definition}
+
+The definition in \coql{} is given by the following code. Due to space constraints, we do not include the complete definitions but they can be found in the file \texttt{QueryConformance.v}.
 
 \begin{minted}{coq}
 Definition queries_conform (type_in_scope : Name)
@@ -295,7 +339,16 @@ Definition queries_conform (type_in_scope : Name)
             [seq (type_in_scope, q) | q <- queries].
 \end{minted}
 
-Finally, with these definitions we can build queries in a GraphQL service. From now on, we will assume that queries are well-formed with respect to a given schema. We can then move onto their semantics.
+As described earlier, this rules are mostly a condensation of a set of validation rules defined in the \spec{}. The first one refers to whether a selection holds by itself. It includes checks such as: if query is over a field, then that field must be defined in the  type in context and its arguments are defined in the given field. Similarly, if a selection is an inline fragment, then the type condition has to be valid with respect to the type in context.
+
+The second and third predicates are defined as a single validation rule in the \spec{}\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Field-Selection-Merging}. We split them into two separate predicates because there is a chance for optimization. We noticed that the original definition includes redundant recursive calls which may result in increased computational time. At the time of writing this paper, a new algorithm was proposed by a team at XING\footnote{https://www.xing.com/} that also addresses this very same issue and is described in~\cite{xingalg}. They follow an approach using sets and provide a much more elaborate analysis of execution times than us. Comparing both approaches and analyzing execution times could be an interesting venue to explore.
+
+During development, we also noticed that the \spec{}'s rule is too conservative and may consider valid queries as invalid. In a nutshell, the \spec{} allows defining fragments that are never evaluated. The issue is that the validation rule can then consider that subqueries in these fragments are invalid, even though they are never evaluated, rendering the whole query invalid\footnote{An example query can be seen in the following link: https://tinyurl.com/y3hz5vgv.}. The definition of the second predicate attempts to remove this conservativeness but we have not proved it. For the third predicate, we still have some conservative checks. Section \ref{subsec:invalidfrags} delves a little deeper into this issue.
+
+% The main issue is that the \spec{} allows for what we call \textit{invalid fragments}, originally described in an issue in the \spec{}'s repository\footnote{https://github.com/graphql/graphql-spec/issues/367}. In a nutshell, the \spec{} allows using fragments with type conditions that can span to multiple unrelated types. These end up not being evaluated due to posterior checks\footnote{https://graphql.github.io/graphql-spec/June2018/\#DoesFragmentTypeApply()}.
+
+
+Finally, with these definitions we can build queries in a GraphQL service. From now on, we will assume that queries conform to a given schema. We can then move onto their semantics.
 
 \subsection{Semantics}\label{subsec:semantics}
 
