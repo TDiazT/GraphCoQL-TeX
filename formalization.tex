@@ -137,7 +137,7 @@ Let Dog := Object "Dog" implements [:: "Animal"] {[::
 
 GraphQL is not tied to any particular database technology and implementation. When resolving fields in a query, GraphQL assumes the existence of \textit{resolvers}. These are internal functions defined by the user implementing a GraphQL service. They are not tied to any particular data model and the only requirement is that they must adhere to the schema. Whether they access a database, return static values or even modify existing data, is up to the user\footnote{The \spec{} states that these ``\textit{must always be side effect‐free and idempotent}'' but the definition of a resolver does not actually impose these restrictions.}. This makes reasoning about the semantics hard.
 
-We choose to follow \HP{}'s approach and define the underlying data model as a graph over which queries are evaluated. With this model, the unspecified resolvers can be instantiated to concrete definitions which allow reasoning over them. The semantics are then described as being implemented over a graph setting. This provides benefits when reasoning about it but also comes with limitations over the results generated. We cover these aspects in Section \ref{subsec:semantics}. It is worth mentioning that the limitations of this model are not described nor discussed in \HP{}.
+We choose to follow \HP{}'s approach and define the underlying data model as a graph over which queries are evaluated. With this model, the unspecified resolvers can be instantiated to concrete definitions which allow reasoning over them. The semantics are then described as being implemented over a graph setting. Although this provides benefits when reasoning about the semantics, it also comes with some potentially severe limitations over the completness of the possible results generated.\td{They may not actually be limitations with the model, but there are open questions on how to model some things.} We cover these limitations more thoroughly in a following paragraph and in Section~\ref{subsec:semantics}. It is worth mentioning that the limitations of this model are not described nor discussed in \HP{}.
 
 Informally, a GraphQL graph is a directed property graph, with labeled edges and typed nodes. The graph describes entities with their types and properties, as well as the relationship between them. This means that every node has properties (key-value pairs) and a type. Also, every label in an edge describes the relation between two nodes. Finally, every property or label may also contain a list of arguments (key-value pairs).
 
@@ -154,17 +154,17 @@ A GraphQL graph over \Vals is defined by the following elements:
 This is defined with the following structures in Coq.
 
 \begin{minted}{coq}
-Structure fld := Field {
+Record fld := Field {
                   label : string;
                   args : seq (string * Vals)
                 }.
 
-Structure node := Node {
+Record node := Node {
                    ntype : Name;
                    nprops : seq (fld * Vals)
                  }.
 
-Structure graphQLGraph := GraphQLGraph {
+Record graphQLGraph := GraphQLGraph {
                         root : node;
                         E : seq (node * fld * node)
                       }.
@@ -173,7 +173,7 @@ Structure graphQLGraph := GraphQLGraph {
 \td{probably rewrite this paragraph...}
 Our definition is in essence the same as in \HP{} but differs greatly in implementation. \HP{} defines a GraphQL graph in a more ``centralized'' manner. For instance, nodes and field names are defined by sets. Node types are defined by a single function which receives a node identifier and gives its type. Properties are also defined by a single function which receives a node identifier and a field name with arguments. Contrarily, our approach attempts to recreate the structures individually. For instance, a node contains all the information pertaining to itself; its type and its properties. We believe this is a more natural approach to defining the graph from an engineering point of view.
 
-The definition of graph is completely independent of any GraphQL schema, so we need a way to relate the data to the type system. We implement the notion of \textit{conformance}  of a graph as partially described by \HP{}. This notion is, in essence, a well-formedness property for graphs with respect to a given schema. At the moment of development, there was no complete definition of conformance given by \HP{}. However, recently~\cite{olafschema} include and extend this notion using a similar ``decentralized'' approach to define graphs. Their definitions capture more features than we currently implement, such as directives.\td{And variables if I'm correct - should check}
+The definition of graph is completely independent of any GraphQL schema, so we need a way to relate the data to the type system. We implement the notion of \textit{conformance}  of a graph as partially described by \HP{}. This notion is, in essence, a well-formedness property for graphs with respect to a given schema. At the moment of development, there was no complete definition of conformance given by \HP{}. However, in a recent work by Hartig and Hidder's~\cite{olafschema}, they give a complete definition and extend it. Their approach uses a similar ``decentralized'' idea to define graphs. Their definitions capture more features than we currently implement, such as directives and non-null types.\td{And variables if I'm correct - should check}
 
 \begin{definition}
 A GraphQL graph \textit{conforms} to a schema $\mathcal{S}$ if it satisfies the following conditions:
@@ -206,6 +206,13 @@ Record conformedGraph (s : wfGraphQLSchema) :=
 \end{minted}
 
 Due to space limitations, we omit a detailed review of \textit{conformance} of nodes and edges. The complete definitions can be found in the file \texttt{GraphConformance.v}. %These properties include validation rules such as: every node must have an object type and their properties must be defined in their associated type, or an edge's label must be declared as a field in the source node's type and the target node must have a type compatible to the field's return type, among other things.
+
+Finally, we partially retake the discussion on the limitations of this model. These have consequences on the semantics of GraphQL queries, so we delay some of it to the corresponding section. The main issue is that there is no proper accounting with respect to list types containing other list types (with any nesting depth). The different features that compose a GraphQL schema can be translated to a graph somehow. For instance, a field is either a property or the label of an edge, while its return type can be associated to a target node in an edge. However, when it comes to list types it is not clear what they represent in a graph. Let us illustrate this with an example.
+
+A service may declare the field \texttt{friends:[Human]} in a given type, representing the list of friends.
+In a graph this can be pictured as having a node with multiple outgoing edges labeled \texttt{friends}, reaching other nodes of type \texttt{Human}. It is possible to then extend the service by including a new field \texttt{friendsByName:[[Human]]}, in which one can request a list of friends but grouped by their names. At the moment neither our implementation, \HP{} nor \cite{olafschema} properly handle this situation. The open question is what does this represent in the graph? These should be outgoing edges similarly to the previous case but, what should the target nodes be? Should these be intermediate blank nodes? Is every edge labeled or only the last one that reaches a node with type \texttt{Human}? What happens if we increase the nesting? Since the information is ultimately collected from ``concrete'' nodes, should the graph be kept the same but introduce \textit{formatter} functions to match the schema?
+
+These questions and more are not addressed nor discussed in \HP{} and it is actually more restrictive than expected, by not allowing nested lists for scalar values (in nodes's properties). Meanwhile, our approach and the one used in \cite{olafschema} allow any list type at the property level but simply ignore any possible nesting when the list type refers to neighboring nodes (composite types), as in the example above. In the case of \cite{olafschema}, they do not address nor discuss these questions. This choice of modeling has some consequences when defining the semantics of GraphQL queries, because the possible results generated are restricted to a smaller subset. It is not clear what the proper way is to handle this issue but more is explored in Section~\ref{subsec:semantics}. We also address the \spec{}'s semantics and how this is managed.
 
 With both the schema and the underlying data model we can proceed to define GraphQL queries and their semantics.
 
@@ -348,33 +355,35 @@ During development, we also noticed that the \spec{}'s rule is too conservative 
 % The main issue is that the \spec{} allows for what we call \textit{invalid fragments}, originally described in an issue in the \spec{}'s repository\footnote{https://github.com/graphql/graphql-spec/issues/367}. In a nutshell, the \spec{} allows using fragments with type conditions that can span to multiple unrelated types. These end up not being evaluated due to posterior checks\footnote{https://graphql.github.io/graphql-spec/June2018/\#DoesFragmentTypeApply()}.
 
 
-Finally, with these definitions we can build queries in a GraphQL service. From now on, we will assume that queries conform to a given schema. We can then move onto their semantics.
+Finally, with these definitions we can build queries in a GraphQL service. Examples may be found in the files \texttt{SpecExamples.v} and \texttt{HPExample.v}. From now on, we will assume that queries conform to a given schema. We can then move onto their semantics.
 
 \subsection{Semantics}\label{subsec:semantics}
 
-We are now ready to review how queries are evaluated. We will begin by briefly reviewing the responses generated by executing our queries. Then we will give an informal description of our semantics, followed by the formal definition. We will finish by discussing some implementation choices and comparison with the \spec{} and HP.
+In this section we describe the semantics of GraphQL queries. We begin by briefly examining the responses generated by executing queries. Then we give an informal description of the semantics, followed by the formal definition. We finish by discussing some implementation choices and comparison with the \spec{} and \HP{}.
 
-We chose to model responses as a tree structure, similar to JSON. The \spec{} only states that responses must be a map. We chose this structure because it is similar to the one used by queries and because it is simpler to preserve order of the responses. The ordering of responses is not a hard requirement but it is one of the selling points for GraphQL (queries and their responses are very similar and easy to read). We use option types to represent null values in the leaves of the response tree.
+The \spec{} describes responses as a map. Our implementation differs slightly, modeling them as a tree structure, similar to JSON. We choose this structure to preserve similarity to queries and because it is simpler to preserve order of the responses. The \spec{} does not impose an ordering of responses, although encourages it\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Serialized-Map-Ordering}. We believe that preserving the order is one of the selling points for GraphQL (queries and their responses are very similar and easy to read). Our approach has two main disadvantages: uniqueness of response names and cost of access. Since we use lists instead of maps, we can encounter duplicated names and accessing a value has a linear cost given by the lists size, instead of the constant access obtainable with a map. We still argue that the simplicity to obtain order is worth it. We do include a proof that the results obtained with the semantics have unique names. Finally, we use option types to represent null values in the leaves of the response tree.
 
 \begin{minted}{coq}
-Inductive ResponseNode : Type :=
+Inductive ResponseNode (A : Type) : Type :=
 | Leaf : A -> ResponseNode
 | Object : seq (Name * ResponseNode) -> ResponseNode
 | Array : seq ResponseNode -> ResponseNode.
 
-Variable (Vals: eqType).
-
-Definition GraphQLResponse :=
+Definition GraphQLResponse (Vals: eqType) :=
     seq (Name * (@ResponseNode (option Vals))).
 \end{minted}
 
-Moving onto the semantics of GraphQL queries. We chose to model it similarly to HP, in the sense that our data model is a graph. Therefore, a query represents a navigation over an underlying graph. At top level, our query starts from the root node and then moves around its edges and nodes, collecting data along its way. In this sense:
+Moving onto the semantics of GraphQL queries. As we described in Section~\ref{subsec:graph}, the underlying data model is a graph, therefore the semantics are instantiated to this setting. In a following paragraph we briefly explore an alternative that is closer to the \spec{}, in the sense that it can be detached from a particular data model. In our setting a query then represents a navigation over a graph. At top level, a query starts from the root node and then moves around its edges and nodes, collecting data along the way. In this sense:
 \begin{itemize}
-    \item A field selection represents one of two things: accessing a node's property or traversing an edge to a neighboring node. On the neighboring nodes we recursively evaluate the subqueries.
-    \item An inline fragment conditions whether we access some value of a node or if we use it to traverse to other nodes.
+    \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node. On the neighboring nodes we recursively evaluate subqueries.
+    \item An inline fragment conditions whether using a node to access its properties or to traverse to other nodes.
 \end{itemize}
 
-Figure \ref{fig:semantics} shows the formal definition of the semantics. It displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes or when it is evaluating an inline fragment. Aliased fields are omitted for brevity.
+Figure \ref{fig:semantics} shows the formal definition of the semantics. It displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.
+
+The main difference with respect to \HP{} and the main similarity to the \spec{} is that we perform a collection of fields at the query level, whereas \HP{} performs a post-processing of responses. The main reasons are similarity to the \spec{} and difficulty in reasoning with \HP{}'s approach, which we explore in more depth in Section~\ref{subsec:semstories}.
+
+%Our first attempt at defining the semantics was to follow \HP{}'s post-processing approach. Our intention was to be as close as possible to their formalization to later prove their transformation and equivalence results, which we cover in Section~\ref{sec:norm}. However, the non-structural recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence very hard.
 
 \begin{figure*}
     \centering
@@ -402,12 +411,18 @@ Figure \ref{fig:semantics} shows the formal definition of the semantics. It disp
     \caption{Semantics for GraphQL queries.\td{This looks bad but I don't know how to format it :/}}
     \label{fig:semantics}
 \end{figure*}
-There are two major aspects that we need to address about our formalization; errors and completeness.
 
-The first one is that we currently do not handle errors during execution. This is due to two main reasons: our semantics assumes it receives valid queries and we have not yet implemented non-null types. These relates to the two kinds of errors one may encounter: validation and execution errors. The first ones are captured before execution and displayed to the user. Our semantics has to deal with a case which would be ruled out by the validation process. We believe both cases can be covered by including X (monad/reasonably exceptional type theory/etc)\td{rewrite}.
+We finish this section by addressing two major aspects about our formalization; completeness and errors.
 
-The second major aspect refers to completeness. Our semantics does not cover all possible responses expected by a GraphQL service. In particular, it does not account for list types of depth bigger than one, when its inner type is not a scalar type\footnote{HP goes a step further and does not allow any type of nested list result.}. For instance, one might want to get information about friends but grouped by their age. This could be modeled as a field with type \texttt{[[Human]]}, where the list type has depth 2. A response for this query would look something like \texttt{"friends":[[...], ..., [...]]}. This response cannot be generated by our semantics\footnote{It can be defined with the \mintinline{coq}{Response} structure but not generated with the semantics.}.
+The first one was briefly mentioned in Section~\ref{subsec:graph}, when discussing the limitations and open questions regarding the graph model. These translate in the fact that we currently do not produce list results with nested lists of objects. For instance, the field \texttt{friendsByName:[[Human]]} is treated as if it were defined as \texttt{friendsByName:[Human]} and the results match the latter format. Otherwise, there is no restriction in the case of nested lists for scalar values. In \HP{}, there is no possibility to produce nested lists for either scalar or object values\footnote{The grammar itself does not permit it.} and there is no mention of this restriction.
 
-The main challenge in this case is to define what this nested list types represent in a graph. If we take a simple case of a field with type \texttt{[Human]}, we can model it as neighbors of a node. However, if we increase the nesting such as \texttt{[[Human]]}, it becomes harder to model. What does this represent in the graph? Should we introduce blank nodes in between the source node and the \texttt{Human} nodes? Are these inner edges labeled? Should there be a blank node per each level of nesting or a single one with edges to itself? All these questions do not have a straightforward answer. Our semantics, as the one definded in PH, simply ignores any nesting bigger than one.\td{This is where it can be modelled using Functors. The \spec{} checks if it received a collection and applies map to eventually get to the concrete values. Not sure how to put this out there.}
+Regarding error handling, we currently do not implement it. Errors may have two main sources; validation errors and execution errors.\td{Not sure how to write this}
+
+%The first one is that we currently do not handle errors during execution. This is due to two main reasons: the evaluation function assumes it receives valid queries and we have not yet implemented non-null types. These relates to the two kinds of errors one may encounter when evaluating GraphQL queries: validation and execution errors. The first ones are captured before execution and displayed to the user. Our semantics has to deal with a case which would be ruled out by the validation process. We believe both cases can be covered by including X (monad/reasonably exceptional type theory/etc)\td{rewrite}.
+
+% The second major aspect refers to completeness. Both our formalization and \HP{}'s do not generate all possible results expected by a GraphQL service. In particular, there is a limitation when generating lists with a nesting bigger than one. it does not generate results for list types of depth bigger than one, when its inner type is not a scalar type\footnote{HP goes a step further and does not allow any type of nested list result.}. For instance, one might want to get information about friends but grouped by their age. This could be modeled as a field with type \texttt{[[Human]]}, where the list type has depth 2. A response for this query would look something like \texttt{"friends":[[...], ..., [...]]}. This response cannot be generated by our semantics\footnote{It can be defined with the \mintinline{coq}{Response} structure but not generated with the semantics.}.
+
+%The main challenge in this case is to define what this nested list types represent in a graph. If we take a simple case of a field with type \texttt{[Human]}, we can model it as neighbors of a node. However, if we increase the nesting such as \texttt{[[Human]]}, it becomes harder to model. What does this represent in the graph? Should we introduce blank nodes in between the source node and the \texttt{Human} nodes? Are these inner edges labeled? Should there be a blank node per each level of nesting or a single one with edges to itself? All these questions do not have a straightforward answer. Our semantics, as the one definded in PH, simply ignores any nesting bigger than one.\td{This is where it can be modelled using Functors. The \spec{} checks if it received a collection and applies map to eventually get to the concrete values. Not sure how to put this out there.}
+\td{I am also missing functors and how the spec "should" be defined.}
 
 This concludes the base formalization of GraphQL schemas, graph data model, and queries and their semantics. Using this basic structures we can start defining query transformations and prove some properties about them.
