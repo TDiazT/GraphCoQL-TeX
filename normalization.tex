@@ -1,21 +1,23 @@
 
 \section{Query Transformation: Normalization}\label{sec:norm}
 
-As a first case study for query transformation, we decided to tackle the normalization process used in HP. This is a fundamental process on which they base their results on complexity for GraphQL queries. One of their base statements is that every query can be normalized and the resulting query is semantically equivalent. They provide equivalence rules to transform the queries but do not provide the full proof of correctness for them.
+As a case study for query transformation, we tackle the normalization process used in \HP{}. This is a fundamental process on which they base their results on complexity for GraphQL queries. One of their base premises is that every query can be normalized and that the resulting query is semantically equivalent. They provide a set of equivalence rules to transform the queries but do not prove their correctness nor the preservation of the semantics.
 
-In this section we review the property of being in \textit{normal form}, as well as the normalization procedure we implemented. We then prove that our normalization procedure is correct and that it preserves the semantics of the original queries, as postulated by HP. In the end, we briefly review some differences and observations with respect to HP's definitions.
+In this section we define the property of being in \textit{normal form}, as well as the normalization procedure. We then prove that the transformation is correct and that it preserves the semantics of the original queries, as postulated by \HP{}. Lastly, we briefly discuss some differences and observations with respect to \HP{}'s definitions.
 
-It is worth mentioning that the bigger part of our development was dedicated to defining and establishing the correctness of this normalization procedure. In terms of code it required around 350 lines of code for the definitions and around 1200 of lemmas and tactics.
+It is worth mentioning that the bigger part of our development was dedicated to defining and establishing the correctness of this normalization procedure. In terms of code it required around 350 lines of code for the definitions and around 1,200 lines of proofs. The complete definitions and proofs can be found in the files \texttt{QueryNormalForm.v} and \texttt{QueryNormalFormLemmas.v}.
 
 \subsection{Normal form}
 
-The notion of \textit{normal form} is defined by the conjunction of two other properties; being \textit{grounded}\footnote{HP refers to it as \textit{ground-typed normal form}. We believe this name is a bit misleading.} and being \textit{non-redundant}.
+The notion of \textit{normal form} is defined by the conjunction of two properties; being \textit{grounded} and being \textit{non-redundant}.
+\HP{} refers to the former as being in \textit{ground-typed normal form}. We believe this naming is a bit confusing so we decide to rename it to the previously described property.
 
+Similarly to what is described in Section~\ref{subsec:query}, the normalization process requires information on the type in context where the queries might be defined. This is crucial as it guides the process on how queries are transformed.
 
 % Throuhgout our development, we noticed that this definition given by \cite{gqlph} was too general when proving correctness of our normalization procedure. In particular, the definition states that the subqueries of a field selection can be either fields or fragments. This means that if there are two field selections with the same response name, one may have subqueries consisting of fields, while the other contains only inline fragments. This would cause issues when trying to remove redundancies in queries because one could not directly establish if the resulting queries satisfied the property.
 \subsubsection*{Groundness}
 
-Informally, the \textit{groundness} property refers to whether queries are completely specified down to the objects and scalar types. The main idea is that if we are querying an Object type then we should only ask for its fields, while if we are querying an Abstract type (Interface or Union), then our queries should be specified down to their object subtypes. In the former case, it does not make sense to use fragments to further specify our query (we cannot be more specific when querying an object), while in the latter we want to use fragments to clearly state what we want from each concrete subtype. 
+Informally, the \textit{groundness} property refers to whether queries are completely specified down to objects and scalar types. The main idea is that if a query is over an Object type then it should only request its fields, while if it is a query over an Abstract type\footnote{Interface or Union}, then the selections should be specified down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query (it is not possible to be more specific when querying an object), while in the latter one should clearly state what is being requested from each concrete subtype.
 
 \begin{definition}
 A GraphQL query $\varphi$ is \textit{grounded} if it satisfies the following conditions, where \texttt{ty} is the type in scope.
@@ -24,12 +26,29 @@ A GraphQL query $\varphi$ is \textit{grounded} if it satisfies the following con
 \item Subqueries of $\varphi$ are \textit{grounded} wrt. to the field's return type or the fragments type condition.
 \end{definition}
 
-This definition differs slightly from the one given by HP, because we use information on the type in context where queries might be defined. We prove that our definition still implies being in \textit{ground-typed normal form}. We made this choice because we found that the notion given by HP was too general for our implementation. This came up during the proofs of correctness for our normalization procedure. We will not go into much detail due to space constraints.
+This definition differs slightly from the one given by \HP{}, because they do not use information on the type in context. We take this approach because the structure of grounded queries is deterministic and it simplifies reasoning. In \HP{}'s approach, subqueries of fields can be either fields or inline fragments, without clear conditions. For instance, the following query, inspired from the schema in Section~\ref{sec:bg}, is in ground-typed normal form but the field \texttt{goodboi} has field subqueries in one case and fragments in the other. With our approach, only the second occurrence of \texttt{goodboi} is grounded, since its return type is an interface and the subqueries are specified down to the subtypes, using fragments.
+
+\begin{minted}[escapeinside=||, mathescape=true]{graphql}
+        query {
+            goodboi {
+              name
+            }
+            goodboi {
+              |$\ldots$| on Dog {
+                name
+              }
+              |$\ldots$| on Pig {
+                name
+              }
+            }
+        }
+\end{minted}
+
+Nevertheless, we prove that our definition still implies being in ground-typed normal form.
 
 \begin{minted}{coq}
-Variable (s : wfGraphQLSchema).
-
-Lemma are_grounded_in_ground_typed_nf (type_in_scope : Name)
+Lemma are_grounded_in_ground_typed_nf (s : wfGraphQLSchema)
+                                      (type_in_scope : Name)
                                       (queries : seq Query) :
         are_grounded s ty queries ->
         are_in_ground_typed_nf s queries.
@@ -37,111 +56,104 @@ Lemma are_grounded_in_ground_typed_nf (type_in_scope : Name)
 
 \subsubsection*{Non-redundancy}
 
-Informally, the notion of non-redundancy refers to whether there might queries that may produce repeated results.
+Informally, the notion of non-redundancy refers to whether there are no queries that produce repeated results.
 
 \begin{definition}
 A GraphQL query $\varphi$ is \textit{non-redundant} if it satisfies the following conditions.
 \begin{itemize}
     \item There is at most one field selection with a given response name. This includes visiting inline fragments.
-    
+
     \item There is at most one inline fragment with a given type condition. This does not include visiting other inline fragments.
-    
+
     \item Subqueries are \textit{non-redundant}.
 \end{itemize}
 \end{definition}
 
-This definition is slightly different from the one given by HP but we leave this discussion to section \ref{subsec:discussion}.
+This definition is slightly different from the one in \HP{} but we leave this discussion to section \ref{subsec:discussion}.
 
-\td{Not much more to add...}
+\td{Not much more to add... Maybe say something about how this definition is defined considering the context of grounded queries? I don't think this adds much though.}
 
-\subsection{Normalization procedure}
+\subsection{Normalization procedure}\label{subsec:normalization}
 
-The normalization procedure is very similar to how the semantics are defined. In a sense, it is essentially a static evaluation of the queries, using only information about the type in context where the queries might be defined.
+The normalization procedure is very similar to the semantics. Informally, it can be described as a static evaluation of queries where instead of evaluating them over nodes and neighbors, it uses only information about the type in context where the queries might be defined.
 
-The process consists of two main parts, which deal with the two aforementioned properties. It first assumes that the type in context is an Object type\footnote{If we lift this to the top level we will find the Query type, which is an Object type.}. We describe them separately but occur simultaneously.
+The process consists of two main parts, related to the two previously described properties. It first assumes that the type in context is an Object type\footnote{If we lift this to top level we will find the Query type, which is also an Object type.}. Due to space constraints we define them informally but the complete definition can be found in the file \texttt{QueryNormalForm.v}.
 
 \begin{itemize}
     \item Merging: Whenever a field is encountered, the procedure tries to find all fields with the same response name and merge their subqueries. It then proceeds to remove them from the list to ensure \textit{non-redundancy}. Comparing it to the the semantics, this is equivalent to the case when we evaluate a field and collect similar ones.
-    
-    \item Grounding: Since it is assumed that the type in context is an Object type, it will try to transform the query such that there are only fields left. This means it will try to get rid of inline fragments and lift their subqueries as much as possible. Much like if we were standing on a node in the graph, we only evaluate fragments and subqueries that make sense for that node's type (which is an Object type). In the case of fields, it will first check on its return type. If it is an abstract type, then it will create a cover of all possible concrete subtypes of the abstract type, by wrapping the subqueries with inline fragments. Otherwise, it will proceed recursively. Once again, this is like finding the neighbors of a node. Since we don't know their types, we anticipate all possible cases.
+
+    \item Grounding: Since it is assumed that the type in context is an Object type, it will try to transform the query such that there are only fields left. This means it will try to get rid of inline fragments and lift their subqueries as much as possible. Much like if we were standing on a node in the graph, we only evaluate fragments and subqueries that make sense for that node's type (which is an Object type). In the case of fields, it will first check on its return type. If it is an abstract type, then it will create a cover of all possible concrete subtypes of the abstract type, by wrapping the subqueries with inline fragments. Otherwise, it will proceed recursively. Once again, this is like finding the neighbors of a node. Since a priori it doesn't know the neighboring nodes that may be encountered, the procedure anticipates all possible scenarios.
 \end{itemize}
 
-With this definition, we proceed to define a second one, which makes no assumption on the type in context. This procedure only checks what kind of type it receives and either pipes the job to the previous one, or covers the queries with the possible concrete subtypes (and then pipes the work to the previous definition).
+With this definition, we define a second one, which makes no assumption on the type in context. This procedure only checks what kind of type it receives and either pipes the job to the previous one, or covers the queries with the possible concrete subtypes (and then pipes the work to the previous definition).
 
 \begin{minted}{coq}
-Definition normalize_queries (type_in_scope : Name) 
+Definition normalize_queries (s : wfGraphQLSchema)
+                             (type_in_scope : Name)
                              (queries : seq Query) :
                                          seq Query :=
     if is_object_type s type_in_scope then
-        normalize type_in_scope queries
+        normalize s type_in_scope queries
     else
-        [seq on t { normalize t queries } |
+        [seq on t { normalize s t queries } |
             t <- get_possible_types s type_in_scope].
 
 \end{minted}
 
-With this definition we can the move onto proving their correctness and that the semantics are preserved for the source query.
+Finally, with these properties and definitions we prove the premises proposed by \HP{}. We leave that discussion, about \HP{}'s approach and ours, to Section~\ref{subsec:discussion}.
 
 \subsection{Proofs of correctness and preservation}
 
-The previous definitions do not ensure that our resulting queries are in normal form, so we must prove them correct. We can then prove that the source queries are semantically equivalent to their normalized versions. This satisfies the statement by HP
+As described initially in this paper, \HP{} base the complexity results over GraphQL queries on two premises; queries can be normalized, preserving their semantics, and there is an equivalent simplified function to evaluate queries in normal form. We tackle the first premise by establishing correctness of our normalization procedure and then preservation of semantics.
 
-First, we prove that the procedure delivers \textit{grounded} queries. By transitivity we get that they are in \textit{ground-typed normal form}.
+First, we prove that the procedure is correct and returns queries in normal form, by proving separately that the resulting queries are grounded and non-redundant\footnote{Since we prove that grounded implies ground-typed normal form, we can also prove ground-typed normal form for the normalization function.}. We consider both the case where the type in scope is an Object type and the general case.
 
 \begin{minted}[escapeinside=||,mathescape=true]{coq}
 Lemma normalize_are_grounded ty |$\varphi$| :
     is_object_type s ty ->
     are_grounded s ty (normalize s ty |$\varphi$|).
-    
-Lemma normalize_queries_are_grounded ty |$\varphi$| :
-    are_grounded s ty (normalize_queries s ty |$\varphi$|).
- 
-\end{minted}
 
-Immediately afterwards we can prove that the resulting queries are indeed \textit{non-redundant}. 
-
-\begin{minted}[escapeinside=||,mathescape=true]{coq}
 Lemma normalize_are_non_redundant ty |$\varphi$| :
     is_object_type s ty ->
     are_non_redundant (normalize s ty |$\varphi$|).
-    
-Lemma normalize_queries_are_non_redundant ty |$\varphi$| :
-    are_non_redundant (normalize_queries s ty |$\varphi$|).
+
 \end{minted}
 
-Finally, we prove that the semantics are preserved for the resulting queries. First, we prove the case where we are normalizing the queries by the type of a node $u$ and evaluating them on that same node. Pushing this to top level, we find ourselves evaluating queries on the root node which has type equal to the query type (given by \textit{conformance} of the graph). We then extend this notion to normalization with any type \texttt{ty} but with the restriction that the node's type must be a subtype of \texttt{ty}. Once again, this is valid at top level over the root node. For nodes in between we know their types are subtypes of the field by which we reached them (given by \textit{conformance} of the graph and its edges).
+Next, we prove that the semantics are preserved for the resulting queries. First, the case where the type in context is the same as the type of the node where queries are being normalized. Lifting this to top level, it corresponds to normalizing over the Query type and evaluating on the root node (whose type is the same, given by conformance of the graph). We then extend this notion to normalization over any type \texttt{ty} but with the restriction that the node's type must be a subtype of \texttt{ty}. Once again, this is valid at top level over the Query type and the root node. Conformance of the graph also ensures that normalization and evaluation over neighboring nodes is preserved.
 
 \begin{minted}[escapeinside=||,mathescape=true]{coq}
 Lemma normalize_exec |$\varphi$| u :
     u |\textbackslash|in g.(nodes) ->
-    s, g |$\vdash$| |$\llbracket$| normalize s u.(ntype) |$\varphi$| |$\rrbracket$| in u with coerce = 
-    s, g |$\vdash$| |$\llbracket$| |$\varphi$| |$\rrbracket$| in u with coerce. 
-          
+    s, g |$\vdash$| |$\llbracket$| normalize s u.(ntype) |$\varphi$| |$\rrbracket$| in u with coerce =
+    s, g |$\vdash$| |$\llbracket$| |$\varphi$| |$\rrbracket$| in u with coerce.
+
 Theorem normalize_queries_exec ty |$\varphi$| u :
     u |\textbackslash|in g.(nodes) ->
     u.(ntype) \in get_possible_types s ty ->
     s, g |$\vdash$| |$\llbracket$| normalize_queries s ty |$\varphi$| |$\rrbracket$| in u with coerce =
-    s, g |$\vdash$| |$\llbracket$| |$\varphi$| |$\rrbracket$| in u with coerce. 
- 
+    s, g |$\vdash$| |$\llbracket$| |$\varphi$| |$\rrbracket$| in u with coerce.
+
 \end{minted}
 
-Having proved this statements we can now define a simplified version of the semantics.
+This concludes our proofs of normalization and the premises established by \HP{}.
+The next section continues with the definition of a simplified version of the semantics
+and the proof of equivalence.
 
 \subsection{Simplified semantics}
 
-As proposed by HP, one of the main properties of queries in normal form is that they produce a unique response, without the need of any collecting and merging of fields. This allows defining a second evaluation function $\ll \varphi \gg_{G}$, similar to the one defined in \ref{subsec:semantics} but without any filtering and collecting of fields. 
+As proposed by \HP{}, one of the main properties of queries in normal form is that they produce a unique response, without the need of any collection and merging of fields. This allows defining a second evaluation function $\ll \varphi \gg_{G}$, similar to the one defined in \ref{subsec:semantics} but without any filtering and collecting of fields.
 
-We implemented this function and then proved that for queries in normal form, both $\llbracket \varphi \rrbracket_{G}$ and $\ll \varphi \gg_{G}$ produce the same response.
+We implement the simplified semantics as defined by \HP{} and then prove the premise that, for queries in normal form, both $\llbracket \varphi \rrbracket_{G}$ and $\ll \varphi \gg_{G}$ produce the same response. We do not include the complete definition but they can be found in the files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}.
 
 \begin{minted}[escapeinside=||,mathescape=true]{coq}
 Theorem exec_equivalence u |$\varphi$| :
     are_in_ground_typed_nf s |$\varphi$| ->
-    are_non_redundant |$\varphi$| -> 
-    s, g |$\vdash$| |$\llbracket$| |$\varphi$| |$\rrbracket$| in u with coerce = 
+    are_non_redundant |$\varphi$| ->
+    s, g |$\vdash$| |$\llbracket$| |$\varphi$| |$\rrbracket$| in u with coerce =
     s, g |$\vdash$| |$\ll$| |$\varphi$| |$\gg$| in u with coerce.
 \end{minted}
 
-This concludes the normalization process and satisfy the requirements set by HP for their complexity results.
+This result concludes the normalization process. We have described our approach to proving both premises proposed by \HP{}. As mentioned earlier, these are fundamental for their complexity results over GraphQL queries but were not proven true. We believe our approach properly and rigorously addresses them. The following section discusses final details regarding some definitions given in \HP{}.
 
 \iffalse
 \begin{minted}{gql.py:GraphqlLexer -x}
@@ -150,37 +162,38 @@ query {
     name:name
 }
 \end{minted}
-\fi 
+\fi
 
 \subsection{Discussion}\label{subsec:discussion}
 
-There are some final notes we must address regarding some of the definitions. This includes some discoveries we made regarding HP and how we resolved them. In particular, we review the \textit{non-redundancy} property and the equivalence rules they define.
+In this section we discuss some discoveries made regarding \HP{}'s definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
 
-For the former, we noticed that their definition is unsound\td{?}, in the sense that there are queries that are considered \textit{non-redundant} but they actually would produce redundant results. A simple example is the following valid query.
-\begin{minted}{gql.py:GraphqlLexer -x}
-query {
-    name
-    name:name
-}
+For the former, we notice that their definition is unsound\td{?}, in the sense that there are queries that are considered non-redundant but actually would produce redundant results. A simple example is the following valid query, that is considered as non-redundant by their definition but which, in fact, would produce two repeated values. It is a very minor slip, which happens because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
+
+\begin{minted}{graphql}
+        query {
+            name
+            name:name
+        }
 \end{minted}
-This is considered as \textit{non-redundant} when, in fact, it would produce two repeated values. It is a very minor slip, which occurs because they only compare unaliased fields with unaliased fields and, respectively, aliased fields with aliased fields. They do not compare unaliased with aliased fields, which causes the problematic cases.
 
-Regarding the equivalence rules, there are three elements we have to highlight. The first one is that rule number (2), which deals with merging of fields with subqueries, is correct but does not preserve ordering of the queries. While this is not a hard requirement, it is an important aspect in GraphQL evaluation. This is also important when comparing that the results are equivalent; Does order matter? Is it just its content? 
+
+Moving onto the equivalence rules, there are three aspects we have to highlight. The first one is that rule number (2), which refers to the merging of fields with subqueries, is correct but does not preserve ordering of the queries. While this is not imposed by the \spec{}, it is an important feature of GraphQL evaluation. This is also important at the moment of defining and comparing semantic equivalence between queries.
 
 The second aspect is about the elements they use \td{?} in their rules. In some cases they use list of queries while in some other they define it over single queries, or sometimes mix them. While this is no big issue, it was a bit confusing when trying to implement their rules in Coq.\td{Not sure how to describe this, but the thing is their rules are a bit weird. They describe rules for individual selections, but there is no... "global" rewriting. I imagine this is "simpler" to understand with their semantics, because they do not modify the queries as they evaluate them (pushing everything to the responses), but it is still weird to define it as a procedure in Coq (or even as inductive relation).}
 
-Finally, there is an implicit notion of type in context when they describe their rules\td{and maybe a missing rule?}. This is crucial, because otherwise there are queries that cannot be normalized. For example, the following query cannot be normalized with the rules as they are.
-\begin{minted}[escapeinside=||, mathescape=true]{gql.py:GraphqlLexer -x}
-query{
-    name
-    |$\ldots$| on Query {
-        name
-    }
-}
+Finally, there is an implicit notion of type in context when they describe their rules\td{and maybe a missing rule?}. This is crucial, because otherwise there are queries that cannot be normalized. For example, the following query cannot be transformed with the rules as they are.
+\begin{minted}[escapeinside=||, mathescape=true]{graphql}
+          query {
+              name
+              |$\ldots$| on Query {
+                  name
+              }
+          }
 \end{minted}
-However, if we include the type in context, which corresponds to \texttt{Query} in this case, we can do more. We can wrap all queries in an inline fragment with type condition \texttt{Query}. We can then use a mix of rules to obtain the normalized query.
+However, if the type in context is included, which corresponds to \texttt{Query} in this case, it is possible to do more. The queries can be wrapped in an inline fragment with type condition \texttt{Query}. Then, with a mix of other rules the normalized query can be obtained.
 
-\td{Not sure where to mention the whole process of doing this (since it took the most of our time). Things such as: 
+\td{Not sure where to mention the whole process of doing this (since it took the most of our time). Things such as:
     \begin{itemize}
         \item Trying to implement HP's rules of equivalence.
         \item Trying to work on a subset of queries with no invalid fragments.
@@ -189,6 +202,3 @@ However, if we include the type in context, which corresponds to \texttt{Query} 
         \item etc.
     \end{itemize}
 }
-
-
-

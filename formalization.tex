@@ -216,7 +216,7 @@ These questions and more are not addressed nor discussed in \HP{} and it is actu
 
 With both the schema and the underlying data model we can proceed to define GraphQL queries and their semantics.
 
-\subsection{GraphQL Query}
+\subsection{GraphQL Query}\label{subsec:query}
 
 As we mentioned in section \ref{sec:bg}, GraphQL queries are selections over types and fields defined in the schema. A GraphQL query can be seen as a tree structure where leaf nodes are selections of fields with a scalar return type. An inner node can be a selection on fields with an object or abstract return type. Inline fragments that condition when its subqueries are evaluated can also be seen as inner nodes. For instance, the query in Figure \ref{fig:qres_ex} can be depicted as the tree in Figure \ref{fig:query_tree}.
 
