@@ -15,7 +15,7 @@ Figure \ref{fig:schema_ex} depicts our type system. We define an interface for a
 
 \begin{figure}
     \centering
-    \begin{minted}[fontsize=\footnotesize]{gql}
+    \begin{minted}[fontsize=\footnotesize]{js}
     interface Animal {
         name: String
         friends: [Animal]
@@ -74,7 +74,7 @@ If we evaluate this query in the graph depicted in \ref{fig:graph_ex}, we would 
 \begin{figure*}
 \centering
 \begin{subfigure}{.5\textwidth}
-\begin{minted}[fontsize=\footnotesize, escapeinside=||,mathescape=true]{gql.py:GraphqlLexer -x}
+\begin{minted}[fontsize=\footnotesize, escapeinside=||,mathescape=true]{js}
 query {
     goodboi(goodnessLevel: BESTBOI) {
         name

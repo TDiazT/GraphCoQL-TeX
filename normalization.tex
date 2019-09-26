@@ -28,7 +28,7 @@ A GraphQL query $\varphi$ is \textit{grounded} if it satisfies the following con
 
 This definition differs slightly from the one given by \HP{}, because they do not use information on the type in context. We take this approach because the structure of grounded queries is deterministic and it simplifies reasoning. In \HP{}'s approach, subqueries of fields can be either fields or inline fragments, without clear conditions. For instance, the following query, inspired from the schema in Section~\ref{sec:bg}, is in ground-typed normal form but the field \texttt{goodboi} has field subqueries in one case and fragments in the other. With our approach, only the second occurrence of \texttt{goodboi} is grounded, since its return type is an interface and the subqueries are specified down to the subtypes, using fragments.
 
-\begin{minted}[escapeinside=||, mathescape=true]{graphql}
+\begin{minted}[escapeinside=||, mathescape=true]{js}
         query {
             goodboi {
               name
@@ -109,11 +109,15 @@ As described initially in this paper, \HP{} base the complexity results over Gra
 First, we prove that the procedure is correct and returns queries in normal form, by proving separately that the resulting queries are grounded and non-redundant\footnote{Since we prove that grounded implies ground-typed normal form, we can also prove ground-typed normal form for the normalization function.}. We consider both the case where the type in scope is an Object type and the general case.
 
 \begin{minted}[escapeinside=||,mathescape=true]{coq}
-Lemma normalize_are_grounded ty |$\varphi$| :
+Lemma normalize_are_grounded (s : wfGraphQLSchema)
+                             (ty : Name)
+                             (|$\varphi$| : seq Query) :
     is_object_type s ty ->
     are_grounded s ty (normalize s ty |$\varphi$|).
 
-Lemma normalize_are_non_redundant ty |$\varphi$| :
+Lemma normalize_are_non_redundant (s : wfGraphQLSchema)
+                                  (ty : Name)
+                                  (|$\varphi$| : seq Query) :
     is_object_type s ty ->
     are_non_redundant (normalize s ty |$\varphi$|).
 
@@ -122,14 +126,21 @@ Lemma normalize_are_non_redundant ty |$\varphi$| :
 Next, we prove that the semantics are preserved for the resulting queries. First, the case where the type in context is the same as the type of the node where queries are being normalized. Lifting this to top level, it corresponds to normalizing over the Query type and evaluating on the root node (whose type is the same, given by conformance of the graph). We then extend this notion to normalization over any type \texttt{ty} but with the restriction that the node's type must be a subtype of \texttt{ty}. Once again, this is valid at top level over the Query type and the root node. Conformance of the graph also ensures that normalization and evaluation over neighboring nodes is preserved.
 
 \begin{minted}[escapeinside=||,mathescape=true]{coq}
-Lemma normalize_exec |$\varphi$| u :
+Lemma normalize_exec (s : wfGraphQLSchema)
+                     (g : conformedGraph s)
+                     (u : node)
+                     (|$\varphi$| : seq Query) :
     u |\textbackslash|in g.(nodes) ->
     s, g |$\vdash$| |$\llbracket$| normalize s u.(ntype) |$\varphi$| |$\rrbracket$| in u with coerce =
     s, g |$\vdash$| |$\llbracket$| |$\varphi$| |$\rrbracket$| in u with coerce.
 
-Theorem normalize_queries_exec ty |$\varphi$| u :
+Theorem normalize_queries_exec (s : wfGraphQLSchema)
+                               (g : conformedGraph s)
+                               (u : node)
+                               (ty : Name)
+                               (|$\varphi$| : seq Query) :
     u |\textbackslash|in g.(nodes) ->
-    u.(ntype) \in get_possible_types s ty ->
+    u.(ntype) |\textbackslash|in get_possible_types s ty ->
     s, g |$\vdash$| |$\llbracket$| normalize_queries s ty |$\varphi$| |$\rrbracket$| in u with coerce =
     s, g |$\vdash$| |$\llbracket$| |$\varphi$| |$\rrbracket$| in u with coerce.
 
@@ -146,7 +157,10 @@ As proposed by \HP{}, one of the main properties of queries in normal form is th
 We implement the simplified semantics as defined by \HP{} and then prove the premise that, for queries in normal form, both $\llbracket \varphi \rrbracket_{G}$ and $\ll \varphi \gg_{G}$ produce the same response. We do not include the complete definition but they can be found in the files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}.
 
 \begin{minted}[escapeinside=||,mathescape=true]{coq}
-Theorem exec_equivalence u |$\varphi$| :
+Theorem exec_equivalence (s : wfGraphQLSchema)
+                         (g : conformedGraph s)
+                         (u : node)
+                         (|$\varphi$| : seq Query) :
     are_in_ground_typed_nf s |$\varphi$| ->
     are_non_redundant |$\varphi$| ->
     s, g |$\vdash$| |$\llbracket$| |$\varphi$| |$\rrbracket$| in u with coerce =
@@ -155,14 +169,6 @@ Theorem exec_equivalence u |$\varphi$| :
 
 This result concludes the normalization process. We have described our approach to proving both premises proposed by \HP{}. As mentioned earlier, these are fundamental for their complexity results over GraphQL queries but were not proven true. We believe our approach properly and rigorously addresses them. The following section discusses final details regarding some definitions given in \HP{}.
 
-\iffalse
-\begin{minted}{gql.py:GraphqlLexer -x}
-query {
-    name
-    name:name
-}
-\end{minted}
-\fi
 
 \subsection{Discussion}\label{subsec:discussion}
 
@@ -170,7 +176,7 @@ In this section we discuss some discoveries made regarding \HP{}'s definitions a
 
 For the former, we notice that their definition is unsound\td{?}, in the sense that there are queries that are considered non-redundant but actually would produce redundant results. A simple example is the following valid query, that is considered as non-redundant by their definition but which, in fact, would produce two repeated values. It is a very minor slip, which happens because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
 
-\begin{minted}{graphql}
+\begin{minted}{js}
         query {
             name
             name:name
@@ -183,7 +189,7 @@ Moving onto the equivalence rules, there are three aspects we have to highlight.
 The second aspect is about the elements they use \td{?} in their rules. In some cases they use list of queries while in some other they define it over single queries, or sometimes mix them. While this is no big issue, it was a bit confusing when trying to implement their rules in Coq.\td{Not sure how to describe this, but the thing is their rules are a bit weird. They describe rules for individual selections, but there is no... "global" rewriting. I imagine this is "simpler" to understand with their semantics, because they do not modify the queries as they evaluate them (pushing everything to the responses), but it is still weird to define it as a procedure in Coq (or even as inductive relation).}
 
 Finally, there is an implicit notion of type in context when they describe their rules\td{and maybe a missing rule?}. This is crucial, because otherwise there are queries that cannot be normalized. For example, the following query cannot be transformed with the rules as they are.
-\begin{minted}[escapeinside=||, mathescape=true]{graphql}
+\begin{minted}[escapeinside=||, mathescape=true]{js}
           query {
               name
               |$\ldots$| on Query {

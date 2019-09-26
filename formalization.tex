@@ -280,7 +280,7 @@ As in the case of well-formedness of schemas or conformance of graphs, queries m
 
 Before defining the validation process, it is very important to address the notion of \textit{type in context} where selections are used. This notion is necessary to validate queries and when transforming queries, as described in Section~\ref{sec:norm}. The type in context is the type over which someone might be requesting information on its fields. For instance, in the following example the field selection \texttt{goodboi} is used in the context of the \texttt{Query} type. However, the type in the case of the field \texttt{name} is not entirely clear. In one case, the type in context is \texttt{Dog}, while in the other the field is used in the context of the \texttt{Pig} type.
 
-\begin{minted}[escapeinside=||, mathescape=true]{gql}
+\begin{minted}[escapeinside=||, mathescape=true]{js}
       query {
         goodboi {
           |$\ldots$| on Dog {
@@ -295,7 +295,7 @@ Before defining the validation process, it is very important to address the noti
 
 The importance of this type in context is that fields or inline fragments might be valid in certain cases but not in others. Similarly, a field may have a particular return type in one case and a different one in another type, like in the following example. Both types have an \texttt{age} field, but in one case it returns an integer value while in the other a floating point value. If that field is encountered in a query, it is necessary to know to which type it is being requested.
 
-\begin{minted}{graphql}
+\begin{minted}{js}
       type Human {
         age: Int
       }
