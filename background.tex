@@ -1,4 +1,4 @@
-
+% !TEX root = ./main.tex
 \section{A brief introduction to GraphQL}\label{sec:bg}
 \td{Meant to rewrite it but time's up :(}
 
@@ -15,34 +15,45 @@ Figure \ref{fig:schema_ex} depicts our type system. We define an interface for a
 
 \begin{figure}
     \centering
-    \begin{minted}[fontsize=\footnotesize]{js}
-    interface Animal {
-        name: String
-        friends: [Animal]
-    }
-    type Dog implements Animal {
-        name: String
-        friends: [Animal]
-        favoriteToy: Toy
-    }
-    type Pig implements Animal {
-        name: String
-        friends: [Animal]
-        oink: Float
-    }
-    type Toy {
-        chewiness: Float
-    }
-    enum Goodness { BESTBOI GOODBOI OKBOI BADBOI }
-    union SearchResult = Dog | Pig | Toy
-    type Query {
-        goodboi(goodness: Goodness): Animal
-        search(text: String): SearchResult
-    }
-    schema {
-        query: Query
-    }
+    \begin{subfigure}{.5\linewidth}
+    
+    \begin{minted}[fontsize=\scriptsize]{js}
+interface Animal {		
+    name: String
+    friends: [Animal]
+}
+type Dog implements Animal {
+    name: String
+    friends: [Animal]
+    favoriteToy: Toy
+}
+type Pig implements Animal {
+    name: String
+    friends: [Animal]
+    oink: Float
+}
     \end{minted}
+    \end{subfigure}%    
+    \begin{subfigure}{.5\linewidth}
+    \begin{minted}[fontsize=\scriptsize]{js}
+type Toy {
+    chewiness: Float
+}
+enum Goodness { 
+    BESTBOI GOODBOI 
+    OKBOI BADBOI 
+}
+union SearchResult = Dog | Pig | Toy
+type Query {
+    goodboi(goodness: Goodness): Animal
+    search(text: String): SearchResult
+}
+schema {
+    query: Query
+}
+    \end{minted}
+    \end{subfigure}
+    
     \caption{Example of GraphQL Schema.}
     \label{fig:schema_ex}
 \end{figure}
