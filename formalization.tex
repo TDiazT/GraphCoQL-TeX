@@ -66,7 +66,7 @@ It is immediate that this structure requires an additional \mintinline{coq}{is_a
 Finally, having defined the GraphQL schemas, we can move onto defining the data model used when evaluating queries.
 
 \setlength{\grammarparsep}{10pt plus 1pt minus 1pt} % increase separation between rules
-\begin{figure*}
+\begin{figure*}[h]
     \centering
     \begin{subfigure}{.5\textwidth}
     \begin{grammar}
@@ -215,15 +215,14 @@ Similar to the schema definition, we try to follow the \spec{}'s grammar as clos
   \centering
   \begin{subfigure}{.5\textwidth}
     \begin{grammar}
-        <Query> ::= <name> \textbf{(} <Arg>* \textbf{)}
-        \alt <alias> \textbf{:} <name> \textbf{(} <Arg>* \textbf{)}
-        \alt <name> \textbf{(} <Arg>* \textbf{)} \textbf{\{} <Query>+ \textbf{\}}
-        \alt <alias> \textbf{:} <name> \textbf{(} <Arg>* \textbf{)} \textbf{\{} <Query>+ \textbf{\}}
-        \alt \textbf{... on} <name> \textbf{\{} <Query>+ \textbf{\}}
-
-        <Arg> ::= <name> \textbf{:} <value>
+        <Query> ::= <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{)}}
+        \alt <alias> \textbf{\texttt{:}} <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{)}}
+        \alt <name> \textbf{(} <Arg>* \textbf{)} \textbf{\texttt{\{}} <Query>$^{+}$ \textbf{\texttt{\}}}
+        \alt <alias> \textbf{\texttt{:}} <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{)}} \textbf{\texttt{\{}} <Query>$^{+}$ \textbf{\texttt{\}}}
+        \alt \textbf{\texttt{... on}} <name> \textbf{\texttt{\{}} <Query>$^{+}$ \textbf{\texttt{\}}}
+        
+        <Arg> ::= <name> \textbf{\texttt{:}} <value>
     \end{grammar}
-    \caption{Grammar of GraphQL queries}
   \end{subfigure}%
   \begin{subfigure}{.5\textwidth}
 
@@ -231,26 +230,21 @@ Similar to the schema definition, we try to follow the \spec{}'s grammar as clos
     Inductive Query : Type :=
     | SingleField (name : Name)
                   (arguments : seq (Name * Vals))
-
     | AliasedField (alias : Name)
                    (name : Name)
                    (arguments : seq (Name * Vals))
-
     | NestedField (name : Name)
                   (arguments : seq (Name * Vals))
                   (subqueries : seq Query)
-
     | NestedAliasedField (alias : Name)
                          (name : Name)
                          (arguments : seq (Name * Vals))
                          (subqueries : seq Query)
-
     | InlineFragment (type_condition : Name)
                      (subqueries : seq Query).
     \end{minted}
-    \caption{Implementation in Coq}
   \end{subfigure}
-  \caption{Definition of GraphQL queries.}
+  \caption{Definition of GraphQL queries, the \spec{}'s grammar (left) and Coq implementation (right).}
   \label{fig:query_def}
 \end{figure*}
 
