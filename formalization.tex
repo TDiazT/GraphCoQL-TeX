@@ -1,4 +1,4 @@
-
+% !TEX root = ./main.tex
 \section{GraphCoQL}\label{sec:form}
 
 In this section we describe our formalization of GraphQL in Coq. We start by defining a schema and its properties, then the graph data model and finally we review queries and their semantics. The definitions are as close as possible with respect to the \spec{}. This eyeball correspondence between the english-written definitions and the code gives a first level of trust that our formalization is correct, following the examples of X, Y and Z. Whenever there is a mismatch we point it out and explain the reasoning behind each decision.
@@ -67,42 +67,37 @@ It is immediate that this structure requires an additional \mintinline{coq}{is_a
 
 Finally, having defined the GraphQL schemas, we can move onto defining the data model used when evaluating queries.
 
-\setlength{\grammarparsep}{20pt plus 1pt minus 1pt} % increase separation between rules
+\setlength{\grammarparsep}{10pt plus 1pt minus 1pt} % increase separation between rules
 \begin{figure*}
     \centering
     \begin{subfigure}{.5\textwidth}
     \begin{grammar}
-    <TypeDefinition> ::= \textbf{scalar} <name>
-    \alt \textbf{type} <name> \textbf{implements} <name>* \textbf{\{} <Field>+ \textbf{\}}
-    \alt \textbf{interface} <name> \textbf{\{} <Field>+ \textbf{\}}
-    \alt \textbf{union} <name> \textbf{=} <name> \textbf{|} <name>*
-    \alt \textbf{enum} <name> \textbf{\{} <name>+ \textbf{\}}
+    <TypeDefinition> ::= \textbf{\texttt{scalar}} <name>
+    \alt \textbf{\texttt{type}} <name> \textbf{\texttt{implements}} <name>* \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
+    \alt \textbf{\texttt{interface}} <name> \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
+    \alt \textbf{\texttt{union}} <name> \textbf{\texttt{=}} <name> (\textbf{\texttt{|}} <name>)*
+    \alt \textbf{\texttt{enum}} <name>  \textbf{\texttt{\{}}  <name>$^{+}$ \textbf{\texttt{\}}}
 
-    <Field> ::= <name> \textbf{(} <Arg>* \textbf{) :} <type>
+    <Field> ::= <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{) :}} <type>
 
-    <Arg> ::= <name> \textbf{:} <type>
+    <Arg> ::= <name> \textbf{\texttt{:}} <type>
 
-    <type> ::= name
-    \alt \textbf{[}  <type> \textbf{]}
+    <type> ::= <name>
+    \alt \textbf{\texttt{[}}  <type> \textbf{\texttt{]}}
     \end{grammar}
 
-    \caption{Grammar of GraphQL types}
     \end{subfigure}%
     \begin{subfigure}{.5\textwidth}
     \begin{minted}{coq}
     Inductive TypeDefinition : Type :=
     | ScalarTypeDefinition (name : Name)
-
     | ObjectTypeDefinition (name : Name)
                            (interfaces : seq Name)
                            (fields : seq FieldDefinition)
-
     | InterfaceTypeDefinition (name : Name)
                               (fields : seq FieldDefinition)
-
     | UnionTypeDefinition (name : Name)
                           (members : seq Name)
-
     | EnumTypeDefinition (name : Name)
                          (members : seq EnumValue).
 
@@ -111,9 +106,8 @@ Finally, having defined the GraphQL schemas, we can move onto defining the data 
     | ListType : type -> type.
     \end{minted}
 
-    \caption{Implementation in Coq\td{Should include fields and arguments?}}
     \end{subfigure}
-    \caption{Definition of GraphQL types.}
+    \caption{Definition of GraphQL types, the \spec{}'s grammar (left) and Coq implementation (right).}
     \label{fig:types_def}
 \end{figure*}
 
