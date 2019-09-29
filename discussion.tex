@@ -39,3 +39,42 @@ We finish this section by addressing two major aspects about our formalization; 
 The first one was briefly mentioned in Section~\ref{subsec:graph}, when discussing the limitations and open questions regarding the graph model. These translate in the fact that we currently do not produce list results with nested lists of objects. For instance, the field \texttt{friendsByName:[[Human]]} is treated as if it were defined as \texttt{friendsByName:[Human]} and the results match the latter format. Otherwise, there is no restriction in the case of nested lists for scalar values. In \HP{}, there is no possibility to produce nested lists for either scalar or object values\footnote{The grammar itself does not permit it.} and there is no mention of this restriction.
 
 Regarding error handling, we currently do not implement it. Errors may have two main sources; validation errors and execution errors.\td{Not sure how to write this}
+
+\subsection{Normalization}
+
+In this section we discuss some discoveries made regarding \HP{}'s definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
+
+For the former, we notice that their definition is unsound\td{?}, in the sense that there are queries that are considered non-redundant but actually would produce redundant results. A simple example is the following valid query, that is considered as non-redundant by their definition but which, in fact, would produce two repeated values. It is a very minor slip, which happens because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
+
+\begin{minted}{js}
+        query {
+            name
+            name:name
+        }
+\end{minted}
+
+
+Moving onto the equivalence rules, there are three aspects we have to highlight. The first one is that rule number (2), which refers to the merging of fields with subqueries, is correct but does not preserve ordering of the queries. While this is not imposed by the \spec{}, it is an important feature of GraphQL evaluation. This is also important at the moment of defining and comparing semantic equivalence between queries.
+
+The second aspect is about the elements they use \td{?} in their rules. In some cases they use list of queries while in some other they define it over single queries, or sometimes mix them. While this is no big issue, it was a bit confusing when trying to implement their rules in Coq.\td{Not sure how to describe this, but the thing is their rules are a bit weird. They describe rules for individual selections, but there is no... "global" rewriting. I imagine this is "simpler" to understand with their semantics, because they do not modify the queries as they evaluate them (pushing everything to the responses), but it is still weird to define it as a procedure in Coq (or even as inductive relation).}
+
+Finally, there is an implicit notion of type in context when they describe their rules\td{and maybe a missing rule?}. This is crucial, because otherwise there are queries that cannot be normalized. For example, the following query cannot be transformed with the rules as they are.
+\begin{minted}[escapeinside=||, mathescape=true]{js}
+          query {
+              name
+              |$\ldots$| on Query {
+                  name
+              }
+          }
+\end{minted}
+However, if the type in context is included, which corresponds to \texttt{Query} in this case, it is possible to do more. The queries can be wrapped in an inline fragment with type condition \texttt{Query}. Then, with a mix of other rules the normalized query can be obtained.
+
+\td{Not sure where to mention the whole process of doing this (since it took the most of our time). Things such as:
+    \begin{itemize}
+        \item Trying to implement HP's rules of equivalence.
+        \item Trying to work on a subset of queries with no invalid fragments.
+        \item Change/Discovery of their semantics and responses.
+        \item Definition of normalization in two separate functions; one for grounding and one for removing redundancy.
+        \item etc.
+    \end{itemize}
+}
