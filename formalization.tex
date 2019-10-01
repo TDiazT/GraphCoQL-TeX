@@ -3,13 +3,12 @@
 
 In this section we describe our formalization of GraphQL in Coq. We start by defining a schema and its properties, then the graph data model and finally we review queries and their semantics. The definitions are as close as possible with respect to the \spec{}. This eyeball correspondence between the english-written definitions and the code gives a first level of trust that our formalization is correct, following the examples of X, Y and Z. Whenever there is a mismatch we point it out and explain the reasoning behind each decision.
 
- \td{mention that we want to correlate to the spec and eyeball correspondence when possible.}
-
-\td{The definitions consist of around 3700 loc and 1400 of lemmas}.
 
 \subsection{GraphQL Schema}\label{subsec:schema}
 
-The GraphQL schema is pretty straightforward to define from the grammar of the \spec{}. It consists of a collection of type definitions and a root query operation type. 
+First, we implement the schemas as described in the \spec{}.  A schema is ``\textit{defined in terms of the types and directives it supports as well as the root operation types for each kind of operation}''\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Schema}. 
+We represent it with a record, containing both the list of type definitions and root operation types.  The only possible root operation is querying; mutations and subscriptions are not currently implemented. \td{Not sure how to introduce the things that are not implemented: Input Object types, Descriptions (Introspection), directives, type extensions, non-null, etc. Probably just push to discussion?}
+
 \begin{minted}{coq}
 Record graphQLSchema := GraphQLSchema {
     query_type : Name;
@@ -17,11 +16,13 @@ Record graphQLSchema := GraphQLSchema {
 }.
 \end{minted}
 
-Similarly, for type definitions we follow the grammar as specified in the \spec{}. Figure \ref{fig:types_def} shows the grammar and the corresponding implementation in Coq. As can be seen from the figure, our implementation looses information about non-emptiness of fields, union and enum members. We push this validation to a posterior predicate, as well as the discussion about the reasons behind this decision, to the following paragraphs.
+Next, type definitions are also implemented following the \spec{}. Figure \ref{fig:types_def} shows the grammar and the implementation in Coq, which tries to mimic the grammar as close as possible, in order to get a degree of trust given by an eyeball correspondence. We choose not to embed non-emptiness of fields, union members and enum members, and push the validation to a separate predicate. The reasons are that the \spec{} also repeats this validation, even when the grammar embeds this notion, and secondly, we find it simpler to reuse the existent machinery for lists.
+
+% As can be seen from the figure, our implementation looses information about non-emptiness of fields, union and enum members. We push this validation to a posterior predicate, as well as the discussion about the reasons behind this decision, to the following paragraphs.
 
 % As can be seen in the figure, we tried to match the \spec{}'s definition as much as possible. This eyeball correspondence gives us a degree of confidence about the implementation.  % We currently do not include the \textit{Input Object} types, as well as anything related to \textit{introspection}.
 
-Although the definitions are straightforward, both the \spec{}'s grammar and the Coq implementation allow building invalid schemas. For instance, it is possible to build an Object that implements scalar types or use a nonexistent type as the query type. To this end, the \spec{} includes validation rules scattered throughout the document\footnote{Most can be found in the \textbf{Type Validation} subsection of each type described in https://graphql.github.io/graphql-spec/draft/\#sec-Type-System.}. In \coql, we summarize these rules into predicates and refer to it as the \textit{well-formedness} property of a GraphQL schema. \HP{} refers to this property as the \textit{consistency} of the schema, to which we will refer briefly in a following paragraph.
+Although the previous definitions are straightforward, both the \spec{}'s grammar and the Coq implementation allow building invalid schemas. For instance, it is possible to build an object that implements scalar types or use a nonexistent type as the query type. To this end, the \spec{} includes validation rules scattered throughout the document\footnote{Most can be found in the \textbf{Type Validation} subsection of each type described in https://graphql.github.io/graphql-spec/draft/\#sec-Type-System.}.  We summarize these rules and refer to it as the \textit{well-formedness} property of a GraphQL schema.
 
 
 \begin{definition}
@@ -42,14 +43,17 @@ Definition is_a_wf_schema (s : graphQLSchema) : bool :=
       all is_wf_type_def s.(type_definitions).
 \end{minted}
 
-Due to space constraints, we omit the definition of well-formedness for type definitions. The complete definitions can be found in the file \texttt{SchemaWellFormedness.v}. We will, though, resume the discussion about non-emptiness of fields, union and enum members, which are included in the predicate. The main reason behind this decision is that, even though the \spec{} embeds this information in the grammar, it still includes it in their validation rules later on. We believe that it is simpler to use common lists instead of defining new structures or using dependent types, from an implementation point of view, while still preserving the correspondence to the algorithmic description given by the \spec{}.
-\td{Not sure if correctly worded... but it was just simpler to use lists. A non-empty list structure required coercions to lists and then redefining some lemmas and things. Or using dependent types (sigma type) adds complexity when proving and defining things (at least that was the case for me)}
+Due to space constraints, we omit the definition of well-formedness for type definitions. This predicate includes rules such as: objects have to implement valid interfaces, union members must contain existent object types and so on. The complete definitions can be found in the file \texttt{SchemaWellFormedness.v}. 
+\td{Se me sale del margen, pero no sé cómo arreglarlo}
+%We will, though, resume the discussion about non-emptiness of fields, union and enum members, which are included in the predicate. The main reason behind this decision is that, even though the \spec{} embeds this information in the grammar, it still includes it in their validation rules later on. We believe that it is simpler to use common lists instead of defining new structures or using dependent types, from an implementation point of view, while still preserving the correspondence to the algorithmic description given by the \spec{}.
+%\td{Not sure if correctly worded... but it was just simpler to use lists. A non-empty list structure required coercions to lists and then redefining some lemmas and things. Or using dependent types (sigma type) adds complexity when proving and defining things (at least that was the case for me)}
 
 
 % There are two main reasons why we push this rule to a separate predicate instead of embedding it in the structure itself. The first one is that, even though the \spec{} embeds it in the grammar, it still includes it in a validation rule later on. To match their definition and preserve the eyeball correspondence, we also include it. The second reason is that we use SSReflect and it is simpler to use \mintinline{coq}{seq} directly and all its theory, instead of defining coercions and repeating definitions for a new structure.
 
 
-With the well-formedness property, we proceed to define a structure that encapsulates this notion, by passing both a schema and a proof of its validity.
+With the well-formedness property, we proceed to define a structure that encapsulates this notion, by passing both a schema and a proof of its validity. An additional \mintinline{coq}{is_a_valid_value} predicate is included in the definition. 
+This predicate is necessary to establish when a value used in a query actually matches the scalar type expected by the schema. For example, if an argument requires a \texttt{Float} value, then the value passed to the query must be something that represents a double-precision fractional value\footnote{The \spec{} declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include this base restrictions but leave it open to implementation.}. 
 
 \begin{minted}{coq}
 Record wfGraphQLSchema := WFGraphQLSchema {
@@ -59,7 +63,7 @@ Record wfGraphQLSchema := WFGraphQLSchema {
 }.
 \end{minted}
 
-It is immediate that this structure requires an additional \mintinline{coq}{is_a_valid_value} predicate, which receives an element of \texttt{type} and a value of type \texttt{Vals}. This predicate is necessary to establish when a value used in a query or in the graph actually matches the scalar type expected by the schema. For instance, if an argument requires a \texttt{Float} value, then the actual value passed to the query must be something that represents a double-precision fractional value\footnote{The \spec{} declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include this base restrictions but leave it open to implementation.}. This predicate validates that this is satisfied.
+% This predicate is necessary to establish when a value used in a query or in the graph actually matches the scalar type expected by the schema. For instance, if an argument requires a \texttt{Float} value, then the actual value passed to the query must be something that represents a double-precision fractional value\footnote{The \spec{} declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include this base restrictions but leave it open to implementation.}. This predicate validates that this is satisfied.
 
 % Due to space constraints, we omit the definition of \textit{well-formedness} for type definitions. This property includes things such as: interfaces and objects must declare at least one field, objects correctly implement their declared interfaces, union types are not empty and contain only object types, amongst others. These definitions are collected from the \spec{} \td{Scattered throughout the \spec{}*}.
 
@@ -127,23 +131,24 @@ Let Dog := Object "Dog" implements [:: "Animal"] {[::
 
 \subsection{GraphQL Data model}\label{subsec:graph}
 
-GraphQL is not tied to any particular database technology and implementation. When resolving fields in a query, GraphQL assumes the existence of \textit{resolvers}. These are internal functions defined by the user implementing a GraphQL service. They are not tied to any particular data model and the only requirement is that they must adhere to the schema. Whether they access a database, return static values or even modify existing data, is up to the user\footnote{The \spec{} states that these ``\textit{must always be side effect‐free and idempotent}'' but the definition of a resolver does not actually impose these restrictions.}. This makes reasoning about the semantics hard.
+An important aspect of GraphQL is that it is not tied to any particular database technology and implementation. When resolving queries, GraphQL simply assumes the existence of \textit{resolvers}, which are internal functions defined by the user implementing a GraphQL service. They are not tied to any particular data model and the only requirement is that they must adhere to the schema. It is up to the user whether the resolvers access a database, return static values or even modify existing data\footnote{The \spec{} states that resolvers ``\textit{must always be side effect‐free and idempotent}'' but the definition of a resolver does not actually impose these restrictions.}. This looseness makes it hard to reason about the semantics.
 
-We choose to follow \HP{}'s approach and define the underlying data model as a graph over which queries are evaluated. With this model, the unspecified resolvers can be instantiated to concrete definitions which allow reasoning over them. The semantics are then described as being implemented over a graph setting. Although this provides benefits when reasoning about the semantics, it also comes with some potentially severe limitations over the completness of the possible results generated.\td{They may not actually be limitations with the model, but there are open questions on how to model some things.} We cover these limitations more thoroughly in a following paragraph and in Section~\ref{subsec:semantics}. It is worth mentioning that the limitations of this model are not described nor discussed in \HP{}.
+With this in mind, we choose to follow \HP{}'s approach and define the underlying data model as a graph over which queries are evaluated. With this model, the unspecified resolvers can be instantiated to concrete definitions, which allow reasoning over them. The semantics are then described as being implemented over a graph setting. Although this provides benefits when reasoning about the semantics, it also comes with some potentially severe limitations over the completeness of the possible results generated.\td{They may not actually be limitations with the model, but there are open questions on how to model some things.} We provide a more thorough explanation of these in Section~\ref{sec:discussion}, as well as \HP{}'s approach to the subject.
 
 Informally, a GraphQL graph is a directed property graph, with labeled edges and typed nodes. The graph describes entities with their types and properties, as well as the relationship between them. This means that every node has properties (key-value pairs) and a type. Also, every label in an edge describes the relation between two nodes. Finally, every property or label may also contain a list of arguments (key-value pairs).
 
-We consider the type \Vals, representing the values associated to properties or used for arguments. A value in \Vals{} may be a single scalar value or a list of values.
+We consider the type \Vals, representing the values associated to properties or used for arguments. A value in \Vals{} may be a single scalar value or a list of values\td{This choice is based on the limitations of the model}.
 
 \begin{definition}
-A GraphQL graph over \Vals is defined by the following elements:
+A GraphQL graph over \Vals{} is defined by the following elements:
 \begin{itemize}
     \item A root node.
     \item A collection of edges of the form ($u$, \texttt{f[}$\alpha$\texttt{]}, $v$), where $u, v$ are nodes and \texttt{f[}$\alpha$\texttt{]} is a label with arguments (key-value pairs).
 \end{itemize}
 \end{definition}
 
-This is defined with the following structures in Coq.
+The corresponding implementation in Coq is described with the following structures, where \texttt{fld} represents the labels in an edge or a key in a node's property \td{Probably the name is not the best}. 
+Meanwhile, the root node represents the starting point from where queries are evaluated.
 
 \begin{minted}{coq}
 Record fld := Field {
@@ -162,7 +167,7 @@ Record graphQLGraph := GraphQLGraph {
                       }.
 \end{minted}
 
-The definition of graph is completely independent of any GraphQL schema, so we need a way to relate the data to the type system. We implement the notion of \textit{conformance}  of a graph as partially described by \HP{}. This notion is, in essence, a well-formedness property for graphs with respect to a given schema. At the moment of development, there was no complete definition of conformance given by \HP{}. However, in a recent work by Hartig and Hidder's~\cite{olafschema}, they give a complete definition and extend it. Their approach uses a similar ``decentralized'' idea to define graphs. Their definitions capture more features than we currently implement, such as directives and non-null types.\td{And variables if I'm correct - should check}
+The definition of graph is completely independent of any GraphQL schema, so it is necessary to relate the data to the type system. We implement the property of \textit{conformance}  of a graph as partially described by \HP{}. This notion is, in essence, a well-formedness property for graphs with respect to a given schema. At the moment of development, there was no complete definition of conformance given by \HP{}, however in a recent work by Hartig and Hidder's~\cite{olafschema}, they give a complete definition and extend it, capturing more features than we currently implement, such as directives and non-null types. \td{Again, I have never said anything about things we haven't implemented so I am not sure if I should mention before or simply push to discussion}
 
 \begin{definition}
 A GraphQL graph \textit{conforms} to a schema $\mathcal{S}$ if it satisfies the following conditions:
@@ -173,7 +178,10 @@ A GraphQL graph \textit{conforms} to a schema $\mathcal{S}$ if it satisfies the 
 \end{itemize}
 \end{definition}
 
-This is captured in the following predicate in Coq.
+The conformance of nodes includes rules such as checking that a node's type must be declared as an object type in the schema and that its properties are defined as fields in the corresponding type, among other things. 
+Regarding the conformance of edges, the predicate checks aspects such as that an edge's label must be declared as a field in the source node's type and the target node must have a type compatible to the field's return type.
+Due to space limitations we do not include the complete definitions but they can be found in the file \texttt{GraphConformance.v}. The previous conformance definition is implemented in Coq as follows.
+
 \begin{minted}{coq}
 Definition is_a_conforming_graph
         (s : wfGraphQLSchema)
@@ -184,7 +192,7 @@ Definition is_a_conforming_graph
         nodes_conform s g.(nodes).
 \end{minted}
 
-Similarly to GraphQL schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph. It contains a graph and a proof of its \textit{conformance} to a particular schema.
+Similarly to GraphQL schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph, containing a graph and a proof of its conformance to a particular schema.
 
 \begin{minted}{coq}
 Record conformedGraph (s : wfGraphQLSchema) :=
@@ -194,13 +202,13 @@ Record conformedGraph (s : wfGraphQLSchema) :=
             }.
 \end{minted}
 
-Due to space limitations, we omit a detailed review of \textit{conformance} of nodes and edges. The complete definitions can be found in the file \texttt{GraphConformance.v}. %These properties include validation rules such as: every node must have an object type and their properties must be defined in their associated type, or an edge's label must be declared as a field in the source node's type and the target node must have a type compatible to the field's return type, among other things.
+ %These properties include validation rules such as: every node must have an object type and their properties must be defined in their associated type, or an edge's label must be declared as a field in the source node's type and the target node must have a type compatible to the field's return type, among other things.
 
 With both the schema and the underlying data model we can proceed to define GraphQL queries and their semantics.
 
 \subsection{GraphQL Query}\label{subsec:query}
 
-As we mentioned in section \ref{sec:bg}, GraphQL queries are selections over types and fields defined in the schema. A GraphQL query can be seen as a tree structure where leaf nodes are selections of fields with a scalar return type. An inner node can be a selection on fields with an object or abstract return type. Inline fragments that condition when its subqueries are evaluated can also be seen as inner nodes. For instance, the query in Figure \ref{fig:qres_ex} can be depicted as the tree in Figure \ref{fig:query_tree}.
+Whenever a user queries a GraphQL service, they must do so by requesting information over the types and fields defined in the service's schema, starting from the root query operation type. This notion induces a tree structure over queries, where leaf nodes are selections of fields with a scalar return type. Meanwhile, inner nodes can either be fields with an object or abstract return type, or inline fragments that condition when its subqueries are evaluated. For instance, the query in Figure \ref{fig:qres_ex} can be depicted as the tree in Figure \ref{fig:query_tree}.
 
 \begin{figure}
     \centering
@@ -209,9 +217,9 @@ As we mentioned in section \ref{sec:bg}, GraphQL queries are selections over typ
     \label{fig:query_tree}
 \end{figure}
 
-Similar to the schema definition, we try to follow the \spec{}'s grammar as closely as possible. The grammar and implementation can be seen in Figure~\ref{fig:query_def}. There is a lost of information regarding non-emptiness of subqueries, as seen by rule 2 and the constructor \texttt{NestedField}. The reasoning behind this decision is very similar to the one used when implementing type definitions, which is described in Section~\ref{subsec:schema}.
+Similar to the schema definition, we follow the \spec{}'s grammar as closely as possible, as can be seen from Figure~\ref{fig:query_def}. We do not embed the property of non-emptiness of subqueries in the definition because the \spec{} pushes it to a different validation rule, even though it is already embedded in the grammar, and we believe it is simpler to reuse the \texttt{seq} library and its existent functionalities. 
 
-\begin{figure*}
+\begin{figure*}[h]
   \centering
   \begin{subfigure}{.5\textwidth}
     \begin{grammar}
@@ -244,38 +252,42 @@ Similar to the schema definition, we try to follow the \spec{}'s grammar as clos
                      (subqueries : seq Query).
     \end{minted}
   \end{subfigure}
-  \caption{Definition of GraphQL queries, the \spec{}'s grammar (left) and Coq implementation (right).}
+  \caption{Definition of GraphQL queries, the \spec{}'s grammar (left) and the Coq implementation (right).}
   \label{fig:query_def}
 \end{figure*}
 
-As in the case of well-formedness of schemas or conformance of graphs, queries must go through a validation process. We define the \textit{conformance} of queries based on validation rules scattered throughout the \textit{Validation} section of the \spec{}\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}.
 
-Before defining the validation process, it is very important to address the notion of \textit{type in context} where selections are used. This notion is necessary to validate queries and when transforming queries, as described in Section~\ref{sec:norm}. The type in context is the type over which someone might be requesting information on its fields. For instance, in the following example the field selection \texttt{goodboi} is used in the context of the \texttt{Query} type. However, the type in the case of the field \texttt{name} is not entirely clear. In one case, the type in context is \texttt{Dog}, while in the other the field is used in the context of the \texttt{Pig} type.
+The definition of queries is completely independent of any schema, both in the \spec{} and our formalization, thus requiring a validation process to establish a proper relation. We define the property of \textit{conformance} of queries, based on validation rules scattered throughout the \textit{Validation} section of the \spec{}\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}. The validity of queries depends on the notion of the \textit{type in context} where queries are defined\footnote{The \spec{} refers to it as type in scope or parent type. Some algorithmic descriptions make use of the types in context but are not explicit in their signatures.}. Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied. Consider the following query where there are two occurrences of the field \texttt{name}. In one case, the field is requesting information about the \texttt{Dog} type, while in the other it is used in the context of the \texttt{Pig} type. The distinction is important because some selections might be valid in some contexts but not in others, such as the case of the field \texttt{favoriteToy} that is valid in the context of a \texttt{Dog} type but should not be requested of a \texttt{Pig} type. Similarly, a field may be defined in two separate types and have different return types in each, as shown below in the field \texttt{age} of the types \texttt{Human} and \texttt{Martian}.
+
+%Just as in the case of well-formedness of schemas or conformance of graphs, queries must go through a validation process. We define the property of \textit{conformance} of queries, based on validation rules scattered throughout the \textit{Validation} section of the \spec{}\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}.
+
+% Before describing the validation process, it is very important to address the notion of \textit{type in context} where queries are defined and used. The type in context is the type over which a user might be requesting information on its fields. To illustrate this, consider the following query. The first selection, namely \texttt{goodboi}, is requesting information about the query type, meaning that it is used in the context of the \texttt{Query} type. Moving onto the  \texttt{name} subselection, it is not direct which is. In one case, the type in context is \texttt{Dog}, while in the other the field is used in the context of the \texttt{Pig} type.
 
 \begin{minted}[escapeinside=||, mathescape=true]{js}
       query {
         goodboi {
           |$\ldots$| on Dog {
             name
+            favoriteToy
           }
           |$\ldots$| on Pig {
             name
+            favoriteToy
           }
         }
       }
-\end{minted}
-
-The importance of this type in context is that fields or inline fragments might be valid in certain cases but not in others. Similarly, a field may have a particular return type in one case and a different one in another type, like in the following example. Both types have an \texttt{age} field, but in one case it returns an integer value while in the other a floating point value. If that field is encountered in a query, it is necessary to know to which type it is being requested.
-
-\begin{minted}{js}
+      
       type Human {
         age: Int
       }
 
       type Martian {
         age: Float
-      }
+      }	
 \end{minted}
+
+% The importance of this type in context is that fields or inline fragments might be valid in certain cases but not in others. Similarly, a field may have a particular return type in one case and a different one in another type, like in the following example. Both types have an \texttt{age} field, but in one case it returns an integer value while in the other a floating point value. If that field is encountered in a query, it is necessary to know to which type it is being requested.
+
 
 
 \begin{definition}
@@ -307,7 +319,7 @@ A GraphQL query $\varphi$ \textit{conforms} to a schema $\mathcal{S}$ if it sati
 \end{itemize}
 \end{definition}
 
-The definition in \coql{} is given by the following code. Due to space constraints, we do not include the complete definitions but they can be found in the file \texttt{QueryConformance.v}.
+The implementation can be seen in the code below, however due to space limitations we only informally describe the three mentioned rules. The complete definitions can be found in the file \texttt{QueryConformance.v}.
 
 \begin{minted}{coq}
 Definition queries_conform (type_in_scope : Name)
@@ -318,18 +330,72 @@ Definition queries_conform (type_in_scope : Name)
             [seq (type_in_scope, q) | q <- queries].
 \end{minted}
 
-As described earlier, this rules are mostly a condensation of a set of validation rules defined in the \spec{}. The first one refers to whether a selection holds by itself. It includes checks such as: if query is over a field, then that field must be defined in the  type in context and its arguments are defined in the given field. Similarly, if a selection is an inline fragment, then the type condition has to be valid with respect to the type in context.
+
+
+The first rule specifies when a selection holds by itself, by checking aspects such as if query is over a field, then that field must be defined in the  type in context and its arguments are defined in the given field. Likewise, if a selection is an inline fragment, then the type condition has to be valid with respect to the type in context. The \spec{} defines this rule in several different sections.
+
+The second validates when fields can be correctly merged during evaluation, which is an essential aspect of the semantics, since it ensures that repeated fields are only evaluated once. To illustrate this, consider the following query, where a user requests information on the fields \texttt{name} and \texttt{oink} of pigs. The user decides to rename the field \texttt{oink} to \texttt{name}, however this is invalid, since both fields cannot be merged and evaluated once; both fields refer to distinct pieces of information in the system.
+
+\begin{minted}[escapeinside=||,mathescape=true]{js}
+query {
+	goodboi {
+		|$\ldots$| on Pig {
+			name
+			name:oink
+		}
+	}
+}
+\end{minted}
+
+The last rule is necessary to check when fields generate unambiguous outputs when evaluated. For instance, in the query below a user might request the names of dogs and the oinkness of pigs, but renaming the latter to have the same response name as the former. This query is considered invalid because evaluating it might produce a response that contains entries where the key \texttt{name} is associated to both string values and floating point numbers. 
+
+\begin{minted}[escapeinside=||,mathescape=true]{js}
+query {
+	goodboi {
+		friends {
+			|$\ldots$| on Dog {
+				name
+			}
+			|$\ldots$| on Pig {
+				name:oink
+			}
+		}
+	}
+}
+
+// Possible output
+
+{
+	"goodboi" : {
+		"friends" : [
+				{
+					"name" : "Marle"
+				},
+				{
+					"name" : 9000
+				}
+		]
+	}
+}
+\end{minted}
+
+
+
+				
+These last two rules, for merging and unambiguous values, are defined as a single validation rule in the \spec{}\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Field-Selection-Merging}, however we decide to separate them. The first reason, which we cover more extensively in Section~\ref{sec:discussion}, is that it is possible to optimize the algorithm by reducing redundant recursive calls. Secondly, splitting facilitates reasoning about the predicates.
 
 % The main issue is that the \spec{} allows for what we call \textit{invalid fragments}, originally described in an issue in the \spec{}'s repository\footnote{https://github.com/graphql/graphql-spec/issues/367}. In a nutshell, the \spec{} allows using fragments with type conditions that can span to multiple unrelated types. These end up not being evaluated due to posterior checks\footnote{https://graphql.github.io/graphql-spec/June2018/\#DoesFragmentTypeApply()}.
 
 
-Finally, with these definitions we can build queries in a GraphQL service. Examples may be found in the files \texttt{SpecExamples.v} and \texttt{HPExample.v}. From now on, we will assume that queries conform to a given schema. We can then move onto their semantics.
+This concludes the definition of GraphQL queries and the validation process. \td{Examples can be found in the files \texttt{SpecExamples.v} and \texttt{HPExample.v}}. For the rest of the paper, it is assumed that queries conform to a given schema. 
 
 \subsection{Semantics}\label{subsec:semantics}
 
-In this section we describe the semantics of GraphQL queries. We begin by briefly examining the responses generated by executing queries. Then we give an informal description of the semantics, followed by the formal definition. We finish by discussing some implementation choices and comparison with the \spec{} and \HP{}.
+In this section we describe the semantics of GraphQL queries. We begin by briefly examining the responses generated by executing queries and then we give an informal description of the semantics, finishing with the formal definition. %We finish by discussing some implementation choices and comparison with the \spec{} and \HP{}.
 
-The \spec{} describes responses as a map. Our implementation differs slightly, modeling them as a tree structure, similar to JSON. We choose this structure to preserve similarity to queries and because it is simpler to preserve order of the responses. The \spec{} does not impose an ordering of responses, although encourages it\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Serialized-Map-Ordering}. We believe that preserving the order is one of the selling points for GraphQL (queries and their responses are very similar and easy to read). Our approach has two main disadvantages: uniqueness of response names and cost of access. Since we use lists instead of maps, we can encounter duplicated names and accessing a value has a linear cost given by the lists size, instead of the constant access obtainable with a map. We still argue that the simplicity to obtain order is worth it. We do include a proof that the results obtained with the semantics have unique names. Finally, we use option types to represent null values in the leaves of the response tree.
+We model responses to GraphQL queries with a tree structure, similar to JSON. We choose this structure to preserve similarity to queries and because it provides a strong reasoning principle, as well as being simpler to preserve order of the responses. This differs slightly from the \spec{}, which only states that responses are a map and does not impose an ordering of responses, although encourages it\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Serialized-Map-Ordering}. We believe that preserving the order is one of the strong selling points for GraphQL (queries and their responses are very similar and easy to read). 
+
+\td{Move to discussion?} Our approach has two main disadvantages: possible duplication of response names and cost of access. Since we use lists instead of maps, we can encounter duplicated names and accessing a value has a linear cost given by the lists size, instead of the constant access obtainable with a map. We still argue that the reasoning principles and simplicity to order is highly valuable. Nevertheless, we include a proof that the results obtained with the semantics have no duplicated names. Finally, we use option types to represent null values in the leaves of the response tree.
 
 \begin{minted}{coq}
 Inductive ResponseNode (A : Type) : Type :=
@@ -341,26 +407,32 @@ Definition GraphQLResponse (Vals: eqType) :=
     seq (Name * (@ResponseNode (option Vals))).
 \end{minted}
 
-Moving onto the semantics of GraphQL queries. As we described in Section~\ref{subsec:graph}, the underlying data model is a graph, therefore the semantics are instantiated to this setting. In a following paragraph we briefly explore an alternative that is closer to the \spec{}, in the sense that it can be detached from a particular data model. In our setting a query then represents a navigation over a graph. At top level, a query starts from the root node and then moves around its edges and nodes, collecting data along the way. In this sense:
+
+As we described in Section~\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec{}, in the sense that it can be detached from a particular data model. 
+Informally, the evaluation of a query then represents a navigation over a graph. At top level, a query begins from the root node and then navigates around its edges and nodes, collecting data along the way. In this sense:
 \begin{itemize}
-    \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node. On the neighboring nodes we recursively evaluate subqueries.
+    \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node.
     \item An inline fragment conditions whether using a node to access its properties or to traverse to other nodes.
+    \item Subqueries are evaluated in neighboring nodes.
 \end{itemize}
 
-Figure \ref{fig:semantics} shows the formal definition of the semantics. It displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.
+The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.
 
-The main difference with respect to \HP{} and the main similarity to the \spec{} is that we perform a collection of fields at the query level, whereas \HP{} performs a post-processing of responses. The main reasons are similarity to the \spec{} and difficulty in reasoning with \HP{}'s approach, which we explore in more depth in Section~\ref{subsec:semstories}.
+\td{Move to discussion?}
+The main difference with respect to \HP{} and the main similarity to the \spec{} is that we perform a collection of fields at the query level, whereas \HP{} performs a post-processing of responses. The main reasons are our approach is more similar to the \spec{} and that it is harder to reason using \HP{}'s approach.
+
+\td{Don't know how to present this or if it is relevant but I include it so you know it exists - The spec first groups fields by name and then evaluates each group. These are different steps. We define everything in one place because it was easier to reason about the semantics. The difficulty with the spec's approach is that when proving things about the semantics, you have to provide, at each step, the information on how your data is structured (every group contains only fields and every field in a group has the same response name as the group's key used to group them). This is problematic mostly because of inline fragments, which do not have response names. Definitions must always account for the case of inline fragments, even when they are thought out to be used only on fields. Our definition is maybe less compositional but thanks to Equations, it is simpler to reason about it - because Equations generate a nice reasoning principle. We also attempted defining it similarly to the spec, still preserving the information on the structure by using dependent types and Equation, but the resulting reasoning principle would end up being huge (80-100 cases) (I believe I read Matthieu saying that nesting some definitions could exponentially increase the size of the reasoning principle, which is what would occur in this case).}
 
 %Our first attempt at defining the semantics was to follow \HP{}'s post-processing approach. Our intention was to be as close as possible to their formalization to later prove their transformation and equivalence results, which we cover in Section~\ref{sec:norm}. However, the non-structural recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence very hard.
 
-\begin{figure*}
+\begin{figure*}[h]
     \centering
     \begin{align}
     % Empty
     \eval{\cdot}{u} &= [\cdot] \\
     % SingleField
     \evalu{\fld\; ::\; \queries} &= \begin{cases}
-    \resp{\val} \; ::\; \evalfilteru{\queries}{\fkey}  & \mathit{u.property}(\fld) = \val \\
+    \resp{\texttt{coerce(\val)}} \; ::\; \evalfilteru{\queries}{\fkey}  & \mathit{u.property}(\fld) = \val \\
     \resp{\nval} \; :: \; \evalfilteru{\queries}{\fkey} & \sim
     \end{cases}\\
     % Nested field
@@ -386,4 +458,6 @@ The main difference with respect to \HP{} and the main similarity to the \spec{}
 
 %The main challenge in this case is to define what this nested list types represent in a graph. If we take a simple case of a field with type \texttt{[Human]}, we can model it as neighbors of a node. However, if we increase the nesting such as \texttt{[[Human]]}, it becomes harder to model. What does this represent in the graph? Should we introduce blank nodes in between the source node and the \texttt{Human} nodes? Are these inner edges labeled? Should there be a blank node per each level of nesting or a single one with edges to itself? All these questions do not have a straightforward answer. Our semantics, as the one definded in PH, simply ignores any nesting bigger than one.\td{This is where it can be modelled using Functors. The \spec{} checks if it received a collection and applies map to eventually get to the concrete values. Not sure how to put this out there.}
 
-This concludes the base formalization of GraphQL schemas, graph data model, and queries and their semantics. Using this basic structures we can start defining query transformations and prove some properties about them.
+This concludes the base formalization of GraphQL schemas, graph data model, and queries and their semantics.  These definitions provide the base upon which further development and analysis can be developed.
+
+\td{I feel there is not much to say about the semantics... The "juicy" bits are in the discussion section - limitations given by the graph model, functor approach to the spec's semantics, etc.}
