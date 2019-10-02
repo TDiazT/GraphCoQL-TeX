@@ -42,6 +42,26 @@ Regarding error handling, we currently do not implement it. Errors may have two 
 
 \subsection{Normalization}
 
+\subsubsection{Grounding}
+This definition differs slightly from the one given by \HP{}, because they do not use information on the type in context. We take this approach because the structure of grounded queries is deterministic and it simplifies reasoning. In \HP{}'s approach, subqueries of fields can be either fields or inline fragments, without clear conditions. For instance, the following query, inspired from the schema in Section~\ref{sec:bg}, is in ground-typed normal form but the field \texttt{goodboi} has field subqueries in one case and fragments in the other. With our approach, only the second occurrence of \texttt{goodboi} is grounded, since its return type is an interface and the subqueries are specified down to the subtypes, using fragments.
+
+\begin{minted}[escapeinside=||, mathescape=true]{js}
+        query {
+            goodboi {
+              name
+            }
+            goodboi {
+              |$\ldots$| on Dog {
+                name
+              }
+              |$\ldots$| on Pig {
+                name
+              }
+            }
+        }
+\end{minted}
+
+
 In this section we discuss some discoveries made regarding \HP{}'s definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
 
 For the former, we notice that their definition is unsound\td{?}, in the sense that there are queries that are considered non-redundant but actually would produce redundant results. A simple example is the following valid query, that is considered as non-redundant by their definition but which, in fact, would produce two repeated values. It is a very minor slip, which happens because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
