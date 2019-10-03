@@ -18,6 +18,52 @@ Record graphQLSchema := GraphQLSchema {
 
 Next, type definitions are also implemented following the \spec{}. Figure \ref{fig:types_def} shows the grammar and the implementation in Coq, which tries to mimic the grammar as close as possible, in order to get a degree of trust given by an eyeball correspondence. We choose not to embed non-emptiness of fields, union members and enum members, and push the validation to a separate predicate. The reasons are that the \spec{} also repeats this validation, even when the grammar embeds this notion, and secondly, we find it simpler to reuse the existent machinery for lists.
 
+\setlength{\grammarparsep}{10pt plus 1pt minus 1pt} % increase separation between rules
+\begin{figure*}[h]
+    \centering
+    \begin{subfigure}{.5\textwidth}
+    \begin{grammar}
+    <TypeDefinition> ::= \textbf{\texttt{scalar}} <name>
+%    \alt \textbf{\texttt{type}} <name> \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
+    \alt \textbf{\texttt{type}} <name> [\textbf{\texttt{implements}} <name>$^{+}$] \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
+    \alt \textbf{\texttt{interface}} <name> \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
+    \alt \textbf{\texttt{union}} <name> \textbf{\texttt{=}} <name> (\textbf{\texttt{|}} <name>)*
+    \alt \textbf{\texttt{enum}} <name>  \textbf{\texttt{\{}}  <name>$^{+}$ \textbf{\texttt{\}}}
+
+    <Field> ::= <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{) :}} <type>
+
+    <Arg> ::= <name> \textbf{\texttt{:}} <type>
+
+    <type> ::= <name>
+    \alt \textbf{\texttt{[}}  <type> \textbf{\texttt{]}}
+    \end{grammar}
+
+    \end{subfigure}%
+    \begin{subfigure}{.5\textwidth}
+    \begin{minted}{coq}
+    Inductive TypeDefinition : Type :=
+    | ScalarTypeDefinition (name : Name)
+    | ObjectTypeDefinition (name : Name)
+                           (interfaces : seq Name)
+                           (fields : seq FieldDefinition)
+    | InterfaceTypeDefinition (name : Name)
+                              (fields : seq FieldDefinition)
+    | UnionTypeDefinition (name : Name)
+                          (members : seq Name)
+    | EnumTypeDefinition (name : Name)
+                         (members : seq EnumValue).
+
+    Inductive type : Type :=
+    | NamedType : Name -> type
+    | ListType : type -> type.
+    \end{minted}
+
+    \end{subfigure}
+    \caption{Definition of GraphQL types, the \spec{}'s grammar (left) and Coq implementation (right). Square brackets represent optional values.}
+    \label{fig:types_def}
+\end{figure*}
+
+
 % As can be seen from the figure, our implementation looses information about non-emptiness of fields, union and enum members. We push this validation to a posterior predicate, as well as the discussion about the reasons behind this decision, to the following paragraphs.
 
 % As can be seen in the figure, we tried to match the \spec{}'s definition as much as possible. This eyeball correspondence gives us a degree of confidence about the implementation.  % We currently do not include the \textit{Input Object} types, as well as anything related to \textit{introspection}.
@@ -68,51 +114,6 @@ Record wfGraphQLSchema := WFGraphQLSchema {
 % Due to space constraints, we omit the definition of \textit{well-formedness} for type definitions. This property includes things such as: interfaces and objects must declare at least one field, objects correctly implement their declared interfaces, union types are not empty and contain only object types, amongst others. These definitions are collected from the \spec{} \td{Scattered throughout the \spec{}*}.
 
 Finally, having defined the GraphQL schemas, we can move onto defining the data model used when evaluating queries.
-
-\setlength{\grammarparsep}{10pt plus 1pt minus 1pt} % increase separation between rules
-\begin{figure*}[h]
-    \centering
-    \begin{subfigure}{.5\textwidth}
-    \begin{grammar}
-    <TypeDefinition> ::= \textbf{\texttt{scalar}} <name>
-    \alt \textbf{\texttt{type}} <name> \textbf{\texttt{implements}} <name>* \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
-    \alt \textbf{\texttt{interface}} <name> \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
-    \alt \textbf{\texttt{union}} <name> \textbf{\texttt{=}} <name> (\textbf{\texttt{|}} <name>)*
-    \alt \textbf{\texttt{enum}} <name>  \textbf{\texttt{\{}}  <name>$^{+}$ \textbf{\texttt{\}}}
-
-    <Field> ::= <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{) :}} <type>
-
-    <Arg> ::= <name> \textbf{\texttt{:}} <type>
-
-    <type> ::= <name>
-    \alt \textbf{\texttt{[}}  <type> \textbf{\texttt{]}}
-    \end{grammar}
-
-    \end{subfigure}%
-    \begin{subfigure}{.5\textwidth}
-    \begin{minted}{coq}
-    Inductive TypeDefinition : Type :=
-    | ScalarTypeDefinition (name : Name)
-    | ObjectTypeDefinition (name : Name)
-                           (interfaces : seq Name)
-                           (fields : seq FieldDefinition)
-    | InterfaceTypeDefinition (name : Name)
-                              (fields : seq FieldDefinition)
-    | UnionTypeDefinition (name : Name)
-                          (members : seq Name)
-    | EnumTypeDefinition (name : Name)
-                         (members : seq EnumValue).
-
-    Inductive type : Type :=
-    | NamedType : Name -> type
-    | ListType : type -> type.
-    \end{minted}
-
-    \end{subfigure}
-    \caption{Definition of GraphQL types, the \spec{}'s grammar (left) and Coq implementation (right).}
-    \label{fig:types_def}
-\end{figure*}
-
 
 
 \iffalse
@@ -208,14 +209,16 @@ With both the schema and the underlying data model we can proceed to define Grap
 
 \subsection{GraphQL Query}\label{subsec:query}
 
-Whenever a user queries a GraphQL service, they must do so by requesting information over the types and fields defined in the service's schema, starting from the root query operation type. This notion induces a tree structure over queries, where leaf nodes are selections of fields with a scalar return type. Meanwhile, inner nodes can either be fields with an object or abstract return type, or inline fragments that condition when its subqueries are evaluated. For instance, the query in Figure \ref{fig:qres_ex} can be depicted as the tree in Figure \ref{fig:query_tree}.
+Whenever a user queries a GraphQL service, they must do so by requesting information over the types and fields defined in the service's schema, starting from the root query operation type. This notion induces a tree structure over queries, where leaf nodes are selections of fields with a scalar return type. Meanwhile, inner nodes can either be fields with an object or abstract return type, or inline fragments that condition when its subqueries are evaluated. %For instance, the query in Figure \ref{fig:qres_ex} can be depicted as the tree in Figure \ref{fig:query_tree}.
 
+\iffalse
 \begin{figure}
     \centering
     \includegraphics[scale=0.33]{imgs/query_tree.png}
     \caption{GraphQL query as a tree.}
     \label{fig:query_tree}
 \end{figure}
+\fi 
 
 Similar to the schema definition, we follow the \spec{}'s grammar as closely as possible, as can be seen from Figure~\ref{fig:query_def}. We do not embed the property of non-emptiness of subqueries in the definition because the \spec{} pushes it to a different validation rule, even though it is already embedded in the grammar, and we believe it is simpler to reuse the \texttt{seq} library and its existent functionalities. 
 
@@ -263,28 +266,33 @@ The definition of queries is completely independent of any schema, both in the \
 
 % Before describing the validation process, it is very important to address the notion of \textit{type in context} where queries are defined and used. The type in context is the type over which a user might be requesting information on its fields. To illustrate this, consider the following query. The first selection, namely \texttt{goodboi}, is requesting information about the query type, meaning that it is used in the context of the \texttt{Query} type. Moving onto the  \texttt{name} subselection, it is not direct which is. In one case, the type in context is \texttt{Dog}, while in the other the field is used in the context of the \texttt{Pig} type.
 
+\begin{minipage}[t]{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
-      query {
-        goodboi {
-          |$\ldots$| on Dog {
-            name
-            favoriteToy
-          }
-          |$\ldots$| on Pig {
-            name
-            favoriteToy
-          }
-        }
-      }
-      
-      type Human {
-        age: Int
-      }
-
-      type Martian {
-        age: Float
-      }	
+query {
+  goodboi {
+    |$\ldots$| on Dog {
+      name
+      favoriteToy
+    }
+    |$\ldots$| on Pig {
+      name
+      favoriteToy
+    }
+  }
+}
 \end{minted}
+\end{minipage}%
+\begin{minipage}[t]{.25\textwidth}
+\begin{minted}[escapeinside=||, mathescape=true]{js}   
+type Human {
+  age: Int
+}
+
+type Martian {
+  age: Float
+}	
+\end{minted}
+\end{minipage}
 
 % The importance of this type in context is that fields or inline fragments might be valid in certain cases but not in others. Similarly, a field may have a particular return type in one case and a different one in another type, like in the following example. Both types have an \texttt{age} field, but in one case it returns an integer value while in the other a floating point value. If that field is encountered in a query, it is necessary to know to which type it is being requested.
 
@@ -338,46 +346,50 @@ The second validates when fields can be correctly merged during evaluation, whic
 
 \begin{minted}[escapeinside=||,mathescape=true]{js}
 query {
-	goodboi {
-		|$\ldots$| on Pig {
-			name
-			name:oink
-		}
-	}
+  goodboi {
+    |$\ldots$| on Pig {
+	  name
+	  name:oink
+    }
+  }
 }
 \end{minted}
 
 The last rule is necessary to check when fields generate unambiguous outputs when evaluated. For instance, in the query below a user might request the names of dogs and the oinkness of pigs, but renaming the latter to have the same response name as the former. This query is considered invalid because evaluating it might produce a response that contains entries where the key \texttt{name} is associated to both string values and floating point numbers. 
 
+\begin{minipage}[t]{.22\textwidth}
 \begin{minted}[escapeinside=||,mathescape=true]{js}
 query {
-	goodboi {
-		friends {
-			|$\ldots$| on Dog {
-				name
-			}
-			|$\ldots$| on Pig {
-				name:oink
-			}
-		}
-	}
-}
-
-// Possible output
-
-{
-	"goodboi" : {
-		"friends" : [
-				{
-					"name" : "Marle"
-				},
-				{
-					"name" : 9000
-				}
-		]
-	}
+  goodboi {
+    friends {
+      |$\ldots$| on Dog {
+        name
+      }
+      |$\ldots$| on Pig {
+        name:oink
+      }
+    }
+  }
 }
 \end{minted}
+\end{minipage}%
+\begin{minipage}[t]{.22\textwidth}
+\begin{minted}[escapeinside=||,mathescape=true]{js}
+// Possible invalid output
+{
+  "goodboi" : {
+    "friends" : [
+        {
+          "name" : "Marle"
+        },
+        {
+          "name" : 9000
+        }
+    ]
+  }
+}
+\end{minted}
+\end{minipage}
 
 
 
@@ -393,10 +405,9 @@ This concludes the definition of GraphQL queries and the validation process. \td
 
 In this section we describe the semantics of GraphQL queries. We begin by briefly examining the responses generated by executing queries and then we give an informal description of the semantics, finishing with the formal definition. %We finish by discussing some implementation choices and comparison with the \spec{} and \HP{}.
 
-We model responses to GraphQL queries with a tree structure, similar to JSON. We choose this structure to preserve similarity to queries and because it provides a strong reasoning principle, as well as being simpler to preserve order of the responses. This differs slightly from the \spec{}, which only states that responses are a map and does not impose an ordering of responses, although encourages it\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Serialized-Map-Ordering}. We believe that preserving the order is one of the strong selling points for GraphQL (queries and their responses are very similar and easy to read). 
+We model responses to GraphQL queries with a tree structure, similar to JSON, as depicted in Figure~\ref{fig:responses}. We choose this structure to preserve similarity to queries and because it provides a strong reasoning principle, as well as being simpler to preserve order of the responses. This differs slightly from the \spec{}, which only states that responses are a map and does not impose an ordering of responses, although encourages it\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Serialized-Map-Ordering}. We believe that preserving the order is one of the strong selling points for GraphQL (queries and their responses are very similar and easy to read). 
 
-\td{Move to discussion?} Our approach has two main disadvantages: possible duplication of response names and cost of access. Since we use lists instead of maps, we can encounter duplicated names and accessing a value has a linear cost given by the lists size, instead of the constant access obtainable with a map. We still argue that the reasoning principles and simplicity to order is highly valuable. Nevertheless, we include a proof that the results obtained with the semantics have no duplicated names. Finally, we use option types to represent null values in the leaves of the response tree.
-
+\begin{figure}[h]
 \begin{minted}{coq}
 Inductive ResponseNode (A : Type) : Type :=
 | Leaf : A -> ResponseNode
@@ -406,6 +417,12 @@ Inductive ResponseNode (A : Type) : Type :=
 Definition GraphQLResponse (Vals: eqType) :=
     seq (Name * (@ResponseNode (option Vals))).
 \end{minted}
+\caption{Implementation in Coq of GraphQL responses.}
+\label{fig:responses}
+\end{figure}
+
+\td{Move to discussion?} Our approach has two main disadvantages: possible duplication of response names and cost of access. Since we use lists instead of maps, we can encounter duplicated names and accessing a value has a linear cost given by the lists size, instead of the constant access obtainable with a map. We still argue that the reasoning principles and simplicity to order is highly valuable. Nevertheless, we include a proof that the results obtained with the semantics have no duplicated names. Finally, we use option types to represent null values in the leaves of the response tree.
+
 
 
 As we described in Section~\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec{}, in the sense that it can be detached from a particular data model. 
