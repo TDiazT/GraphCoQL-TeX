@@ -8,8 +8,12 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage[nounderscore]{syntax}
-\setminted{fontsize=\footnotesize}
+\usepackage{graphicx}
+\usepackage{newunicodechar}
+\newunicodechar{ə}{\pmschwa}
+\DeclareRobustCommand{\pmschwa}{\rotatebox[origin=c]{180}{e}}
 
+\setminted{fontsize=\footnotesize}
 
 % Colors
 \definecolor{darkgray}{HTML}{404040}
