@@ -98,10 +98,17 @@
 }
 
 \begin{abstract}
-    This is the abstract \et{write it!}
+GraphQL is a novel language for specifying and querying web APIs, allowing clients to flexibility and efficiently retrieve data of interest. The GraphQL language specification is unfortunately only available in prose, making it hard to develop robust formal results for this language. Recently, Hartig and Pérez proposed a formal semantics for GraphQL in order to study the complexity of GraphQL queries. These semantics are however not mechanized and leave certain key aspects unverified. We present GraphCoQL, the first mechanized formalization of GraphQL, developed in the Coq proof assistant. We illustrate the application of GraphCoQL by formalizing the key query transformation and interpretation techniques of Hartig and Pérez, and proving them correct \et{modulo some bugs/imprecisions?}. 
+We hope that GraphCoQL can serve as a solid formal baseline for both language design and verification efforts for GraphQL.
 \end{abstract}
 
+
 \maketitle
+
+
+\et{future work/somewhere: relate to the current reference implementation as we did for CoqR}
+
+\et{future work: extraction for real}
 
 \input{introduction.tex}
 \input{background.tex}
