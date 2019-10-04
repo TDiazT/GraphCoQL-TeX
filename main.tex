@@ -49,9 +49,14 @@
 \newcommand{\HP}{\textit{HP}}
 \newcommand{\Vals}{$\mathit{Vals}$}
 
+% semantics
 \newcommand{\eval}[2]{\llbracket #1 \rrbracket^{#2}_{G}}
 \newcommand{\evalu}[1]{\eval{#1}{u}}
 \newcommand{\evalfilteru}[2]{\eval{\mathit{filter}_{#2}(#1)}{u}}
+% simpl semantics
+\newcommand{\seval}[2]{\ll #1 \gg^{#2}_{G}}
+\newcommand{\sevalu}[1]{\seval{#1}{u}}
+
 \newcommand{\queries}{\overline{\varphi}}
 \newcommand{\subqueries}[1]{\overline{#1}}
 \newcommand{\fkey}{\texttt{f}}

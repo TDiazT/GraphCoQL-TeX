@@ -278,7 +278,36 @@ We now move onto proving correctness of the normalization procedure and the pres
 
 \subsection{Proofs of correctness and preservation}
 
-As described initially in this paper, \HP{} base the complexity results over GraphQL queries on two premises; queries can be normalized, preserving their semantics, and there is an equivalent simplified function to evaluate queries in normal form. We tackle the first premise by establishing correctness of our normalization procedure and then preservation of semantics.
+As described initially in this paper, \HP{} base the complexity results over GraphQL queries on two premises; queries can be normalized, preserving their semantics, and there is an equivalent simplified function to evaluate queries in normal form. We tackle the first premise by establishing correctness of our normalization procedure and then preservation of semantics. Figure~\ref{fig:simpl_semantics} shows the simplified semantics's formal definition. Aliased cases are not included due to space constraints.
+
+\setcounter{equation}{0}% Restart equation counter
+\begin{figure*}[h]
+    \centering
+    \begin{align}
+    % Empty
+    \seval{\cdot}{u} &= [\cdot] \\
+    % SingleField
+    \sevalu{\fld\; ::\; \queries} &= \begin{cases}
+    \resp{\texttt{coerce(\val)}} \; ::\; \sevalu{\queries}  & \mathit{u.property}(\fld) = \val \\
+    \resp{\nval} \; :: \; \sevalu{\queries} & \sim
+    \end{cases}\\
+    % Nested field
+    \sevalu{\nfld{\overline{\beta}} \; ::\; \queries} &=
+    \begin{cases}
+    \resp{\texttt{[} \mathit{map} (\lambda\; v_{i} \Rightarrow\; \seval{\overline{\beta}}{v_{i}})\; \mathit{neighbors(u)} \texttt{]}} \; :: \; \sevalu{\queries}  & \mathit{type(f)} \in L_{t} \text{and} \{v_{1}, \ldots, v_{k}\} = \{v_{i} \mid (u, f[\alpha], v_{i}) \in E\} \\
+    (f:\{\seval{\subqueries{\beta}}{v}\})\; :: \; \sevalu{\queries}  & \mathit{type(f)} \notin L_{t} \text{and} (u, f[\alpha], v) \in E \\
+    (f:null)\; :: \; \sevalu{\queries} & \mathit{type(f)} \notin L_{t} \text{and there is no } v \text{ s.t.} (u, f[\alpha], v) \in E \\
+    \end{cases}\\
+    %inline fragment
+    \sevalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
+    \sevalu{\overline{\beta} \mdoubleplus \queries} & \mathit{does\_fragment\_type\_apply_{\texttt{t}}(u.type)} = \texttt{true}\\
+    \sevalu{\queries} & \sim
+    \end{cases}
+    \end{align}
+    \caption{Simplified semantics for queries in normal form.}
+    \label{fig:simpl_semantics}
+\end{figure*}
+
 
 First, we prove that the procedure is correct and returns queries in normal form, by proving separately that the resulting queries are grounded and non-redundant\footnote{Since we prove that grounded implies ground-typed normal form, we can also prove ground-typed normal form for the normalization function.}. Both are proved by well-founded induction over the queries size\footnote{The notion of size includes the length of the list as well as the depth of the query tree.} and then mostly auxiliary lemmas over subtypes.  We consider the case where the type in scope is an Object type and the general case. 
 
