@@ -12,8 +12,7 @@ We represent it with a record, containing both the list of type definitions and 
 \begin{minted}{coq}
 Record graphQLSchema := GraphQLSchema {
     query_type : Name;
-    type_definitions : seq TypeDefinition
-}.
+    type_definitions : seq TypeDefinition }.
 \end{minted}
 
 Next, type definitions are also implemented following the \spec{}. Figure \ref{fig:types_def} shows the grammar and the implementation in Coq, which tries to mimic the grammar as close as possible, in order to get a degree of trust given by an eyeball correspondence. We choose not to embed non-emptiness of fields, union members and enum members, and push the validation to a separate predicate. The reasons are that the \spec{} also repeats this validation, even when the grammar embeds this notion, and secondly, we find it simpler to reuse the existent machinery for lists.
@@ -105,8 +104,7 @@ This predicate is necessary to establish when a value used in a query actually m
 Record wfGraphQLSchema := WFGraphQLSchema {
     schema : graphQLSchema;
     _ : schema.(is_a_wf_schema);
-    is_a_valid_value : type -> Vals -> bool;
-}.
+    is_a_valid_value : type -> Vals -> bool; }.
 \end{minted}
 
 % This predicate is necessary to establish when a value used in a query or in the graph actually matches the scalar type expected by the schema. For instance, if an argument requires a \texttt{Float} value, then the actual value passed to the query must be something that represents a double-precision fractional value\footnote{The \spec{} declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include this base restrictions but leave it open to implementation.}. This predicate validates that this is satisfied.
@@ -152,20 +150,12 @@ The corresponding implementation in Coq is described with the following structur
 Meanwhile, the root node represents the starting point from where queries are evaluated.
 
 \begin{minted}{coq}
-Record fld := Field {
-                  label : string;
-                  args : seq (string * Vals)
-                }.
-
-Record node := Node {
-                   ntype : Name;
-                   nprops : seq (fld * Vals)
-                 }.
-
-Record graphQLGraph := GraphQLGraph {
-                        root : node;
-                        E : seq (node * fld * node)
-                      }.
+Record fld := 
+  Field { label : string; args : seq (string * Vals) }.
+Record node := 
+  Node { ntype : Name; nprops : seq (fld * Vals) }.
+Record graphQLGraph := 
+  GraphQLGraph { root : node; E : seq (node * fld * node) }.
 \end{minted}
 
 The definition of graph is completely independent of any GraphQL schema, so it is necessary to relate the data to the type system. We implement the property of \textit{conformance}  of a graph as partially described by \HP{}. This notion is, in essence, a well-formedness property for graphs with respect to a given schema. At the moment of development, there was no complete definition of conformance given by \HP{}, however in a recent work by Hartig and Hidder's~\cite{olafschema}, they give a complete definition and extend it, capturing more features than we currently implement, such as directives and non-null types. \td{Again, I have never said anything about things we haven't implemented so I am not sure if I should mention before or simply push to discussion}
@@ -184,23 +174,19 @@ Regarding the conformance of edges, the predicate checks aspects such as that an
 Due to space limitations we do not include the complete definitions but they can be found in the file \texttt{GraphConformance.v}. The previous conformance definition is implemented in Coq as follows.
 
 \begin{minted}{coq}
-Definition is_a_conforming_graph
-        (s : wfGraphQLSchema)
-        (graph : graphQLGraph) : bool :=
-
-        root_type_conforms s g.(root) &&
-        edges_conform s g &&
-        nodes_conform s g.(nodes).
+Definition is_a_conforming_graph 
+      (s : wfGraphQLSchema) (g : graphQLGraph) : bool :=
+  root_type_conforms s g.(root) &&
+  edges_conform s g &&
+  nodes_conform s g.(nodes).
 \end{minted}
 
 Similarly to GraphQL schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph, containing a graph and a proof of its conformance to a particular schema.
 
 \begin{minted}{coq}
 Record conformedGraph (s : wfGraphQLSchema) :=
-            ConformedGraph {
-                graph : graphQLGraph;
-                _ : is_a_conforming_graph s graph
-            }.
+  ConformedGraph { graph : graphQLGraph;
+                       _ : is_a_conforming_graph s graph }.
 \end{minted}
 
  %These properties include validation rules such as: every node must have an object type and their properties must be defined in their associated type, or an edge's label must be declared as a field in the source node's type and the target node must have a type compatible to the field's return type, among other things.
@@ -266,6 +252,8 @@ The definition of queries is completely independent of any schema, both in the \
 
 % Before describing the validation process, it is very important to address the notion of \textit{type in context} where queries are defined and used. The type in context is the type over which a user might be requesting information on its fields. To illustrate this, consider the following query. The first selection, namely \texttt{goodboi}, is requesting information about the query type, meaning that it is used in the context of the \texttt{Query} type. Moving onto the  \texttt{name} subselection, it is not direct which is. In one case, the type in context is \texttt{Dog}, while in the other the field is used in the context of the \texttt{Pig} type.
 
+\et{for space reason, we may want to take some liberties wrt the formatting of queries and responses (see some examples on this page)}
+
 \begin{minipage}[t]{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 query {
@@ -277,9 +265,7 @@ query {
     |$\ldots$| on Pig {
       name
       favoriteToy
-    }
-  }
-}
+} } }
 \end{minted}
 \end{minipage}%
 \begin{minipage}[t]{.25\textwidth}
@@ -350,9 +336,7 @@ query {
     |$\ldots$| on Pig {
 	  name
 	  name:oink
-    }
-  }
-}
+} } }
 \end{minted}
 
 The last rule is necessary to check when fields generate unambiguous outputs when evaluated. For instance, in the query below a user might request the names of dogs and the oinkness of pigs, but renaming the latter to have the same response name as the former. This query is considered invalid because evaluating it might produce a response that contains entries where the key \texttt{name} is associated to both string values and floating point numbers. 
@@ -367,10 +351,7 @@ query {
       }
       |$\ldots$| on Pig {
         name:oink
-      }
-    }
-  }
-}
+} } } }
 \end{minted}
 \end{minipage}%
 \begin{minipage}[t]{.22\textwidth}
@@ -379,15 +360,10 @@ query {
 {
   "goodboi" : {
     "friends" : [
-        {
-          "name" : "Marle"
-        },
-        {
-          "name" : 9000
-        }
+        { "name" : "Marle" },
+        { "name" : 9000 }
     ]
-  }
-}
+}  }
 \end{minted}
 \end{minipage}
 
@@ -443,6 +419,7 @@ The main difference with respect to \HP{} and the main similarity to the \spec{}
 %Our first attempt at defining the semantics was to follow \HP{}'s post-processing approach. Our intention was to be as close as possible to their formalization to later prove their transformation and equivalence results, which we cover in Section~\ref{sec:norm}. However, the non-structural recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence very hard.
 
 \begin{figure*}[h]
+\small
     \centering
     \begin{align}
     % Empty
@@ -465,7 +442,7 @@ The main difference with respect to \HP{} and the main similarity to the \spec{}
     \evalu{\queries} & \sim
     \end{cases}
     \end{align}
-    \caption{Semantics for GraphQL queries.\td{This looks bad but I don't know how to format it :/}}
+    \caption{Semantics of GraphQL queries.\td{This looks bad but I don't know how to format it :/}}
     \label{fig:semantics}
 \end{figure*}
 

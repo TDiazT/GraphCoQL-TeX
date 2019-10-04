@@ -1,21 +1,25 @@
 % !TEX root = ./main.tex
 \section{Query Transformation: Normalization}\label{sec:norm}
 
-As a case study for query transformation, we tackle the normalization process proposed by \HP{}. This process is fundamental for the complexity results they prove. These results are based on two premises, the first one being that every query can be normalized and that the resulting query is semantically equivalent. Secondly, it is possible to define a new simplified evaluation function that is equivalent to the original semantics, if the queries are in normal form. For the former they provide a set of equivalence rules, which serve as rewriting rules, but do not provide proofs of correctness. Similarly, for the latter they do not prove the equivalence. In this section, we therefore describe our approach to tackling these issues. To begin with, we define the property of being in \textit{normal form} and the normalization procedure, as well as providing proofs of correctness and semantic equivalence. Finally, we define a new simplified semantics and prove the equivalence to the semantics defined in Section~\ref{subsec:semantics}.
+To illustrate how GraphCoQL can be used to reason about query transformations, we study the normalization process proposed by Hartig and Pérez~\cite{gqlph}, which is fundamental for the complexity results they prove.
+%
+Recall that these results are based on two premises: {\em a)} every query can be normalized to a semantically-equivalent query; {\em b)} on such queries, one can use a simplified, but equivalent, evaluation function. For normalization,  Hartig and Pérez provide a set of equivalence rules, which serve as rewriting rules\et{directedness?}, but they do not prove the correctness of rewriting\et{do they prove equivalence?}. Likewise, they do not prove the equivalence of the semantics when applied to normalized queries.
 
-It is worth mentioning that most of our formalization effort was devoted to defining and establishing the correctness of this normalization procedure. In terms of code, definitions are coded in approximately $350$ lines, while proofs encompass around $1,200$ lines. cThe complete definitions and proofs can be found in the files \texttt{QueryNormalForm.v} and \texttt{QueryNormalFormLemmas.v}.
+In this section, we use GraphCoQL to define the property of being in \textit{normal form}, the normalization procedure, as well as proving both correctness and semantic equivalence. Finally, we define a new simplified semantics and prove the equivalence to the original semantics from \S~\ref{subsec:semantics}.
+
+It is worth mentioning that most of our formalization effort was devoted to defining and establishing the correctness of this normalization procedure. In terms of code, definitions are coded in approximately $350$ lines, while proofs amount to around $1,200$ lines. The complete definitions and proofs can be found in the files \texttt{QueryNormalForm.v} and \texttt{QueryNormalFormLemmas.v}. \et{does that include point b)?}
 
 \subsection{Normal form}
 
-The notion of \textit{normal form} is defined by the conjunction of two properties; being \textit{grounded} and being \textit{non-redundant}.
-\HP{} refers to the former as being in \textit{ground-typed normal form}. We believe this naming is confusing so we decide to rename it to the previously described property.
+The notion of \textit{normal form} introduced by Hartig and Pérez consists of the conjunction of two properties: being \textit{grounded} and being \textit{non-redundant}.
+\HP{} refers to the former as being in \textit{ground-typed normal form}. \et{remove/why is that confusing?} We believe this naming is confusing so we decide to rename it to the previously described property.
 
-Similarly to what is described in Section~\ref{subsec:query}, the normalization process requires information on the type in context where the queries might be defined. This is crucial as it guides the process on how queries are transformed.
+\et{skip/move} Similarly to what is described in Section~\ref{subsec:query}, the normalization process requires information on the type in context where the queries might be defined. This is crucial as it guides the process on how queries are transformed.
 
 % Throuhgout our development, we noticed that this definition given by \cite{gqlph} was too general when proving correctness of our normalization procedure. In particular, the definition states that the subqueries of a field selection can be either fields or fragments. This means that if there are two field selections with the same response name, one may have subqueries consisting of fields, while the other contains only inline fragments. This would cause issues when trying to remove redundancies in queries because one could not directly establish if the resulting queries satisfied the property.
 \subsubsection*{Groundness}
-
-Informally, the \textit{groundness} property refers to whether queries are completely specified down to the object types.  Consider the query depicted in Figure~\ref{fig:grounded} that requests the name of an animal. This query is not grounded because the field \texttt{name} is made over the \texttt{Animal} type, which is an abstract type. Now, consider the query to the right that is requesting the same information as the previous. In this case, the query is grounded since it completely specifies the object types to which it will request the information.
+\et{should it be "groundedness"? (being bounded is boundedness, being rounded is roundedness, etc.)}
+Informally, the \textit{groundness} property refers to whether queries are completely specified down to the object types.  Consider the query on the left of Figure~\ref{fig:grounded}, which requests the name of an animal. This query is not grounded because the field \texttt{name} is made over the \texttt{Animal} type \et{we don't see Animal?}, which is abstract. In contrast, the query on the right is requesting the same information, but it is grounded because it fully specifies the \et{(concrete)} object types on which it requests the information.
 
 \begin{figure}[h]
 \centering
@@ -43,48 +47,57 @@ query {
 \end{minted} 
 \end{subfigure}
 
-\caption{Not grounded query (left) and semantically equivalent grounded query (right).}
+\caption{An ungrounded query (left) and its semantically-equivalent grounded query (right).}
 \label{fig:grounded}
 \end{figure}
 
-The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype.
+\et{verbose/repetitive} The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype. 
 
 \begin{definition}
 A GraphQL query $\varphi$ is \textit{grounded} if it satisfies the following conditions, where \texttt{ty} is the type in scope.
 \begin{itemize}
 	\item If \texttt{ty} is an object type, then $\varphi$ contains only fields.
-	\item If \texttt{ty} is an abstract type (interface or union), then $\varphi$ contains only inline fragments. The type condition on these fragments must be Object types.
+	\item If \texttt{ty} is an abstract type (interface or union\et{wasn't this definition clear from before?}), then $\varphi$ contains only inline fragments whose type conditions are Object\et{why capitalized?} types.
 	\item Subqueries of $\varphi$ are \textit{grounded} w.r.t. to the field's return type or the fragments type condition.
 \end{itemize}
 \end{definition}
 
-Our definition of groundness is slightly different from the one in \HP{}, nevertheless, we prove that our definition still implies being in ground-typed normal form.
+This definition of groundedness differs slightly from that of \HP{} \et{how is it different? why?}, nevertheless, we prove that our definition still implies being in ground-typed normal form \et{if you prove that it means you have also formalized the exact def from HP? so?}.
 
 \begin{minted}{coq}
 Lemma are_grounded_in_ground_typed_nf (s : wfGraphQLSchema)
-                                      (type_in_scope : Name)
+                                      (ty : Name)
                                       (queries : seq Query) :
         are_grounded s ty queries ->
         are_in_ground_typed_nf s queries.
 \end{minted}
 
+\et{why this plural formulation?}
+\et{watch out the argument was called type-in-scope while its used as ty.}
+
+\et{why do we care about this lemma instead of the definition of is-grounded?}
+
 \subsubsection*{Non-redundancy}
 
-Informally, the notion of non-redundancy refers to whether there are no queries that may produce repeated results. For example, the two queries below depict the cases of a redundant and a non-redundant query. The first one is requesting the field \texttt{name} twice to the same type and uses two fragments with the same type condition. If no collection and merger of fields is performed during the evaluation, this would produce two values with key \texttt{name}. Meanwhile, the second case requests information about each type only once. It is important to notice that, even though it requests the \texttt{name} field in both,  this is considered not redundant. The reason is that only one fragment will actually be executed at a time, depending on the concrete object value that is used to evaluate the query, therefore not repeating the evaluation of the field.
-\td{Should this be another figure?}
+Informally, 
+% \et{bad phrasing: what is "non-redundant" is a "query", not "whether there are no queries"} the notion of non-redundancy refers to whether there are no queries that may produce repeated results. 
+a non-redundant query is a query that does not produce repeated results.
+For example, consider the two queries below:
+\td{Should this be another figure?}\et{do the same as you do for groundedness -- better to just inline if there are no references from other parts of the paper}\et{use the same trick with comments to indicate grounded/ungrounded}
+
 \begin{minipage}[t]{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Redundant query
 query {
     goodboi {
         name
-	name
-	|$\ldots$| on Dog {
-	    name
-	}
-	|$\ldots$| on Dog {
-	    friends { |$\ldots$| }
-	}
+  name
+  |$\ldots$| on Dog {
+      name
+  }
+  |$\ldots$| on Dog {
+      friends { |$\ldots$| }
+  }
     }
 }
 \end{minted}
@@ -95,18 +108,22 @@ query {
 query {
     goodboi {
         |$\ldots$| on Dog {
-	    name
-	}
-	|$\ldots$| on Pig {
-	    name
-	}
-    }	
+      name
+  }
+  |$\ldots$| on Pig {
+      name
+  }
+    } 
 }
 \end{minted} 
 \end{minipage}
+\et{fix layout}
+
+The query on the left requests the field \texttt{name} twice to the same type, and uses two fragments with the same type condition. If no collection and merger of fields is performed during the evaluation, this will produce two values with key \texttt{name}. Meanwhile, the query on the right requests information about each type only once. It is important to notice that, even though it requests the field \texttt{name} in both, this is considered not redundant because only one fragment will actually be executed at a time, 
+depending on the concrete object value that is used to evaluate the query.
 
 \begin{definition}
-A GraphQL query $\varphi$ is \textit{non-redundant} if it satisfies the following conditions.
+A GraphQL query $\varphi$ is \textit{non-redundant} if it satisfies the following conditions:
 \begin{itemize}
     \item There is at most one field selection with a given response name, for a particular depth of the query tree.
 
@@ -116,11 +133,11 @@ A GraphQL query $\varphi$ is \textit{non-redundant} if it satisfies the followin
 \end{itemize}
 \end{definition}
 
-Our definition of non-redundancy assumes that the queries are grounded, much like \HP{}, mainly to simplify the implementation. The difficulty arises from using inline fragments and comparing their contents appropriately. This difficulty is further enhanced by the fact that the \spec{} currently allows using fragments that can possibly span over several unrelated types\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Fragment-spread-is-possible}\footnote{https://github.com/graphql/graphql-spec/issues/367}\footnote{Example of inline fragments spanning to unrelated types - https://tinyurl.com/y4uxz3gu}\td{Should we expand on this somewhere?}.
+Our definition of non-redundancy assumes that the queries are grounded \et{maybe the Coq definition, but not the definition above!}, much like \HP{}, mainly to simplify the implementation. The difficulty arises from using inline fragments and comparing their contents appropriately. This difficulty is further enhanced \et{how can a "difficulty" be "enhanced"?} by the fact that the \spec{} currently allows using fragments that can possibly span over several unrelated types\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Fragment-spread-is-possible}\footnote{https://github.com/graphql/graphql-spec/issues/367}\footnote{Example of inline fragments spanning to unrelated types - https://tinyurl.com/y4uxz3gu}\td{Should we expand on this somewhere?}.
 
 \subsection{Normalization procedure}\label{subsec:normalization}
 
-The normalization procedure can be understood as a form of abstract interpretation, which evaluates queries using only static information about the type in context. Figure~\ref{fig:normalize} displays pseudocode describing the process when the head of the list of queries is a field selection with subqueries. We do not include the complete definition because of space limitations but the complete definition can be found in the file \texttt{QueryNormalForm.v}.
+The normalization procedure can be understood as a form of abstract interpretation\et{before, tell us what it does}, which evaluates queries using only static information about the type in context. Figure~\ref{fig:normalize} displays pseudocode describing the process when the head of the list of queries is a field selection with subqueries. We do not include the complete definition because of space limitations, but the complete definition can be found in the file \texttt{QueryNormalForm.v}.
 
 
 \begin{figure*}[h]
@@ -157,7 +174,7 @@ style=code]
 \label{fig:normalize}
 \end{figure*}
 
-The complete normalization process is actually composed of two separate functions; \texttt{normalize} that performs all the actual work but under the assumption that the type in context is an object type, and \texttt{normalize\_queries} that makes no assumption but only pipes the work to the former. The main process can be informally described as consisting of two subprocesses that deal with the two aforementioned properties.
+The complete normalization process is actually composed of two separate functions; \texttt{normalize}, which performs all the actual work but under the assumption that the type in context is an object type, and \texttt{normalize\_queries}, which makes no assumption but only pipes the work\et{?} to the former. The main process can be informally described as consisting of two subprocesses that deal with the two aforementioned properties.\et{which? (merging, mentioned below, was not mentioned above)}
 \iffalse
 \begin{itemize}
     \item Grounding: Selections are either wrapped with inline fragments or lifted from an inline fragment.
@@ -170,7 +187,7 @@ The complete normalization process is actually composed of two separate function
 \end{itemize}
 \fi
 
-The first subprocess tackles the groundness of queries, and corresponds to the \texttt{if-else} block as well as the mapping in line 19 of Figure~\ref{fig:normalize}. The grounding is done by either wrapping selections with inline fragments, whenever the type in context is an abstract type, or by lifting nested selections from inside fragments, whenever their type conditions are compatible with the object type in context\td{This is related to the fact that GraphQL allows invalid fragments}. This process can be illustrated with the example for Figure~\ref{fig:grounded}. Once again, the query to the left is not grounded since it requests the name of an animal without being specific down to the object types. The normalization process will then produce the query to the right, by wrapping the selection using fragments with the subtypes of the \texttt{Animal} type, namely \texttt{Dog} and \texttt{Pig}.
+The first subprocess\et{name it} tackles\et{you "tackle" too much -- it's a vague term, be precise. What is "tackling the groundedness"? is it "transforming a query to an equivalent grounded one"? then say so. You can look for "tackle" in the whole paper and do the exercise of finding the thing tackle stands for.} the groundedness of queries, and corresponds to the \texttt{if-else} block \et{lines?} as well as the mapping in line 19 of Figure~\ref{fig:normalize}. The grounding is done by either wrapping selections with inline fragments, whenever the type in context is an abstract type, or by lifting nested selections from inside fragments, whenever their type conditions are compatible with the object type in context\td{This is related to the fact that GraphQL allows invalid fragments}. This process can be illustrated with the example for Figure~\ref{fig:grounded}. \et{there is no space for repetition: this is just saying that normalizing grounds, which we know already. So what is worth saying? (go the point, don't repeat)} Once again, the query to the left is not grounded since it requests the name of an animal without being specific down to the object types. The normalization process will then produce the query to the right, by wrapping the selection using fragments with the subtypes of the \texttt{Animal} type, namely \texttt{Dog} and \texttt{Pig}.
 
 \iffalse
 \td{This is the same example as above, so it can be reused}
@@ -196,7 +213,8 @@ query {
 \fi
 
 
-\td{Unnecessary?} Next, to tackle inline fragments that are unnecessary or that specialize selections in the context of an object type, let us consider the following queries. The first query includes two fragments that are not necessary; a fragment with type condition \texttt{Query} and one with type condition \texttt{Animal}. The procedure eliminates both fragments, by lifting the subqueries.
+\td{Unnecessary?} \et{yeah, I think all this is taking too much space for the actual technical content and insights it provides. Think of a more concise way to describe normalization, ie. by guiding the reader walk through FIgure 9}\et{examples are not necessary, you illustrated before when introducing the notions} \et{for now, I'm skipping the rest of 4.2, jumping to 4.3}
+Next, to tackle inline fragments that are unnecessary or that specialize selections in the context of an object type, let us consider the following queries. The first query includes two fragments that are not necessary; a fragment with type condition \texttt{Query} and one with type condition \texttt{Animal}. The procedure eliminates both fragments, by lifting the subqueries.
 
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Not grounded query
@@ -278,7 +296,9 @@ We now move onto proving correctness of the normalization procedure and the pres
 
 \subsection{Proofs of correctness and preservation}
 
-As described initially in this paper, \HP{} base the complexity results over GraphQL queries on two premises; queries can be normalized, preserving their semantics, and there is an equivalent simplified function to evaluate queries in normal form. We tackle the first premise by establishing correctness of our normalization procedure and then preservation of semantics. Figure~\ref{fig:simpl_semantics} shows the simplified semantics's formal definition. Aliased cases are not included due to space constraints.
+\et{the name of this "property/ies" keeps changing. Pick one, and use it throughout (ie. intro, beginning of 4)}
+
+As described initially in this paper \et{you recalled it in the header of 4, no need to say it again}, \HP{} base the complexity results over GraphQL queries on two premises; queries can be normalized, preserving their semantics, and there is an equivalent simplified function to evaluate queries in normal form. We tackle \et{lol} the first premise by establishing correctness of our normalization procedure and then preservation of semantics. Figure~\ref{fig:simpl_semantics} shows the simplified semantics's \et{why are we talking about the simplified semantics here? (we're not in 4.4 yet)} formal definition. Aliased cases are not included due to space constraints.
 
 \setcounter{equation}{0}% Restart equation counter
 \begin{figure*}[h]
