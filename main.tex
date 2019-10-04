@@ -1,4 +1,5 @@
-\documentclass[sigplan,10pt,anonymous,review]{acmart}\settopmatter{printfolios=true,printccs=false,printacmref=false}
+\documentclass[sigplan,10pt,anonymous,review,nonacm]{acmart}
+% \settopmatter{printfolios=true,printccs=false,printacmref=false}
 \usepackage[utf8]{inputenc}
 \usepackage{subcaption}
 \usepackage{listings}
@@ -8,7 +9,6 @@
 \usepackage{xcolor}
 \usepackage[nounderscore]{syntax}
 \setminted{fontsize=\footnotesize}
-
 
 
 % Colors
@@ -61,10 +61,6 @@
 \newcommand{\resp}[1]{\fkey\texttt{:}#1}
 \newcommand{\nval}{\texttt{null}}
 \newcommand{\val}{\texttt{v}}
-
-
-\renewcommand\footnotetextcopyrightpermission[1]{}
-
 
 
 \begin{document}
