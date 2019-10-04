@@ -1,44 +1,80 @@
 %!TEX root = ./main.tex
 \section{Introduction}
 
-GraphQL is a technology-agnostic framework that provides a common language to define interfaces to services' data and to query them. It has been mainly proposed as a new alternative to RESTful Web Services. After being designed and used internally in Facebook for three years, in 2015 they released a specification~\cite{gqlspec} and a reference implementation\footnote{https://github.com/graphql/graphql-js}. Since then, GraphQL has seen a huge increase in their extent, community and popularity, becoming an independent foundation\footnote{https://foundation.graphql.org/} early on 2019 and being incorporated to the services of major firms such as Coursera, Github and Airbnb. Some of its strong appeals are that many REST requests can be replaced by a single GraphQL query and that queries follow a ``what you ask is what you get'' spirit. This means that, in contrast with REST-based services, one can be very precise with the data requested and the response will look very similar to the query.
 
-As recently mentioned, GraphQL has a specification that describes its main components, the \spec{} for the remainder of the paper. This document includes definitions for the query language and validation processes, among other things. The specification actively undergoes revisions, with an open working group that meets monthly to discuss related issues and improvements. These include extending the language to support new features or fix possible ambiguities present in the document. This is because the document is written in natural language, i.e. plain English, and does not include a rigorous formalization of its inner mechanics and limitations.
+GraphQL is an increasingly popular language to define interfaces and queries to services data. Originally developed internally by Facebook as an alternative to RESTful Web Services, GraphQL was made public in 2015, along with a specification~\cite{gqlspec}\et{fix ref (version/year)} and a reference implementation\footnote{https://github.com/graphql/graphql-js}. Since early 2019, as a result of its successful adoption by major players in industry,
+GraphQL is driven by an independent foundation\footnote{https://foundation.graphql.org/}. The key novelty compared to traditional REST-based services is that tailored queries can be formulated directly by clients, allowing a very precise selection of which data ought to be sent back as response. This supports a much more flexible and efficient interaction model for clients of services, who do not need to gather results of multiple queries on their own, possibly wasting bandwidth with unnecessary data.
+% many REST requests can be replaced by a single GraphQL query; additionally, and 
+% that 
+
+% follow a ``what you ask is what you get'' spirit. This means that, in contrast with REST-based services, one can be very precise with the data requested and the response will look very similar to the query.
+
+The official GraphQL specification, called \spec{} hereafter, 
+covers the definition of interfaces, the query language, and the validation processes, among other aspects. The specification undergoes regular revisions by an open working group, which meets monthly to discuss extensions and improvements, as well as addressing ambiguities. Indeed, the \spec{} is written in natural language, and does not include a rigorous formalization of \et{vague} its inner mechanics and limitations.
+% related issues and improvements.  
+% These include extending the language to support new features or fix possible ambiguities present in the document. This is because the document is written in natural language, i.e. plain English, 
 % There is also a project to define CATs\footnote{Compatibility Acceptance Tests} for the different languages and frameworks that implement GraphQL\td{Not sure if this should go or where. It may serve as a link to "why of GraphCoQL"}.
+Considering the actual vibrancy of the GraphQL community, sustained by many different implementations in a variety of programming languages and underlying technologies, having a formal specification ought to bring some welcome clarity for all actors.
 
-Hartig and Pérez proposed the first (and so far only) formalization of GraphQL~\cite{gqlph} and used it to prove complexity boundaries for GraphQL queries.
-We refer to it as \HP{} for the remainder of the paper. These results are based on two major premises. The first one is that ``\textit{for every query $\varphi$ that conforms to a schema $\mathcal{S}$, there exists a {\normalfont non-redundant} query $\varphi$' in {\normalfont ground-typed normal form} such that $\varphi \equiv \varphi$'}''. The second one is that for queries that are \textit{non-redundant} and in \textit{ground-typed normal form}, it is possible to define a simplified version of the semantics which is equivalent to the original.
-For the former, they propose a set of equivalence rules to transform queries but they do not actually prove that their application yield a query in this particular form or that they preserve the query semantics. The latter is also exploited, without providing any correctness proof. Since both are fundamental for their complexity results, we believe they must be rigorously addressed.
+Recently, Hartig and Pérez~\cite{gqlph} proposed the first (and so far only) formalization of GraphQL, called \HP{} hereafter. 
+\HP{} is a formalization ``on paper'' that was used to prove complexity boundaries for GraphQL queries. Having a mechanized formalization would present many additional benefits, such as potentially providing a faithful reference implementation, and serving as a solid basis to prove results about the GraphQL formal semantics. 
+
+For instance, the complexity results of Hartig and Pérez rely on two techniques: {\em a)} transforming queries to {\em equivalent} queries in some  normal form, {\em b)} interpreting queries in a simplified but {\em equivalent} definition of the semantics. However, they do not prove that the query transformation (called {\em normalization}) indeed produces queries in such a normal form, and that their semantics is preserved; nor do they prove that the simplified semantics is equivalent to the original one, on such queries\et{right?}.
+
+% The complexity results are based on two major premises. 
+% The first one is that ``\textit{for every query $\varphi$ that conforms to a schema $\mathcal{S}$, there exists a {\normalfont non-redundant} query $\varphi$' in {\normalfont ground-typed normal form} such that $\varphi \equiv \varphi$'}''. The second one is that for queries that are \textit{non-redundant} and in \textit{ground-typed normal form}, it is possible to define a simplified version of the semantics which is equivalent to the original.
+
+% For the former, they propose a set of equivalence rules to transform queries but they do not actually prove that their application yield a query in this particular form or that they preserve the query semantics. The latter is also exploited, without providing any correctness proof. Since both are fundamental for their complexity results, we believe they must be rigorously addressed.
+
+\paragraph{GraphCoQL.} This work presents the first mechanized formalization of GraphQL, carried out in the Coq proof assistant \et{cite}, called GraphCoQL (pronounced ``græf$\cdot$co$\cdot$k{\pmschwa}l''). In addition to capturing the semantics of GraphQL, GraphCoQL makes it possible to completely specify and prove correct transformations over queries, as well as other extensions and optimizations made to the language and its algorithms. We illustrate this by proving \HP{}'s normalization \et{and simplified semantics?} correct \et{but there were bugs, right? clarify}.
+We hope that GraphCoQL can serve as a starting point for a formal specification of GraphQL from which reference implementations can be extracted. Although we have not yet experimented with extraction, GraphCoQL facilitates this vision by relying on boolean reflection as much as possible.
+% ; this should eventually make it possible to extract reference implementations of the different components developed in GraphCoQL, such as the query evaluator or the normalization function. 
+ % and extracting it to be its official reference implementation.
 
 %We will refer to it as \HP{} throughout the paper. They define the semantics of GraphQL by using a graph as the underlying data model over which queries are evaluated. \td{rewrite} define the normalization transformation, which results in \textit{non-redundant} queries in \textit{ground-typed normal form}.
 % This normalization process is essential for proving complexity boundaries for GraphQL queries, because it allows simplifying the semantics and.
 
-On another note, we believe that GraphQL is still a very young and active technology which could greatly benefit by having its specification mechanically verified from its early stages. It has a very active and growing community, with many different implementations in different programming languages and technologies, and more importantly, with many open questions and issues. It currently has a reference implementation, written in Javascript, that could be improved by introducing a formally and mechanically verified one. %We refer to the reference implementation as \textit{GraphQLJs} throughout the document.
+% On another note, we believe that GraphQL is still a very young and active technology which could greatly benefit by having its specification mechanically verified from its early stages. It has a very active and growing community, with many different implementations in different programming languages and technologies, and more importantly, with many open questions and issues. It currently has a reference implementation, written in Javascript, that could be improved by introducing a formally and mechanically verified one. %We refer to the reference implementation as \textit{GraphQLJs} throughout the document.
 
- Given the previous factors, we develop a Coq formalization of GraphQL, called 
- GraphCoQL (pronounced ``græf$\cdot$co$\cdot$k{\pmschwa}l'').
- We believe that GraphCoQL can serve as a starting point towards fully formalizing GraphQL and extracting it to be its official reference implementation.  Transformations over queries, such as \HP{}'s normalization, can then be completely specified and proven correct, as well as possible extensions and optimizations made to the language and its algorithms. To address the trustworthiness of our implementation, GraphCoQL tries to match the \spec{}'s definitions whenever possible. This provides a component of trustworthiness given by an eyeball correspondence, following the examples of~\cite{jscert} and\cite{coqr}.
+ % Given the previous factors, we develop a Coq formalization of GraphQL, called 
+ % GraphCoQL (pronounced ``græf$\cdot$co$\cdot$k{\pmschwa}l'').
+ % We believe that GraphCoQL can serve as a starting point towards fully formalizing GraphQL and extracting it to be its official reference implementation.  
 
+To address the trustworthiness of the GraphCoQL formalization, we have tried to establish a direct ``eyeball correspondence'' between GraphCoQL and the \spec{} whenever possible---though this correspondence has not (yet) been as seriously and systematically established as in the JSCert~\cite{jscert} and CoqR~\cite{coqr} projects, among others.
+  % current status of GraphCoQL is less firmly 
+  % following the examples of JSCert~\cite{jscert} and CoqR~\cite{coqr}.
+ % This provides a component of trustworthiness given by an , 
  % We also test our implementation with examples from the \spec{} but a more thorough comparison should be made against \textit{GraphQLJs} and a bigger test suite.
+\et{there is some contradiction between the eyeball correspondence and the "mixed approach"} 
+Like \HP{}, GraphCoQL adopts at its core a graph-based data model \et{what is the model in \spec{}?}, but the algorithm \et{which algo?} can be traced closely to \spec{}. 
+% With respect to the semantics of GraphQL, we follow a mixed approach between the \spec{} and \HP{}. The semantics are defined in a graph setting, as is in \HP{}, . 
+% One of the biggest difference between both approaches (besides the graph model) is that the 
+\et{what is this processing about? and is the mixed approach you took here?}
+\spec{} performs a processing of queries during the evaluation, while \HP{} performs a post-processing of the responses generated. We took the mixed approach, which brings out some benefits as well as some limitations, which we discuss further in a following section.
 
-With respect to the semantics of GraphQL, we follow a mixed approach between the \spec{} and \HP{}. The semantics are defined in a graph setting, as is in \HP{}, but the algorithm can be traced more closely to the \spec{}'s. One of the biggest difference between both approaches (besides the graph model) is that the \spec{} performs a processing of queries during the evaluation, while \HP{} performs a post-processing of the responses generated. We took the mixed approach, which brings out some benefits as well as some limitations, which we discuss further in a following section.
 
 %\td{Rewrite} When it comes to the underlying data model, we follow \HP{} and define our semantics in a graph setting. We are also interested in defining the properties and transformation rules defined by \HP{}. These definitions and their proofs of correctness are fundamental in the posterior results they obtain. This served as a particularly interesting first case study for our system, to establish that we can actually reason about GraphQL and that theirs results were based off correct assumptions. This allows us to, hopefully, anticipate that other transformations may also be defined and proven correct in GraphCoQL.
 
-Finally, regarding the development itself, we use SSReflect \et{cite} intensively, relying on boolean reflection as much as possible. Also, the use of the \textit{Equations} library \et{cite the paper} to define non-structural recursive functions is essential for our definitions. Other libraries, such as \textit{Function} and \textit{Program} did not provide sufficient tools to handle rewriting and inductive reasoning about our definitions, which \textit{Equations} incredibly facilitates. \coql{} is not currently extracted to other languages but we believe that it should not be a difficult task, given the design decisions considered.
+\et{I think we can skip this paragraph here, not important enough for being in the intro} Finally, regarding the development itself, we use SSReflect \et{cite} intensively, relying on boolean reflection as much as possible. Also, the use of the \textit{Equations} library \et{cite the paper} to define non-structural recursive functions is essential for our definitions. Other libraries, such as \textit{Function} and \textit{Program} did not provide sufficient tools to handle rewriting and inductive reasoning about our definitions, which \textit{Equations} incredibly facilitates. \coql{} is not currently extracted to other languages but we believe that it should not be a difficult task, given the design decisions considered.
 
 %We were first motivated to use it to define the data model and try to narrow our scope to finite types, as was used by (Veronique, Ev, Emilio, Dumbrava). In the end, we did not use any of it but the computational aspect of SSReflect was kept, as it facilitated developing the proofs. This same element is what makes us believe that extraction should not be hard.
 
-\subsubsection*{Contributions}
-The main contributions of this work are:
-\begin{enumerate}
-    \item The first mechanized formalization of GraphQL, including the definition for schema's DSL, query definition, schema and query validation, and its semantics over a graph data model.
-    \item Detection and correction of unsound definitions in \HP{}.
-    \item The implementation of a normalization function with proofs of its correctness and preservation of semantics. This is a result used by \HP{} to prove complexity boundaries about GraphQL queries.
-    \item Proof of equivalence between the semantics and a simplified version. This is also an important result for posterior analysis made in \HP{}.
+\paragraph{Contributions.}
+The contributions of this work are:
+\begin{itemize}
+    \item The first mechanized formalization of GraphQL (\S\ref{sec:form}), including the definition of the Schema DSL, query definition, schema and query validation, and the semantics of queries over a graph data model.
+    \item \et{where?} Detection and correction of unsound definitions in \HP{}.\et{I'd move that to an observation after the list, so as not to make too much fuss about it}
+    \item An implementation of \HP{}'s normalization (\S\ref{sec:norm}), proven correct.
+    \item A proof of equivalence between the original GraphQL semantics and the simplified semantics used by \HP{}.\et{shouldn't this be a separate section?}
+     % function with proofs of its correctness and preservation of semantics. This is a result used by \HP{} to prove complexity boundaries about GraphQL queries.
+    % \item Proof of equivalence between the semantics and a simplified version. This is also an important result for posterior analysis made in \HP{}.
+\end{itemize}
 
-\end{enumerate}
+We first briefly introduce GraphQL (\S\ref{sec:bg}). We end this article by discussing the validation and limitations of GraphCoQL (\S\ref{sec:valid}), related work (\S\ref{sec:related}) and conclude in \S\ref{sec:conclu}.
 
-\subsubsection*{Structure of this paper}
+\td{include note on code as anonymous supplementary material}
 
-We first begin by gently and briefly introducing GraphQL in Section \ref{sec:bg}, which we do by means of an example. Then, in Section \ref{sec:form}, we describe the basic building blocks of our Coq formalization. This includes the definition of a GraphQL schema, the graph data model, queries and their semantics. Section \ref{sec:norm} describes the normalization process and proofs of its correctness and preservation of semantics. We finalize that section with the definition of the simplified semantics, as described in \HP{}, and a proof of equivalence between the semantics defined in Section \ref{sec:form} and the simplified one. In Section \ref{sec:valid}, we describe some of the work we did to validate our implementation and finally Section \ref{sec:related} and \ref{sec:future} we discuss related and future work.\td{include note on code as anonymous supplementary material}
+
+% \subsubsection*{Structure of this paper}
+
+% We first begin by gently and briefly introducing GraphQL in Section \ref{sec:bg}, which we do by means of an example. Then, in Section \ref{sec:form}, we describe the basic building blocks of our Coq formalization. This includes the definition of a GraphQL schema, the graph data model, queries and their semantics. Section \ref{sec:norm} describes the normalization process and proofs of its correctness and preservation of semantics. We finalize that section with the definition of the simplified semantics, as described in \HP{}, and a proof of equivalence between the semantics defined in Section \ref{sec:form} and the simplified one. In Section \ref{sec:valid}, we describe some of the work we did to validate our implementation and finally Section \ref{sec:related} and \ref{sec:future} we discuss related and future work.
