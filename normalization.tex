@@ -15,35 +15,47 @@ Similarly to what is described in Section~\ref{subsec:query}, the normalization 
 % Throuhgout our development, we noticed that this definition given by \cite{gqlph} was too general when proving correctness of our normalization procedure. In particular, the definition states that the subqueries of a field selection can be either fields or fragments. This means that if there are two field selections with the same response name, one may have subqueries consisting of fields, while the other contains only inline fragments. This would cause issues when trying to remove redundancies in queries because one could not directly establish if the resulting queries satisfied the property.
 \subsubsection*{Groundness}
 
-Informally, the \textit{groundness} property refers to whether queries are completely specified down to the object types.  Consider the first query depicted below, requesting the name of an animal. This query is not grounded because the \texttt{name} request is made over the \texttt{Animal} type, which is an abstract type. Now, consider the second query that is requesting the same information as the previous. In this case, the query is grounded since it completely specifies the object types to which it is requesting information.
+Informally, the \textit{groundness} property refers to whether queries are completely specified down to the object types.  Consider the query depicted in Figure~\ref{fig:grounded} that requests the name of an animal. This query is not grounded because the field \texttt{name} is made over the \texttt{Animal} type, which is an abstract type. Now, consider the query to the right that is requesting the same information as the previous. In this case, the query is grounded since it completely specifies the object types to which it will request the information.
 
+\begin{figure}[h]
+\centering
+\begin{subfigure}{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
-// Not grounded query
 query {
-    goodboi {
-        name
-    }
+  goodboi {
+    name
+  }
 }
-// Grounded query
+\end{minted}
+\end{subfigure}%
+\begin{subfigure}{.25\textwidth}
+\begin{minted}[escapeinside=||, mathescape=true]{js}
 query {
-    goodboi {
-        |$\ldots$| on Dog {
-	    name
-	}
-	|$\ldots$| on Pig {
-	    name
-	}
-    }	
+  goodboi {
+    |$\ldots$| on Dog {
+	  name
+    }
+    |$\ldots$| on Pig {
+      name
+    }
+  }	
 }
 \end{minted} 
+\end{subfigure}
+
+\caption{Not grounded query (left) and semantically equivalent grounded query (right).}
+\label{fig:grounded}
+\end{figure}
 
 The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype.
 
 \begin{definition}
 A GraphQL query $\varphi$ is \textit{grounded} if it satisfies the following conditions, where \texttt{ty} is the type in scope.
-\item If \texttt{ty} is an Object type, then $\varphi$ contains only fields.
-\item If \texttt{ty} is an Abstract type (Interface or Union), then $\varphi$ contains only inline fragments. The type condition on these fragments must be Object types.
-\item Subqueries of $\varphi$ are \textit{grounded} w.r.t. to the field's return type or the fragments type condition.
+\begin{itemize}
+	\item If \texttt{ty} is an object type, then $\varphi$ contains only fields.
+	\item If \texttt{ty} is an abstract type (interface or union), then $\varphi$ contains only inline fragments. The type condition on these fragments must be Object types.
+	\item Subqueries of $\varphi$ are \textit{grounded} w.r.t. to the field's return type or the fragments type condition.
+\end{itemize}
 \end{definition}
 
 Our definition of groundness is slightly different from the one in \HP{}, nevertheless, we prove that our definition still implies being in ground-typed normal form.
@@ -59,7 +71,8 @@ Lemma are_grounded_in_ground_typed_nf (s : wfGraphQLSchema)
 \subsubsection*{Non-redundancy}
 
 Informally, the notion of non-redundancy refers to whether there are no queries that may produce repeated results. For example, the two queries below depict the cases of a redundant and a non-redundant query. The first one is requesting the field \texttt{name} twice to the same type and uses two fragments with the same type condition. If no collection and merger of fields is performed during the evaluation, this would produce two values with key \texttt{name}. Meanwhile, the second case requests information about each type only once. It is important to notice that, even though it requests the \texttt{name} field in both,  this is considered not redundant. The reason is that only one fragment will actually be executed at a time, depending on the concrete object value that is used to evaluate the query, therefore not repeating the evaluation of the field.
-
+\td{Should this be another figure?}
+\begin{minipage}[t]{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Redundant query
 query {
@@ -74,6 +87,10 @@ query {
 	}
     }
 }
+\end{minted}
+\end{minipage}%
+\begin{minipage}[t]{.25\textwidth}
+\begin{minted}[escapeinside=||, mathescape=true]{js}
 // Non-redundant query
 query {
     goodboi {
@@ -86,6 +103,7 @@ query {
     }	
 }
 \end{minted} 
+\end{minipage}
 
 \begin{definition}
 A GraphQL query $\varphi$ is \textit{non-redundant} if it satisfies the following conditions.
@@ -102,10 +120,44 @@ Our definition of non-redundancy assumes that the queries are grounded, much lik
 
 \subsection{Normalization procedure}\label{subsec:normalization}
 
-The normalization procedure can be understood as a form of abstract interpretation, which evaluates queries using only static information about the type in context.
+The normalization procedure can be understood as a form of abstract interpretation, which evaluates queries using only static information about the type in context. Figure~\ref{fig:normalize} displays pseudocode describing the process when the head of the list of queries is a field selection with subqueries. We do not include the complete definition because of space limitations but the complete definition can be found in the file \texttt{QueryNormalForm.v}.
 
-The process is composed of two separate functions; \texttt{normalize} that performs all the actual work but under the assumption that the type in context is an object type, and \texttt{normalize\_queries} that makes no assumption but only pipes the work to the former. The main process can be described as consisting of two subprocesses that deal with the two aforementioned properties. Due to space constraints we describe them informally but the complete definition can be found in the file \texttt{QueryNormalForm.v}.
 
+\begin{figure*}[h]
+\centering
+\begin{tabular}{c}
+\begin{lstlisting}[
+mathescape=true,
+style=code]
+(*@\textbf{BEGIN}@*) normalize
+ (*@\textbf{INPUT}@*) schema, type_in_context, queries
+ CASE queries WITH
+  | nil => nil
+  | CONS (response_name [args] { subqueries }) queries => 
+    LET return_type := LOOKUP (schema, type_in_scope, response_name) IN
+    LET collected := COLLECT (schema, response_name, type_in_scope, queries) IN
+    LET merged := CONCAT (subqueries,  MERGE collected) IN
+    LET filtered := FILTER (response_name, queries) IN
+    
+    IF IS_OBJECT_TYPE (schema, return_type) THEN 
+     CONS
+      response_name [args] { normalize (schema, return_type, merged)} 
+      normalize (schema, type_in_scope, filtered)
+    ELSE 
+     LET subtypes := SUBTYPES (schema, type_in_scope) IN
+     CONS
+      response_name [args] { MAP ($\lambda$ subtype => INLINE (subtype, normalize (schema, subtype, merged))) subtypes } 
+      normalize (schema, type_in_scope, filtered)
+     
+  | ...
+(*@\textbf{END}@*) normalize
+\end{lstlisting}
+\end{tabular}
+\caption{Pseudocode for the normalization procedure, showcasing field selections with subqueries.\td{Should we add brief defs. of COLLECT, MERGE, etc.?}}
+\label{fig:normalize}
+\end{figure*}
+
+The complete normalization process is actually composed of two separate functions; \texttt{normalize} that performs all the actual work but under the assumption that the type in context is an object type, and \texttt{normalize\_queries} that makes no assumption but only pipes the work to the former. The main process can be informally described as consisting of two subprocesses that deal with the two aforementioned properties.
 \iffalse
 \begin{itemize}
     \item Grounding: Selections are either wrapped with inline fragments or lifted from an inline fragment.
@@ -118,8 +170,9 @@ The process is composed of two separate functions; \texttt{normalize} that perfo
 \end{itemize}
 \fi
 
-The first subprocess tackles the groundness of queries. The grounding is done by either wrapping selections with inline fragments, whenever the type in context is an abstract type, or by lifting nested selections from inside fragments, whenever their type conditions are compatible with the object type in context\td{This is related to the fact that GraphQL allows invalid fragments}. Let us illustrate the first scenario with the queries below. The top query is not grounded, since it requests the name of an animal without specifying down to the concrete object types. The normalization process will then wrap the selection with fragments where the type conditions are the \texttt{Animal} subtypes: \texttt{Dog} and \texttt{Pig}.
+The first subprocess tackles the groundness of queries, and corresponds to the \texttt{if-else} block as well as the mapping in line 19 of Figure~\ref{fig:normalize}. The grounding is done by either wrapping selections with inline fragments, whenever the type in context is an abstract type, or by lifting nested selections from inside fragments, whenever their type conditions are compatible with the object type in context\td{This is related to the fact that GraphQL allows invalid fragments}. This process can be illustrated with the example for Figure~\ref{fig:grounded}. Once again, the query to the left is not grounded since it requests the name of an animal without being specific down to the object types. The normalization process will then produce the query to the right, by wrapping the selection using fragments with the subtypes of the \texttt{Animal} type, namely \texttt{Dog} and \texttt{Pig}.
 
+\iffalse
 \td{This is the same example as above, so it can be reused}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Not grounded query
@@ -140,8 +193,10 @@ query {
     }	
 }
 \end{minted} 
+\fi
 
-Next, to tackle inline fragments that are unnecessary or that specialize selections in the context of an object type, let us consider the following queries. The first query includes two fragments that are not necessary; a fragment with type condition \texttt{Query} and one with type condition \texttt{Animal}. The procedure eliminates both fragments, by lifting the subqueries.
+
+\td{Unnecessary?} Next, to tackle inline fragments that are unnecessary or that specialize selections in the context of an object type, let us consider the following queries. The first query includes two fragments that are not necessary; a fragment with type condition \texttt{Query} and one with type condition \texttt{Animal}. The procedure eliminates both fragments, by lifting the subqueries.
 
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Not grounded query
@@ -165,8 +220,9 @@ query {
 }
 \end{minted} 
 
-When it comes to removing redundancies in a query, there is a second subprocess that handles it. The process collects fields that share the same response name, merging their subqueries into a single selection. For example, the first query below is redundant since it requests the same \texttt{goodboi} field twice, and the subqueries in both cases also contain repeated \texttt{name} selections. The normalization process then merges the selections with the same response name, leaving only one occurrence of each case.
+When it comes to removing redundancies in a query, there is a second subprocess that handles it, which roughly correspond to lines 7-9 in Figure~\ref{fig:normalize}. The process collects fields that share the same response name, merging their subqueries into a single selection. For example, the first query below is redundant since it requests the same \texttt{goodboi} field twice, and the subqueries in both cases also contain repeated \texttt{name} selections. The normalization process then merges the selections with the same response name, leaving only one occurrence of each case.
 
+\begin{minipage}[t]{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Redundant query
 query {
@@ -177,6 +233,11 @@ query {
  	name
     } 
 }
+\end{minted}
+\end{minipage}%
+\begin{minipage}[t]{.25\textwidth}
+\begin{minted}[escapeinside=||, mathescape=true]{js}
+
 // Normalized query
 query {
     goodboi {
@@ -189,7 +250,7 @@ query {
     }	
 }
 \end{minted} 
-
+\end{minipage}
 
 % With this definition, we define a second one, which makes no assumption on the type in context. This procedure only checks what kind of type it receives and either pipes the job to the previous one, or covers the queries with the possible concrete subtypes (and then pipes the work to the previous definition).
 
@@ -219,7 +280,7 @@ We now move onto proving correctness of the normalization procedure and the pres
 
 As described initially in this paper, \HP{} base the complexity results over GraphQL queries on two premises; queries can be normalized, preserving their semantics, and there is an equivalent simplified function to evaluate queries in normal form. We tackle the first premise by establishing correctness of our normalization procedure and then preservation of semantics.
 
-First, we prove that the procedure is correct and returns queries in normal form, by proving separately that the resulting queries are grounded and non-redundant\footnote{Since we prove that grounded implies ground-typed normal form, we can also prove ground-typed normal form for the normalization function.}. Both are proved using the inductive principle generated by Equations\td{Which is in essence induction over the list structure... I guess? But I believe it's more since it builds the graph of the function, so it's probably more likely induction over the graph structure induced by the definition. I am not entirely familiar with the inner mechanics of Equations tbh} and then mostly auxiliary lemmas over subtypes.  We consider the case where the type in scope is an Object type and the general case. 
+First, we prove that the procedure is correct and returns queries in normal form, by proving separately that the resulting queries are grounded and non-redundant\footnote{Since we prove that grounded implies ground-typed normal form, we can also prove ground-typed normal form for the normalization function.}. Both are proved by well-founded induction over the queries size\footnote{The notion of size includes the length of the list as well as the depth of the query tree.} and then mostly auxiliary lemmas over subtypes.  We consider the case where the type in scope is an Object type and the general case. 
 
 \begin{minted}[escapeinside=||,mathescape=true]{coq}
 Lemma normalize_are_grounded (s : wfGraphQLSchema)
@@ -236,7 +297,7 @@ Lemma normalize_are_non_redundant (s : wfGraphQLSchema)
 
 \end{minted}
 
-Next, we prove that the semantics are preserved for the resulting queries. To begin with, we prove the case where the type in context is the same as the type of the node where queries are being normalized. Lifting this to top level, it corresponds to normalizing over the Query type and evaluating on the root node (whose type is the same, due to graph conformance). We then extend this notion to normalization over any type in context, \texttt{ty}, but with the restriction that the node's type must be subtype of \texttt{ty}. Once again, this is valid at top level over the Query type and the root node. Conformance of the graph also ensures that normalization and evaluation over neighboring nodes is preserved. The proof is performed by using the reasoning principle generated by the Equations library and mostly auxiliary lemmas about graph conformance.
+Next, we prove that the semantics are preserved for the resulting queries. To begin with, we prove the case where the type in context is the same as the type of the node where queries are being normalized. Lifting this to top level, it corresponds to normalizing over the Query type and evaluating on the root node (whose type is the same, due to graph conformance). We then extend this notion to normalization over any type in context, \texttt{ty}, but with the restriction that the node's type must be subtype of \texttt{ty}. Once again, this is valid at top level over the Query type and the root node. Conformance of the graph also ensures that normalization and evaluation over neighboring nodes is preserved. The proof is also performed by well-founded induction over the queries size and mostly auxiliary lemmas about graph conformance.
 
 \begin{minted}[escapeinside=||,mathescape=true]{coq}
 Lemma normalize_exec (s : wfGraphQLSchema)
@@ -267,7 +328,7 @@ and the proof of equivalence.
 
 As proposed by \HP{}, one of the main properties of queries in normal form is that they produce non-redundant responses\td{They actually say "unique responses" - they don't define non-redundancy for responses.}, without the need of any collection and merger of fields. This property allows defining a second evaluation function $\ll \varphi \gg_{G}$, similar to the one defined in Section~\ref{subsec:semantics} but without any filtering and collecting of fields.
 
-We implement the simplified semantics following \HP{} and then prove the premise that, for queries in normal form, both $\llbracket \varphi \rrbracket_{G}$ and $\ll \varphi \gg_{G}$ produce the same response. We do not include the complete definition but they can be found in the files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. The proof is carried by induction over the size of the queries\footnote{The notion of size includes the length of the list as well as the depth of the query tree}.
+We implement the simplified semantics following \HP{} and then prove the premise that, for queries in normal form, both $\llbracket \varphi \rrbracket_{G}$ and $\ll \varphi \gg_{G}$ produce the same response. We do not include the complete definition but they can be found in the files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. The proof is once again performed by induction over the size of the queries.
 
 \begin{minted}[escapeinside=||,mathescape=true]{coq}
 Theorem exec_equivalence (s : wfGraphQLSchema)

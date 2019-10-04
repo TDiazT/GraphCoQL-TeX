@@ -4,9 +4,36 @@
 \usepackage{listings}
 \usepackage{multicol}
 \usepackage[cache=false]{minted}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[nounderscore]{syntax}
 \setminted{fontsize=\footnotesize}
 
-\usepackage[nounderscore]{syntax}
+
+
+% Colors
+\definecolor{darkgray}{HTML}{404040}
+\definecolor{rulegray}{HTML}{DADADA}
+\definecolor{keywordblue}{HTML}{1F497C}
+\definecolor{mygray}{gray}{0.6}
+% Listings
+\lstdefinestyle{code}{
+  basicstyle=\scriptsize,
+  %backgroundcolor=\color{rulegray},
+   numbers=left,
+  emph=[1]{BEGIN, END, INPUT},
+  emphstyle=[1]{\color{black}},
+  keywordstyle=\color{keywordblue},
+  keywords={LET, IN,CASE,IF,ELSE,THEN, WITH},
+  escapeinside={(*@}{@*)}
+}
+% Listings
+%\lstdefinestyle{code}{
+  %basicstyle=\scriptsize,
+  %keywordstyle=\color{keywordblue},
+  %keywords={import,qualified,as,do,where}
+%}
+
 
 \newcommand{\mynote}[3]
     {{\color{#3} \fbox{\bfseries\sffamily\scriptsize#1}
