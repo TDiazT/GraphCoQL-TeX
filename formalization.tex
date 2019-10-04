@@ -132,7 +132,7 @@ Let Dog := Object "Dog" implements [:: "Animal"] {[::
 
 An important aspect of GraphQL is that it is not tied to any particular database technology and implementation. When resolving queries, GraphQL simply assumes the existence of \textit{resolvers}, which are internal functions defined by the user implementing a GraphQL service. They are not tied to any particular data model and the only requirement is that they must adhere to the schema. It is up to the user whether the resolvers access a database, return static values or even modify existing data\footnote{The \spec{} states that resolvers ``\textit{must always be side effect‐free and idempotent}'' but the definition of a resolver does not actually impose these restrictions.}. This looseness makes it hard to reason about the semantics.
 
-With this in mind, we choose to follow \HP{}'s approach and define the underlying data model as a graph over which queries are evaluated. With this model, the unspecified resolvers can be instantiated to concrete definitions, which allow reasoning over them. The semantics are then described as being implemented over a graph setting. Although this provides benefits when reasoning about the semantics, it also comes with some potentially severe limitations over the completeness of the possible results generated.\td{They may not actually be limitations with the model, but there are open questions on how to model some things.} We provide a more thorough explanation of these in Section~\ref{sec:discussion}, as well as \HP{}'s approach to the subject.
+With this in mind, we choose to follow \HP{}'s approach and define the underlying data model as a graph over which queries are evaluated. With this model, the unspecified resolvers can be instantiated to concrete definitions, which allow reasoning over them. The semantics are then described as being implemented over a graph setting. Although this provides benefits when reasoning about the semantics, it also comes with some potentially severe limitations over the completeness of the possible results generated.\td{They may not actually be limitations with the model, but there are open questions on how to model some things.} We provide a more thorough explanation of these in \S\ref{sec:discussion}, as well as \HP{}'s approach to the subject.
 
 Informally, a GraphQL graph is a directed property graph, with labeled edges and typed nodes. The graph describes entities with their types and properties, as well as the relationship between them. This means that every node has properties (key-value pairs) and a type. Also, every label in an edge describes the relation between two nodes. Finally, every property or label may also contain a list of arguments (key-value pairs).
 
@@ -370,7 +370,7 @@ query {
 
 
 				
-These last two rules, for merging and unambiguous values, are defined as a single validation rule in the \spec{}\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Field-Selection-Merging}, however we decide to separate them. The first reason, which we cover more extensively in Section~\ref{sec:discussion}, is that it is possible to optimize the algorithm by reducing redundant recursive calls. Secondly, splitting facilitates reasoning about the predicates.
+These last two rules, for merging and unambiguous values, are defined as a single validation rule in the \spec{}\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Field-Selection-Merging}, however we decide to separate them. The first reason, which we cover more extensively in \S\ref{sec:discussion}, is that it is possible to optimize the algorithm by reducing redundant recursive calls. Secondly, splitting facilitates reasoning about the predicates.
 
 % The main issue is that the \spec{} allows for what we call \textit{invalid fragments}, originally described in an issue in the \spec{}'s repository\footnote{https://github.com/graphql/graphql-spec/issues/367}. In a nutshell, the \spec{} allows using fragments with type conditions that can span to multiple unrelated types. These end up not being evaluated due to posterior checks\footnote{https://graphql.github.io/graphql-spec/June2018/\#DoesFragmentTypeApply()}.
 
@@ -401,7 +401,7 @@ Definition GraphQLResponse (Vals: eqType) :=
 
 
 
-As we described in Section~\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec{}, in the sense that it can be detached from a particular data model. 
+As we described in \S\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec{}, in the sense that it can be detached from a particular data model. 
 Informally, the evaluation of a query then represents a navigation over a graph. At top level, a query begins from the root node and then navigates around its edges and nodes, collecting data along the way. In this sense:
 \begin{itemize}
     \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node.

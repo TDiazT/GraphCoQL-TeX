@@ -375,7 +375,7 @@ and the proof of equivalence.
 
 \subsection{Simplified semantics}
 
-As proposed by \HP{}, one of the main properties of queries in normal form is that they produce non-redundant responses\td{They actually say "unique responses" - they don't define non-redundancy for responses.}, without the need of any collection and merger of fields. This property allows defining a second evaluation function $\ll \varphi \gg_{G}$, similar to the one defined in Section~\ref{subsec:semantics} but without any filtering and collecting of fields.
+As proposed by \HP{}, one of the main properties of queries in normal form is that they produce non-redundant responses\td{They actually say "unique responses" - they don't define non-redundancy for responses.}, without the need of any collection and merger of fields. This property allows defining a second evaluation function $\ll \varphi \gg_{G}$, similar to the previous (\S\ref{subsec:semantics}) but without any filtering and collecting of fields.
 
 We implement the simplified semantics following \HP{} and then prove the premise that, for queries in normal form, both $\llbracket \varphi \rrbracket_{G}$ and $\ll \varphi \gg_{G}$ produce the same response. We do not include the complete definition but they can be found in the files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. The proof is once again performed by induction over the size of the queries.
 
