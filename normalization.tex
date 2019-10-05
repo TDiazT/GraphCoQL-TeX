@@ -12,28 +12,28 @@ It is worth mentioning that most of our formalization effort was devoted to defi
 \subsection{Normal form}
 
 The notion of \textit{normal form} introduced by Hartig and Pérez consists of the conjunction of two properties: being \textit{grounded} and being \textit{non-redundant}.
-\HP{} refers to the former as being in \textit{ground-typed normal form}. \et{remove/why is that confusing?} We believe this naming is confusing so we decide to rename it to the previously described property.
+\HP{} refers to the former as being in \textit{ground-typed normal form}. %\et{remove/why is that confusing?} We believe this naming is confusing so we decide to rename it to the previously described property.
 
-\et{skip/move} Similarly to what is described in Section~\ref{subsec:query}, the normalization process requires information on the type in context where the queries might be defined. This is crucial as it guides the process on how queries are transformed.
+%\et{skip/move} Similarly to what is described in Section~\ref{subsec:query}, the normalization process requires information on the type in context where the queries might be defined. This is crucial as it guides the process on how queries are transformed.
 
 % Throuhgout our development, we noticed that this definition given by \cite{gqlph} was too general when proving correctness of our normalization procedure. In particular, the definition states that the subqueries of a field selection can be either fields or fragments. This means that if there are two field selections with the same response name, one may have subqueries consisting of fields, while the other contains only inline fragments. This would cause issues when trying to remove redundancies in queries because one could not directly establish if the resulting queries satisfied the property.
-\subsubsection*{Groundness}
-\et{should it be "groundedness"? (being bounded is boundedness, being rounded is roundedness, etc.)}
-Informally, the \textit{groundness} property refers to whether queries are completely specified down to the object types.  Consider the query on the left of Figure~\ref{fig:grounded}, which requests the name of an animal. This query is not grounded because the field \texttt{name} is made over the \texttt{Animal} type \et{we don't see Animal?}, which is abstract. In contrast, the query on the right is requesting the same information, but it is grounded because it fully specifies the \et{(concrete)} object types on which it requests the information.
-
-\begin{figure}[h]
-\centering
-\begin{subfigure}{.25\textwidth}
+\subsubsection*{Groundedness}
+%\et{should it be "groundedness"? (being bounded is boundedness, being rounded is roundedness, etc.)}
+Informally, the \textit{groundedness} property refers to whether queries are completely specified down to the object types.  Consider the queries below, based on the schema from Figure~\ref{fig:schema_ex}\td{Might be a stretch to pull that figure from the beginning}, which request the name of an animal. The query to the left is not grounded because the field \texttt{name} is made over the abstract type \texttt{Animal} type. In contrast, the query on the right is requesting the same information, but it is grounded because it fully specifies the concrete object types on which it requests the information.
+\td{Align to top or as it is? Aligning to top leaves a huge empty space :/}
+\begin{minipage}{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
+// Not grounded query
 query {
   goodboi {
     name
   }
 }
 \end{minted}
-\end{subfigure}%
-\begin{subfigure}{.25\textwidth}
+\end{minipage}%
+\begin{minipage}{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
+// Grounded query
 query {
   goodboi {
     |$\ldots$| on Dog {
@@ -45,35 +45,31 @@ query {
   }	
 }
 \end{minted} 
-\end{subfigure}
+\end{minipage}
 
-\caption{An ungrounded query (left) and its semantically-equivalent grounded query (right).}
-\label{fig:grounded}
-\end{figure}
-
-\et{verbose/repetitive} The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype. 
+%\et{verbose/repetitive} The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype. 
 
 \begin{definition}
 A GraphQL query $\varphi$ is \textit{grounded} if it satisfies the following conditions, where \texttt{ty} is the type in scope.
 \begin{itemize}
 	\item If \texttt{ty} is an object type, then $\varphi$ contains only fields.
-	\item If \texttt{ty} is an abstract type (interface or union\et{wasn't this definition clear from before?}), then $\varphi$ contains only inline fragments whose type conditions are Object\et{why capitalized?} types.
+	\item If \texttt{ty} is an abstract type, then $\varphi$ contains only inline fragments whose type conditions are object types.
 	\item Subqueries of $\varphi$ are \textit{grounded} w.r.t. to the field's return type or the fragments type condition.
 \end{itemize}
 \end{definition}
 
-This definition of groundedness differs slightly from that of \HP{} \et{how is it different? why?}, nevertheless, we prove that our definition still implies being in ground-typed normal form \et{if you prove that it means you have also formalized the exact def from HP? so?}.
+This definition of groundedness differs slightly from that of \HP{} \et{how is it different? why?}\td{See response in Zulip}, nevertheless, we prove that our definition still implies being in ground-typed normal form \et{if you prove that it means you have also formalized the exact def from HP? so?}.
 
 \begin{minted}{coq}
 Lemma are_grounded_in_ground_typed_nf (s : wfGraphQLSchema)
-                                      (ty : Name)
+                                      (type_in_scope : Name)
                                       (queries : seq Query) :
-        are_grounded s ty queries ->
+        are_grounded s type_in_scope queries ->
         are_in_ground_typed_nf s queries.
 \end{minted}
 
 \et{why this plural formulation?}
-\et{watch out the argument was called type-in-scope while its used as ty.}
+%\et{watch out the argument was called type-in-scope while its used as ty.}
 
 \et{why do we care about this lemma instead of the definition of is-grounded?}
 
@@ -83,7 +79,7 @@ Informally,
 % \et{bad phrasing: what is "non-redundant" is a "query", not "whether there are no queries"} the notion of non-redundancy refers to whether there are no queries that may produce repeated results. 
 a non-redundant query is a query that does not produce repeated results.
 For example, consider the two queries below:
-\td{Should this be another figure?}\et{do the same as you do for groundedness -- better to just inline if there are no references from other parts of the paper}\et{use the same trick with comments to indicate grounded/ungrounded}
+%\td{Should this be another figure?}\et{do the same as you do for groundedness -- better to just inline if there are no references from other parts of the paper}\et{use the same trick with comments to indicate grounded/ungrounded}
 
 \begin{minipage}[t]{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
@@ -91,15 +87,13 @@ For example, consider the two queries below:
 query {
     goodboi {
         name
-  name
-  |$\ldots$| on Dog {
-      name
-  }
-  |$\ldots$| on Dog {
-      friends { |$\ldots$| }
-  }
-    }
-}
+        name
+        |$\ldots$| on Dog {
+            name
+        }
+        |$\ldots$| on Dog {
+            friends { |$\ldots$| }
+}  }  }
 \end{minted}
 \end{minipage}%
 \begin{minipage}[t]{.25\textwidth}
@@ -108,16 +102,16 @@ query {
 query {
     goodboi {
         |$\ldots$| on Dog {
-      name
-  }
-  |$\ldots$| on Pig {
-      name
-  }
+            name
+        }
+        |$\ldots$| on Pig {
+            name
+        }
     } 
 }
 \end{minted} 
 \end{minipage}
-\et{fix layout}
+%\et{fix layout}
 
 The query on the left requests the field \texttt{name} twice to the same type, and uses two fragments with the same type condition. If no collection and merger of fields is performed during the evaluation, this will produce two values with key \texttt{name}. Meanwhile, the query on the right requests information about each type only once. It is important to notice that, even though it requests the field \texttt{name} in both, this is considered not redundant because only one fragment will actually be executed at a time, 
 depending on the concrete object value that is used to evaluate the query.
@@ -133,7 +127,7 @@ A GraphQL query $\varphi$ is \textit{non-redundant} if it satisfies the followin
 \end{itemize}
 \end{definition}
 
-Our definition of non-redundancy assumes that the queries are grounded \et{maybe the Coq definition, but not the definition above!}, much like \HP{}, mainly to simplify the implementation. The difficulty arises from using inline fragments and comparing their contents appropriately. This difficulty is further enhanced \et{how can a "difficulty" be "enhanced"?} by the fact that the \spec{} currently allows using fragments that can possibly span over several unrelated types\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Fragment-spread-is-possible}\footnote{https://github.com/graphql/graphql-spec/issues/367}\footnote{Example of inline fragments spanning to unrelated types - https://tinyurl.com/y4uxz3gu}\td{Should we expand on this somewhere?}.
+Our definition of non-redundancy assumes that the queries are grounded \et{maybe the Coq definition, but not the definition above!}, much like \HP{}, mainly to simplify the implementation. The difficulty arises from using inline fragments and comparing their contents appropriately. This difficulty is further increased by the fact that the \spec{} currently allows using fragments that can possibly span over several unrelated types\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Fragment-spread-is-possible}\footnote{https://github.com/graphql/graphql-spec/issues/367}\footnote{Example of inline fragments spanning to unrelated types - https://tinyurl.com/y4uxz3gu}\td{Should we expand on this somewhere?}.
 
 \subsection{Normalization procedure}\label{subsec:normalization}
 
@@ -174,7 +168,7 @@ style=code]
 \label{fig:normalize}
 \end{figure*}
 
-The complete normalization process is actually composed of two separate functions; \texttt{normalize}, which performs all the actual work but under the assumption that the type in context is an object type, and \texttt{normalize\_queries}, which makes no assumption but only pipes the work\et{?} to the former. The main process can be informally described as consisting of two subprocesses that deal with the two aforementioned properties.\et{which? (merging, mentioned below, was not mentioned above)}
+The complete normalization process is actually composed of two separate functions; \texttt{normalize}, which performs all the actual work but under the assumption that the type in context is an object type, and \texttt{normalize\_queries}, which makes no assumption but only pipes the work\et{?}\td{Don't know what else to add. One function does all the work, the other one just pipes the work the other, based on the type in context} to the former. The main process can be informally described as consisting of two subprocesses that deal with the two aforementioned properties.\et{which? (merging, mentioned below, was not mentioned above)}
 \iffalse
 \begin{itemize}
     \item Grounding: Selections are either wrapped with inline fragments or lifted from an inline fragment.
@@ -298,7 +292,8 @@ We now move onto proving correctness of the normalization procedure and the pres
 
 \et{the name of this "property/ies" keeps changing. Pick one, and use it throughout (ie. intro, beginning of 4)}
 
-As described initially in this paper \et{you recalled it in the header of 4, no need to say it again}, \HP{} base the complexity results over GraphQL queries on two premises; queries can be normalized, preserving their semantics, and there is an equivalent simplified function to evaluate queries in normal form. We tackle \et{lol} the first premise by establishing correctness of our normalization procedure and then preservation of semantics. Figure~\ref{fig:simpl_semantics} shows the simplified semantics's \et{why are we talking about the simplified semantics here? (we're not in 4.4 yet)} formal definition. Aliased cases are not included due to space constraints.
+%As described initially in this paper \et{you recalled it in the header of 4, no need to say it again}, \HP{} base the complexity results over GraphQL queries on two premises; queries can be normalized, preserving their semantics, and there is an equivalent simplified function to evaluate queries in normal form. 
+We prove the premise that any query can be normalized and still preserve its semantics, by establishing correctness of our procedure and then proving the latter. 
 
 \setcounter{equation}{0}% Restart equation counter
 \begin{figure*}[h]
@@ -375,7 +370,7 @@ and the proof of equivalence.
 
 \subsection{Simplified semantics}
 
-As proposed by \HP{}, one of the main properties of queries in normal form is that they produce non-redundant responses\td{They actually say "unique responses" - they don't define non-redundancy for responses.}, without the need of any collection and merger of fields. This property allows defining a second evaluation function $\ll \varphi \gg_{G}$, similar to the previous (\S\ref{subsec:semantics}) but without any filtering and collecting of fields.
+As proposed by \HP{}, one of the main properties of queries in normal form is that they produce non-redundant responses\td{They actually say "unique responses" - they don't define non-redundancy for responses.}, without the need of any collection and merger of fields. This property allows defining a second evaluation function $\ll \varphi \gg_{G}$, similar to the previous (\S\ref{subsec:semantics}) but without any filtering and collecting of fields. Figure~\ref{fig:simpl_semantics} shows the simplified semantics's formal definition. Aliased cases are not included due to space constraints.
 
 We implement the simplified semantics following \HP{} and then prove the premise that, for queries in normal form, both $\llbracket \varphi \rrbracket_{G}$ and $\ll \varphi \gg_{G}$ produce the same response. We do not include the complete definition but they can be found in the files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. The proof is once again performed by induction over the size of the queries.
 
