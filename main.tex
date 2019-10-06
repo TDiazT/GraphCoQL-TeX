@@ -6,14 +6,19 @@
 \usepackage{multicol}
 \usepackage[cache=false]{minted}
 \usepackage{listings}
-\usepackage{xcolor}
+%\usepackage{xcolor}
 \usepackage[nounderscore]{syntax}
 \usepackage{graphicx}
+\usepackage{xspace}
 \usepackage{newunicodechar}
 \newunicodechar{ə}{\pmschwa}
 \DeclareRobustCommand{\pmschwa}{\rotatebox[origin=c]{180}{e}}
 
+
+% Minted options
 \setminted{fontsize=\footnotesize}
+\definecolor{coqbg}{rgb}{0.95,0.95,0.95}
+
 
 % Colors
 \definecolor{darkgray}{HTML}{404040}
@@ -43,15 +48,15 @@
     {{\color{#3} \fbox{\bfseries\sffamily\scriptsize#1}
     {\small$\blacktriangleright$\textsf{\emph{#2}}$\blacktriangleleft$}}~}
 \newcommand{\et}[1]{\mynote{ET}{#1}{purple}}
-\newcommand{\fo}[1]{\mynote{FO}{#1}{red}}
+\newcommand{\fo}[1]{\mynote{FO}{#1}{brown}}
 \newcommand{\td}[1]{\mynote{TD}{#1}{blue}}
 
 \newcommand\mdoubleplus{\mathbin{+\mkern-5mu+}}
 
 \newcommand{\coql}{\textit{GraphCoQL}}
-\newcommand{\spec}{\textit{Spec}}
+\newcommand{\spec}{\textit{Spec}\xspace}
 \newcommand{\HP}{\textit{HP}}
-\newcommand{\Vals}{$\mathit{Vals}$}
+\newcommand{\Vals}{$\mathit{Vals}$\xspace}
 
 % semantics
 \newcommand{\eval}[2]{\llbracket #1 \rrbracket^{#2}_{G}}
@@ -70,6 +75,14 @@
 \newcommand{\resp}[1]{\fkey\texttt{:}#1}
 \newcommand{\nval}{\texttt{null}}
 \newcommand{\val}{\texttt{v}}
+
+
+\newcommand{\ie}{i.e.\@\xspace}
+\newcommand{\wrt}{w.r.t.\@\xspace}
+\newcommand{\eg}{e.g.\@\xspace}
+\newcommand{\cf}{cf.\@\xspace}
+\newcommand{\viz}{viz.\@\xspace}
+\newcommand{\etal}{et al.\@\xspace}
 
 
 \begin{document}
