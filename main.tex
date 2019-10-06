@@ -53,9 +53,17 @@
 
 \newcommand\mdoubleplus{\mathbin{+\mkern-5mu+}}
 
-\newcommand{\coql}{\textit{GraphCoQL}}
-\newcommand{\spec}{\textit{Spec}\xspace}
-\newcommand{\HP}{\textit{HP}}
+\newcommand{\plstyle}[1]{\mbox{\textsc{#1}}\xspace}
+\newcommand{\gql}{\plstyle{GraphQL}}
+\newcommand{\gcoql}{\plstyle{GraphCoQL}}
+\newcommand{\spec}{\plstyle{Spec}}
+\newcommand{\HP}{\plstyle{H\&P}}
+\newcommand{\json}{\plstyle{JSON}}
+\newcommand{\jscert}{\plstyle{JSCert}}
+\newcommand{\coqr}{\plstyle{CoqR}}
+\newcommand{\coq}{\plstyle{Coq}}
+\newcommand{\ssreflect}{\plstyle{SSReflect}}
+\newcommand{\equations}{\plstyle{Equations}}
 \newcommand{\Vals}{$\mathit{Vals}$\xspace}
 
 % semantics
@@ -87,7 +95,7 @@
 
 \begin{document}
 
-\title{A Mechanized Formalization of GraphQL}
+\title{A Mechanized Formalization of \gql}
 \author{Tomás Díaz}
 \affiliation{%
   \institution{IMFD Chile}
@@ -111,9 +119,9 @@
 }
 
 \begin{abstract}
-GraphQL is a novel language for specifying and querying web APIs, allowing clients to flexibility and efficiently retrieve data of interest. The GraphQL language specification is unfortunately only available in prose, making it hard to develop robust formal results for this language. Recently, Hartig and Pérez proposed a formal semantics for GraphQL in order to study the complexity of GraphQL queries. These semantics are however not mechanized and leave certain key aspects unverified. We present GraphCoQL, the first mechanized formalization of GraphQL, developed in the Coq proof assistant.  GraphCoQL covers the schema definition DSL, query definitions, validation of both schema and queries, as well as the semantics of queries over a graph data model.
-We illustrate the application of GraphCoQL by formalizing the key query transformation and interpretation techniques of Hartig and Pérez, and proving them correct, after addressing some imprecisions and minor issues. 
-We hope that GraphCoQL can serve as a solid formal baseline for both language design and verification efforts for GraphQL.
+\gql is a novel language for specifying and querying web APIs, allowing clients to flexibility and efficiently retrieve data of interest. The \gql language specification is unfortunately only available in prose, making it hard to develop robust formal results for this language. Recently, Hartig and Pérez proposed a formal semantics for \gql in order to study the complexity of \gql queries. These semantics are however not mechanized and leave certain key aspects unverified. We present \gcoql, the first mechanized formalization of \gql, developed in the \coq proof assistant.  \gcoql covers the schema definition DSL, query definitions, validation of both schema and queries, as well as the semantics of queries over a graph data model.
+We illustrate the application of \gcoql by formalizing the key query transformation and interpretation techniques of Hartig and Pérez, and proving them correct, after addressing some imprecisions and minor issues. 
+We hope that \gcoql can serve as a solid formal baseline for both language design and verification efforts for \gql.
 \end{abstract}
 
 
@@ -124,8 +132,6 @@ We hope that GraphCoQL can serve as a solid formal baseline for both language de
 
 \et{future work: extraction for real}
 
-\et{global search/replace for Tomas: change "Section~\ref{X}" to "\S\ref{X}" (try to keep them aside from the text -- see "contributions" below for examples)}
-\et{global search/replace for Tomas: change all occurrences of GraphQL and GraphCoQL to macros, so that we can line up and adjust the formats easily}
 
 \input{introduction.tex}
 \input{background.tex}
