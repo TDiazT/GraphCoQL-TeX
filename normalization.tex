@@ -304,16 +304,33 @@ proving the correctness of our normalization procedure. Recall that this key res
     % Empty
     \seval{\cdot}{u} &= [\cdot] \\
     % SingleField
-    \sevalu{\fld\; ::\; \queries} &= \begin{cases}
-    \resp{\texttt{coerce(\val)}} \; ::\; \sevalu{\queries}  & \mathit{u.property}(\fld) = \val \\
-    \resp{\nval} \; :: \; \sevalu{\queries} & \sim
+    \sevalu{\fld\; ::\; \queries} &= 
+    \begin{cases}
+      \resp{\texttt{coerce(\val)}} \; ::\; \sevalu{\queries}  
+      & \mathit{u.property}(\fld) = \val \\
+      %
+      \resp{\nval} \; :: \; \sevalu{\queries} 
+      & \sim
     \end{cases}\\
     % Nested field
     \sevalu{\nfld{\overline{\beta}} \; ::\; \queries} &=
     \begin{cases}
-    \resp{\texttt{[} \mathit{map} (\lambda\; v_{i} \Rightarrow\; \seval{\overline{\beta}}{v_{i}})\; \mathit{neighbors(u)} \texttt{]}} \; :: \; \sevalu{\queries}  & \mathit{type(f)} \in L_{t} \text{and} \{v_{1}, \ldots, v_{k}\} = \{v_{i} \mid (u, f[\alpha], v_{i}) \in E\} \\
-    (f:\{\seval{\subqueries{\beta}}{v}\})\; :: \; \sevalu{\queries}  & \mathit{type(f)} \notin L_{t} \text{and} (u, f[\alpha], v) \in E \\
-    (f:null)\; :: \; \sevalu{\queries} & \mathit{type(f)} \notin L_{t} \text{and there is no } v \text{ s.t.} (u, f[\alpha], v) \in E \\
+      \resp{\texttt{[} \mathit{map} (\lambda\; v_{i} \Rightarrow\; \seval{\overline{\beta}}{v_{i}})\; 
+      \mathit{neighbors(u)} \texttt{]}} \; :: \; \sevalu{\queries}  \\
+      \hfill \text{ if } 
+        \mathit{type(\fkey)} \in L_{t} 
+          \text{ and } \{v_{1}, \ldots, v_{k}\} = \{v_{i} \mid (u, \fkey[\alpha], 
+        v_{i}) \in E\} \\
+        % 
+      \resp{\{\seval{\subqueries{\beta}}{v}\})} \; :: \; \sevalu{\queries}  
+      \hfill \text{ if } 
+        \mathit{type(\fkey)} \notin L_{t} 
+        \text{ and } (u, \fkey[\alpha], v) \in E \\
+        %
+      \resp{\nval} \; :: \; \sevalu{\queries} 
+      \qquad \qquad \qquad \qquad \qquad \qquad
+      \text{ if } \mathit{type(\fkey)} \notin L_{t} 
+        \text{ and } \nexists v \text{ s.t. } (u, \fkey[\alpha], v) \in E \\
     \end{cases}\\
     %inline fragment
     \sevalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
@@ -321,7 +338,7 @@ proving the correctness of our normalization procedure. Recall that this key res
     \sevalu{\queries} & \sim
     \end{cases}
     \end{align}
-    \caption{Simplified semantics for queries in normal form.}
+    \caption{Simplified semantics for queries in normal form. \et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}}
     \label{fig:simpl_semantics}
 \end{figure*}
 
