@@ -1,7 +1,8 @@
 %!TEX root = ./main.tex
 \section{Introduction}
 
-\gql is an increasingly popular language to define interfaces and queries to services data. Originally developed internally by Facebook as an alternative to RESTful Web Services, \gql was made public in 2015, along with a reference implementation\footnote{https://github.com/graphql/graphql-js} and a specification---both of which have naturally evolved since~\cite{gqlspec}\et{cite the version you used}. Since early 2019, as a result of its successful adoption by major players in industry,
+\gql is an increasingly popular language to define interfaces and queries to services data. Originally developed internally by Facebook as an alternative to RESTful Web Services, \gql was made public in 2015, along with a reference implementation\footnote{https://github.com/graphql/graphql-js} and a specification---both of which have naturally evolved since~\cite{gqlspec}.%\et{cite the version you used}.
+Since early 2019, as a result of its successful adoption by major players in industry,
 \gql is driven by an independent foundation\footnote{https://foundation.graphql.org/}. The key novelty compared to traditional REST-based services is that tailored queries can be formulated directly by clients, allowing a very precise selection of which data ought to be sent back as response. This supports a much more flexible and efficient interaction model for clients of services, who do not need to gather results of multiple queries on their own, possibly wasting bandwidth with unnecessary data.
 % many REST requests can be replaced by a single \gql query; additionally, and 
 % that 
@@ -25,7 +26,7 @@ For instance, the complexity results of Hartig and Pérez rely on two techniques
 
 % For the former, they propose a set of equivalence rules to transform queries but they do not actually prove that their application yield a query in this particular form or that they preserve the query semantics. The latter is also exploited, without providing any correctness proof. Since both are fundamental for their complexity results, we believe they must be rigorously addressed.
 
-\paragraph{\gcoql.} This work presents the first mechanized formalization of \gql, carried out in the \coq proof assistant \et{cite}, called \gcoql (|græf$\cdot$co$\cdot$k{\pmschwa}l|). In addition to precisely capturing the semantics of \gql, \gcoql makes it possible to completely specify and prove the correctness of query transformations, as well as other extensions and optimizations made to the language and its algorithms. We illustrate this by proving the correctness and semantic preservation of \HP's normalization---in the process we uncover and address some imprecisions and minor issues.
+\paragraph{\gcoql.} This work presents the first mechanized formalization of \gql, carried out in the \coq proof assistant~\cite{Coq}, called \gcoql (|græf$\cdot$co$\cdot$k{\pmschwa}l|). In addition to precisely capturing the semantics of \gql, \gcoql makes it possible to completely specify and prove the correctness of query transformations, as well as other extensions and optimizations made to the language and its algorithms. We illustrate this by proving the correctness and semantic preservation of \HP's normalization---in the process we uncover and address some imprecisions and minor issues.
 We hope that \gcoql can serve as a starting point for a formal specification of \gql from which reference implementations can be extracted. Although we have not yet experimented with extraction, \gcoql facilitates this vision by relying on boolean reflection as much as possible.
 % ; this should eventually make it possible to extract reference implementations of the different components developed in \gcoql, such as the query evaluator or the normalization function. 
  % and extracting it to be its official reference implementation.
@@ -75,9 +76,9 @@ The contributions of this work are:
 We first briefly introduce \gql (\S\ref{sec:bg}). 
 We end this article by discussing the validation and limitations of \gcoql (\S\ref{sec:valid}), related work (\S\ref{sec:related}) and conclude in \S\ref{sec:conclusion}.
 
-\gcoql and the results presented in this paper have been developed in Coq v.\et{put version} and are provided as anonymous supplementary material. We often refer directly to Coq files in the paper. \gcoql extensively uses the 
-\ssreflect \et{cite} and \equations \et{cite} libraries. 
-The \gql specification on which this work is based is version\et{put version}.
+\gcoql and the results presented in this paper have been developed in Coq v.8.9.1 and are provided as anonymous supplementary material. We often refer directly to Coq files in the paper. \gcoql extensively uses the 
+\ssreflect \et{cite} and \equations\footnote{http://mattam82.github.io/Coq-Equations/}~\cite{equations} libraries. 
+The \gql specification on which this work is based is version June 2018\td{Like this?}.
 % \et{I think we can skip this paragraph here, not important enough for being in the intro} Finally, regarding the development itself, we use SSReflect \et{cite} intensively, relying on boolean reflection as much as possible. Also, the use of the  to define non-structural recursive functions is essential for our definitions. Other libraries, such as \textit{Function} and \textit{Program} did not provide sufficient tools to handle rewriting and inductive reasoning about our definitions, which \textit{Equations} incredibly facilitates. \coql{} is not currently extracted to other languages but we believe that it should not be a difficult task, given the design decisions considered.
 
 % \td{include note on code as anonymous supplementary material}

@@ -396,7 +396,7 @@ As proposed by \HP, one of the main properties of queries in normal form is that
 
 We define the simplified semantics of \HP, and prove that, for queries in normal form, both $\eval{\varphi}{}$ and $\seval{\varphi}{}$ produce the same response. We do not include the complete definition---they can be found in files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. The proof is once again performed by induction over the size of the queries. \et{any insight from the proofs?}
 
-\begin{minted}[bgcolor=coqbg][escapeinside=||,mathescape=true]{coq}
+\begin{minted}[bgcolor=coqbg, escapeinside=||,mathescape=true]{coq}
 Theorem exec_equivalence (s : wfGraphQLSchema)
                          (g : conformedGraph s)
                          (u : node)

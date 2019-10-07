@@ -201,11 +201,13 @@ To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:qu
   \centering
   \begin{subfigure}{.5\textwidth}
     \begin{grammar}
-        <Query> ::= <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{)}}
+    		<Query> ::= [\textbf{\texttt{query}} [<name>]] \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
+		
+        <Selection> ::= <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{)}}
         \alt <alias> \textbf{\texttt{:}} <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{)}}
-        \alt <name> \textbf{(} <Arg>* \textbf{)} \textbf{\texttt{\{}} <Query>$^{+}$ \textbf{\texttt{\}}}
-        \alt <alias> \textbf{\texttt{:}} <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{)}} \textbf{\texttt{\{}} <Query>$^{+}$ \textbf{\texttt{\}}}
-        \alt \textbf{\texttt{... on}} <name> \textbf{\texttt{\{}} <Query>$^{+}$ \textbf{\texttt{\}}}
+        \alt <name> \textbf{(} <Arg>* \textbf{)} \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
+        \alt <alias> \textbf{\texttt{:}} <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{)}} \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
+        \alt \textbf{\texttt{... on}} <name> \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
         
         <Arg> ::= <name> \textbf{\texttt{:}} <value>
     \end{grammar}
@@ -213,7 +215,7 @@ To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:qu
   \begin{subfigure}{.5\textwidth}
 
     \begin{minted}[bgcolor=coqbg]{coq}
-    Inductive Query : Type :=
+    Inductive Selection : Type :=
     | SingleField (name : Name)
                   (arguments : seq (Name * Vals))
     | AliasedField (alias : Name)
@@ -225,16 +227,16 @@ To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:qu
     | NestedAliasedField (alias : Name)
                          (name : Name)
                          (arguments : seq (Name * Vals))
-                         (subqueries : seq Query)
+                         (subqueries : seq Selection)
     | InlineFragment (type_condition : Name)
-                     (subqueries : seq Query).
+                     (subqueries : seq Selection).
     \end{minted}
   \end{subfigure}
   \caption{Definition of \gql queries, the \spec's grammar (left) and the \coq implementation (right).\fo{To be consistent with what you do for \texttt{NestedField}, rename \texttt{AliasedField} to \texttt{SignleAliasedField}. Also, in the grammar, push the first constructor to a new line, to match the way you display it in the Coq formalization on the right}}
   \label{fig:query_def}
 \end{figure*}
 
-Intuitively, a valid query will have\et{use present tense!} a tree structure, where leaves correspond to fields of scalar types and inner nodes correspond either to fields of some object type or abstract type \fo{abstract type not defined}, or to inline fragments that condition when their subqueries are evaluated. 
+Intuitively, a valid query has a tree structure, where leaves correspond to fields of scalar types and inner nodes correspond either to fields of some object type or abstract type \fo{abstract type not defined}, or to inline fragments that condition when their subqueries are evaluated. 
 
 \iffalse
 %For instance, the query in Figure \ref{fig:qres_ex} can be depicted as the tree in Figure \ref{fig:query_tree}.
@@ -276,7 +278,7 @@ query {
 % }
 % \end{minted}
 % \end{minipage}
-\et{for space reason, we may want to take some liberties wrt the formatting of queries and responses (see some examples on this page)}
+%\et{for space reason, we may want to take some liberties wrt the formatting of queries and responses (see some examples on this page)}
 
 
 \noindent In one case, the field is requesting information about the \texttt{Dog} type, while in the other it is requesting information about case about the \texttt{Pig} type. (These are the respective types in context for the first and second occurrence of the field.) The distinction is important because some field selections might be valid in some contexts but not in others. This is the case, for instance, for field \texttt{favoriteToy}: It is valid in the context of a \texttt{Dog} type but it is invalid in the context of a \texttt{Pig} type, as \texttt{Pig} type does not contain any such field. Similarly, the above query would also be invalid if \texttt{Pig} type contained a so-called field, but of type different from \texttt{Toy} ---the type the same field in type \texttt{Dog}.
@@ -439,7 +441,7 @@ The formal definition of the semantics is depicted in Figure \ref{fig:semantics}
 \td{Move to discussion?}
 The main difference with respect to \HP and the main similarity to the \spec is that we perform a collection of fields at the query level, whereas \HP performs a post-processing of responses. The main reasons are our approach is more similar to the \spec and that it is harder to reason using \HP's approach.
 
-\td{Don't know how to present this or if it is relevant but I include it so you know it exists - The spec first groups fields by name and then evaluates each group. These are different steps. We define everything in one place because it was easier to reason about the semantics. The difficulty with the spec's approach is that when proving things about the semantics, you have to provide, at each step, the information on how your data is structured (every group contains only fields and every field in a group has the same response name as the group's key used to group them). This is problematic mostly because of inline fragments, which do not have response names. Definitions must always account for the case of inline fragments, even when they are thought out to be used only on fields. Our definition is maybe less compositional but thanks to Equations, it is simpler to reason about it - because Equations generate a nice reasoning principle. We also attempted defining it similarly to the spec, still preserving the information on the structure by using dependent types and Equation, but the resulting reasoning principle would end up being huge (80-100 cases) (I believe I read Matthieu saying that nesting some definitions could exponentially increase the size of the reasoning principle, which is what would occur in this case).}
+%\td{Don't know how to present this or if it is relevant but I include it so you know it exists - The spec first groups fields by name and then evaluates each group. These are different steps. We define everything in one place because it was easier to reason about the semantics. The difficulty with the spec's approach is that when proving things about the semantics, you have to provide, at each step, the information on how your data is structured (every group contains only fields and every field in a group has the same response name as the group's key used to group them). This is problematic mostly because of inline fragments, which do not have response names. Definitions must always account for the case of inline fragments, even when they are thought out to be used only on fields. Our definition is maybe less compositional but thanks to Equations, it is simpler to reason about it - because Equations generate a nice reasoning principle. We also attempted defining it similarly to the spec, still preserving the information on the structure by using dependent types and Equation, but the resulting reasoning principle would end up being huge (80-100 cases) (I believe I read Matthieu saying that nesting some definitions could exponentially increase the size of the reasoning principle, which is what would occur in this case).}
 
 %Our first attempt at defining the semantics was to follow \HP's post-processing approach. Our intention was to be as close as possible to their formalization to later prove their transformation and equivalence results, which we cover in Section~\ref{sec:norm}. However, the non-structural recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence very hard.
 
