@@ -145,10 +145,10 @@ In our formalization, this is captured by the following structures, where \textt
 %
 \begin{minted}[bgcolor=coqbg]{coq}
 Record fld := 
-Field { label : string; args : seq (string * Vals) }.
+  Field { label : string; args : seq (string * Vals) }.
 
 Record node := 
-Node { ntype : Name; nprops : seq (fld * Vals) }.
+  Node { ntype : Name; nprops : seq (fld * Vals) }.
 
 Record graphQLGraph := 
   GraphQLGraph { root : node; E : seq (node * fld * node) }.
@@ -234,7 +234,7 @@ To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:qu
   \label{fig:query_def}
 \end{figure*}
 
-Intuitively, a valid query will have a tree structure, where leaves correspond to fields of scalar types and inner nodes correspond either to fields of some object type or abstract type \fo{abstract type not defined}, or to inline fragments that condition when their subqueries are evaluated. 
+Intuitively, a valid query will have\et{use present tense!} a tree structure, where leaves correspond to fields of scalar types and inner nodes correspond either to fields of some object type or abstract type \fo{abstract type not defined}, or to inline fragments that condition when their subqueries are evaluated. 
 
 \iffalse
 %For instance, the query in Figure \ref{fig:qres_ex} can be depicted as the tree in Figure \ref{fig:query_tree}.
@@ -317,6 +317,8 @@ A \gql query $\varphi$ \textit{conforms} to a schema $s$ if:
     % \end{minted}
 \end{itemize}
 \end{definition}
+
+\et{this is the beginning of the problem I'm having with your statements about queries. There is the notion of *a query*, noted $\varphi$, yet from now on your statements are about *queries*. The definition below mixes "the content" (consistency, compatible response, etc.) with "the sequence" (all, list comprehension, etc). Worse, later on in the development, you use $\varphi$ as the variable name of type "seq Queries" (while fig6 uses a bar over). See also my later comments about your "plural formulations"}
 
 In our formalization, this is captured as follows:
 
