@@ -195,7 +195,7 @@ Record conformedGraph (s : wfGraphQLSchema) :=
 
 
 \subsection{Queries}\label{subsec:query}
-To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:query_def}. A query can be a single field, a field followed by a set of subqueries or an inline fragment comprising a type condition and a set of subqueries. Field can be accompanied by a list of arguments and can also be renamed.
+To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:query_def}. A query consists of an optional name and a list of selections. A selection can be a single field, a field followed by a set of subselections or an inline fragment comprising a type condition and a set of subselections. Fields can be accompanied by a list of arguments and can also be renamed.
 
 \begin{figure*}[h]
   \centering
@@ -215,6 +215,10 @@ To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:qu
   \begin{subfigure}{.5\textwidth}
 
     \begin{minted}[bgcolor=coqbg]{coq}
+    Record query := 
+         Query { qname : option string; 
+                 selection_set : seq Selection }.
+                   
     Inductive Selection : Type :=
     | SingleField (name : Name)
                   (arguments : seq (Name * Vals))
@@ -232,11 +236,11 @@ To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:qu
                      (subqueries : seq Selection).
     \end{minted}
   \end{subfigure}
-  \caption{Definition of \gql queries, the \spec's grammar (left) and the \coq implementation (right).\fo{To be consistent with what you do for \texttt{NestedField}, rename \texttt{AliasedField} to \texttt{SignleAliasedField}. Also, in the grammar, push the first constructor to a new line, to match the way you display it in the Coq formalization on the right}}
+  \caption{Definition of \gql queries, the \spec's grammar (left) and the \coq implementation (right).}
   \label{fig:query_def}
 \end{figure*}
 
-Intuitively, a valid query has a tree structure, where leaves correspond to fields of scalar types and inner nodes correspond either to fields of some object type or abstract type \fo{abstract type not defined}, or to inline fragments that condition when their subqueries are evaluated. 
+Intuitively, a valid query has a tree structure, where leaves correspond to fields of scalar types and inner nodes correspond either to fields of some object type or abstract type (interface or union)\fo{abstract type not defined}\td{Ok like this?}, or to inline fragments that condition when their subselections are evaluated. 
 
 \iffalse
 %For instance, the query in Figure \ref{fig:qres_ex} can be depicted as the tree in Figure \ref{fig:query_tree}.
@@ -250,7 +254,7 @@ Intuitively, a valid query has a tree structure, where leaves correspond to fiel
 
 % Similar to the schema definition, we follow the \spec's grammar as closely as possible, as can be seen from Figure~\ref{fig:query_def}. We do not embed the property of non-emptiness of subqueries in the definition because the \spec pushes it to a different validation rule, even though it is already embedded in the grammar, and we believe it is simpler to reuse the \texttt{seq} library and its existent functionalities. 
 
-Observe that the definition of queries in Figure~\ref{fig:query_def} is not bound to any schema, requiring thus a separate validation process to ensure that they respect or adhere to a given schema. We introduce the notion of query \textit{conformance}, based on a set of validation rules scattered throughout the \textit{Validation} section of the \spec\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}. The validity of queries depends on a notion of \textit{type in context} at a given query location.\footnote{The \spec refers to it as type in scope or parent type. Some algorithmic descriptions make use of the types in context but are not explicit in their signatures.} % Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied.
+Observe that the definition of queries in Figure~\ref{fig:query_def} is not bound to any schema, requiring thus a separate validation process to ensure that they respect or adhere to a given schema. We introduce the notion of query \textit{conformance}, based on a set of validation rules scattered throughout the \textit{Validation} section of the \spec\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}. The validity of queries depends on the validity of their selection sets, which in turn requires the notion of \textit{type in context} at a given selection location.\footnote{The \spec refers to it as type in scope or parent type. Some algorithmic descriptions make use of the types in context but are not explicit in their signatures.} % Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied.
 To illustrate this, consider the following query with two occurrences of field \texttt{name}.
 
 %\begin{minipage}[t]{.25\textwidth}
@@ -291,6 +295,7 @@ query {
 
 Now that we have clarified the notion of type in context, we are in condition of defining the notion of query conformance. 
 
+\td{A query conforms when its selections conform to the Query type}
 \begin{definition}
 A \gql query $\varphi$ \textit{conforms} to a schema $s$ if:
 \begin{itemize}
@@ -320,23 +325,28 @@ A \gql query $\varphi$ \textit{conforms} to a schema $s$ if:
 \end{itemize}
 \end{definition}
 
-\et{this is the beginning of the problem I'm having with your statements about queries. There is the notion of *a query*, noted $\varphi$, yet from now on your statements are about *queries*. The definition below mixes "the content" (consistency, compatible response, etc.) with "the sequence" (all, list comprehension, etc). Worse, later on in the development, you use $\varphi$ as the variable name of type "seq Queries" (while fig6 uses a bar over). See also my later comments about your "plural formulations"}
+%\et{this is the beginning of the problem I'm having with your statements about queries. There is the notion of *a query*, noted $\varphi$, yet from now on your statements are about *queries*. The definition below mixes "the content" (consistency, compatible response, etc.) with "the sequence" (all, list comprehension, etc). Worse, later on in the development, you use $\varphi$ as the variable name of type "seq Queries" (while fig6 uses a bar over). See also my later comments about your "plural formulations"}
 
 In our formalization, this is captured as follows:
 
 %The implementation can be seen in the code below, however due to space limitations we only informally describe the %three mentioned rules. The complete definitions can be found in the file \texttt{QueryConformance.v}.
 
 \begin{minted}[bgcolor=coqbg]{coq}
-Definition queries_conform (type_in_scope : Name)
-                           (queries : seq Query) : bool :=
-        all (is_consistent type_in_scope) queries &&
-        is_field_merging_possible type_in_scope queries &&
+Definition query_conforms 
+    (s : wfGraphQLSchema) (q : query) : bool :=
+    selections_conform s s.(query_type) q.(selection_set).
+    
+Definition selections_conform (s : wfGraphQLSchema)
+    (ts : Name) (selections : seq Selection) : bool :=
+        all (is_consistent ts) selections &&
+        is_field_merging_possible ts selections &&
         have_compatible_response_shapes
-            [seq (type_in_scope, q) | q <- queries].
-\end{minted}
-\fo{This introduces the conformance of a query \wrt a schema, but the schema is never mentioned in the definition. It needs to be fixed!!!}
+            [seq (ts, s) | s <- selections].
 
-The first rule specifies when a selection \fo{explain what we mean by a selection} holds by itself. For instance, if the selection is over a field, the rule checks that the field is part of the type in context and that its arguments are provided; if the selection is an inline fragment, then the type condition has to be valid with respect to the type in context \fo{when can it not be valid?}.%The \spec defines this rule in several different sections.
+\end{minted}
+%\fo{This introduces the conformance of a query \wrt a schema, but the schema is never mentioned in the definition. It needs to be fixed!!!}
+
+The first rule specifies when a selection holds by itself. For instance, if the selection is over a field, the rule checks that the field is part of the type in context and that its arguments are provided; if the selection is an inline fragment, then the type condition has to be valid with respect to the type in context \fo{when can it not be valid?}\td{If both the type condition and the type in context do not share at least one subtype (subtype is reflexive). Not sure if this is relevant here though}.%The \spec defines this rule in several different sections.
 
 The second rule validates when fields can be correctly merged during evaluation, which is an essential aspect of the semantics, since it ensures that repeated fields are only evaluated once. To illustrate this, consider the following query, where a user requests information on the fields \texttt{name} and \texttt{oink} of pigs. The user decides to rename the field \texttt{oink} to \texttt{name}, however this is invalid, since both fields cannot be merged and evaluated once; both fields refer to distinct pieces of information in the system.
 
@@ -388,9 +398,9 @@ These last two rules, for merging and unambiguous values, are defined as a singl
 This concludes the definition of \gql queries and the validation process. \td{Examples can be found in the files \texttt{SpecExamples.v} and \texttt{HPExample.v}}. For the rest of the paper, it is assumed that queries conform to a given schema. 
 
 \subsection{Semantics}\label{subsec:semantics}
-Now we have all the prerequisites to define the semantics of \gql queries. We begin by briefly examining the responses generated by executing queries and then we give an informal description of the semantics, finishing with the formal definition. %We finish by discussing some implementation choices and comparison with the \spec and \HP.
+Now we have all the prerequisites to define the semantics of \gql queries and their selection sets. We begin by briefly examining the responses generated by executing queries and then we give an informal description of the semantics, finishing with the formal definition. %We finish by discussing some implementation choices and comparison with the \spec and \HP.
 
-A first observation we need to make is that query semantics is not compositional, in the sense that the result of a sequence of queries is not obtained by concatenating the results of the individual queries. Therefore, our semantic function will take a (whole) sequence of queries and return a (whole) sequence of responses.  
+A first observation we need to make is that query semantics is not compositional, in the sense that the result of a sequence of selections is not obtained by concatenating the results of the individual selections. Therefore, our semantic function will take a (whole) sequence of selections and return a (whole) sequence of responses.  
 
 We model individual responses with a tree structure, similar to JSON, as shown below:
 %
@@ -407,8 +417,8 @@ Inductive Response  : Type :=
 \fo{Explain the role of each constructor}
 \fo{Shouldn't the ObjectResponse constructor take a GraphQLResponse argument?}
 
-Our treatment of query responses differs from that in the \spec, where responses are just maps \fo{from what to what}
-as depicted in Figure~\ref{fig:responses}. We choose this structure to preserve similarity to queries and because it provides a strong reasoning principle, as well as being simpler to preserve order of the responses. This differs slightly from the \spec, which only states that responses are a map and does not impose an ordering of responses, although encourages it\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Serialized-Map-Ordering}. We believe that preserving the order is one of the strong selling points for \gql (queries and their responses are very similar and easy to read). 
+Our treatment of query responses differs from that in the \spec, where responses are just maps from keys to values\td{Unspecified},
+as depicted in Figure~\ref{fig:responses}. We choose this structure to preserve similarity to selections and because it provides a strong reasoning principle, as well as being simpler to preserve order of the responses. This differs slightly from the \spec, which only states that responses are a map and does not impose an ordering of responses, although encourages it\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Serialized-Map-Ordering}. We believe that preserving the order is one of the strong selling points for \gql (selections and their responses are very similar and easy to read). 
 
 %\begin{figure}[h]
 \begin{minted}[bgcolor=coqbg]{coq}
@@ -429,14 +439,31 @@ Definition GraphQLResponse (Vals: eqType) :=
 
 
 As we described in \S\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec, in the sense that it can be detached from a particular data model. 
-Informally, the evaluation of a query then represents a navigation over a graph. At top level, a query begins from the root node and then navigates around its edges and nodes, collecting data along the way. In this sense:
+Informally, the evaluation of the selection set of a query represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. In this sense:
 \begin{itemize}
     \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node.
     \item An inline fragment conditions whether using a node to access its properties or to traverse to other nodes.
-    \item Subqueries are evaluated in neighboring nodes.
+    \item Subselections are evaluations over neighboring nodes.
 \end{itemize}
 
-The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.
+\begin{definition}
+Let $\mathcal{G}$ be a graph and $ss$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $ss$ over $\mathcal{G}$ from node $u \in \mathit{nodes}(\mathcal{G})$, denoted $\llbracket ss \rrbracket^{u}_{\mathcal{G}}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
+\end{definition}
+
+The definition of the evaluation function for selections, displayed in Figure~\ref{fig:semantics}, only refers to the base case of an empty list, field selections without renaming and inline fragments. The complete definition can be found in the file \texttt{QuerySemantics.v}.
+
+\begin{definition}
+Let $\mathcal{G}$ be a graph and $\varphi$ a query containing a selection set $ss$, both conforming to a schema $\mathcal{S}$. The semantics of $\varphi$ over $\mathcal{G}$ is defined as the result of evaluating $ss$ from the root node of $\mathcal{G}$.
+\end{definition}
+
+The semantics of queries is then formalized as follows:
+\begin{minted}[bgcolor=coqbg]{coq}
+Definition execute_query (s : wfGraphQLSchema)
+    (g : conformedGraph s) (q : query) :=
+    execute_selection_set s g.(root) q.(selection_set).
+\end{minted}
+
+%The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.
 
 \td{Move to discussion?}
 The main difference with respect to \HP and the main similarity to the \spec is that we perform a collection of fields at the query level, whereas \HP performs a post-processing of responses. The main reasons are our approach is more similar to the \spec and that it is harder to reason using \HP's approach.
