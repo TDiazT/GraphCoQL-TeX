@@ -10,6 +10,7 @@
 \usepackage[nounderscore]{syntax}
 \usepackage{graphicx}
 \usepackage{xspace}
+\usepackage{stmaryrd}
 \usepackage{newunicodechar}
 \newunicodechar{ə}{\pmschwa}
 \DeclareRobustCommand{\pmschwa}{\rotatebox[origin=c]{180}{e}}
@@ -71,7 +72,7 @@
 \newcommand{\evalu}[1]{\eval{#1}{u}}
 \newcommand{\evalfilteru}[2]{\eval{\mathit{filter}_{#2}(#1)}{u}}
 % simpl semantics
-\newcommand{\seval}[2]{\ll #1 \gg^{#2}_{G}}
+\newcommand{\seval}[2]{\llparenthesis #1 \rrparenthesis^{#2}_{G}}
 \newcommand{\sevalu}[1]{\seval{#1}{u}}
 
 \newcommand{\queries}{\overline{\varphi}}
@@ -83,7 +84,6 @@
 \newcommand{\resp}[1]{\fkey\texttt{:}#1}
 \newcommand{\nval}{\texttt{null}}
 \newcommand{\val}{\texttt{v}}
-
 
 \newcommand{\ie}{i.e.\@\xspace}
 \newcommand{\wrt}{w.r.t.\@\xspace}

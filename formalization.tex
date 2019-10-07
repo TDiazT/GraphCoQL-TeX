@@ -452,21 +452,21 @@ The main difference with respect to \HP and the main similarity to the \spec is 
     % SingleField
     \evalu{\fld\; ::\; \queries} &= \begin{cases}
         \resp{\texttt{coerce(\val)}} \; ::\; \evalfilteru{\queries}{\fkey}  
-        & \text{ if } \mathit{u.property}(\fld) = \val \\
+        & \text{if } \mathit{u.property}(\fld) = \val \\
         \resp{\nval} \; :: \; \evalfilteru{\queries}{\fkey} 
         & \text{otherwise}
     \end{cases}\\
     % Nested field
     \evalu{\nfld{\overline{\beta}} \; ::\; \queries} &=
     \begin{cases}
-        \resp{\texttt{[} \mathit{map} (\lambda\; v_{i} \Rightarrow \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\queries))}}{v_{i}})\; \mathit{neighbors(u)} \texttt{]}} \; :: \; \evalfilteru{\queries}{\fkey} \\  
+        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\queries))}}{v_{i}})\; \mathit{neighbors(u)} \texttt{]}} \; :: \; \evalfilteru{\queries}{\fkey} \\  
         \hfill \text{ if } 
-            \mathit{type(\fkey)} \in L_{t} \text{and} \{v_{1}, \ldots, v_{k}\} = 
+            \mathit{type(\fkey)} \in L_{t} \text{ and } \{v_{1}, \ldots, v_{k}\} = 
         \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in E\} \\
         %
     (\fkey:\{\eval{\subqueries{\beta}}{v}\})\; :: \; \evalfilteru{\queries}{\fkey}  
         \hfill \text{ if } 
-        \mathit{type(\fkey)} \notin L_{t} \text{and} (u, \fkey[\alpha], v) \in E \\
+        \mathit{type(\fkey)} \notin L_{t} \text{ and } (u, \fkey[\alpha], v) \in E \\
     %
     \resp{\nval}\; :: \; \evalfilteru{\queries}{\fkey} 
     \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad
