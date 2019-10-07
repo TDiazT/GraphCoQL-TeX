@@ -60,7 +60,7 @@ A \gql query $\varphi$ is \textit{grounded} if it satisfies the following condit
 
 This definition of groundedness differs slightly from that of \HP \et{how is it different? why?}\td{See response in Zulip}\et{you can't just say that "it differs slightly" to the reader---you're  saying too much or too little. You can be approximate here and then clarify in the discussion section, or mention it here and saying that you'll expand on this in that later section}\et{I'd suggest to give you 2-3 lines to mention the main differences and put a forward ref to \S5)} nevertheless, we prove that our definition still implies being in ground-typed normal form \et{if you prove that it means you have also formalized the exact def from HP? so?}.
 
-\begin{minted}{coq}
+\begin{minted}[bgcolor=coqbg]{coq}
 Lemma are_grounded_in_ground_typed_nf (s : wfGraphQLSchema)
                                       (type_in_scope : Name)
                                       (queries : seq Query) :
@@ -270,7 +270,7 @@ query {
 % With this definition, we define a second one, which makes no assumption on the type in context. This procedure only checks what kind of type it receives and either pipes the job to the previous one, or covers the queries with the possible concrete subtypes (and then pipes the work to the previous definition).
 
 \iffalse
-\begin{minted}{coq}
+\begin{minted}[bgcolor=coqbg]{coq}
  Definition normalize_queries (s : wfGraphQLSchema)
                              (type_in_scope : Name)
                              (queries : seq Query) :
@@ -347,7 +347,7 @@ Recall that both of these results are only assumed---not proven---by \HP.
 
 First, we prove that the normalization procedure is correct \et{meaning? there are tons of definitions of correctness, so you need to be super clear} and produces queries in normal form, by proving separately that the resulting queries are grounded and non-redundant\footnote{Since we prove that grounded implies ground-typed normal form, we can also prove ground-typed normal form for the normalization function.\et{this whole story about g-t normal form makes more noise than necessary, I think}}. Both are proved by well-founded induction over the queries size\footnote{The notion of size includes the length of the list as well as the depth of the query tree.\et{this should be made clear in section 3, when you explain how you model queries. Just reading section 4, you jump between singular, list, and trees... confusing}} and auxiliary lemmas about subtyping.  We consider the case where the type in scope is an Object type \et{you use "object type" and "Object type" interchangeably, it's confusing} and the general case. 
 
-\begin{minted}[escapeinside=||,mathescape=true]{coq}
+\begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Lemma normalize_are_grounded (s : wfGraphQLSchema)
                              (ty : Name)
                              (|$\varphi$| : seq Query) :
@@ -364,7 +364,7 @@ Lemma normalize_are_non_redundant (s : wfGraphQLSchema)
 
 Next, we prove normalization preserves the semantics of queries. To begin with, we prove the case where the type in context is the same as the type of the node where queries are being normalized. Lifting this to the top level, it corresponds to normalizing over the Query type and evaluating on the root node (whose type is the same, due to graph conformance). We then extend this notion to normalization over any type in context, \texttt{ty}\et{here you're using "ty" - ts or ty is good for me but be consistent throughout}, but with the restriction that the node's type must be subtype of \texttt{ty}. Once again, this is valid at top level over the Query type and the root node. Conformance of the graph also ensures that normalization and evaluation over neighboring nodes is preserved\et{why? I don't get it}. The proof also follows by well-founded induction over the queries size and auxiliary lemmas about graph conformance.
 
-\begin{minted}[escapeinside=||,mathescape=true]{coq}
+\begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Lemma normalize_exec (s : wfGraphQLSchema)
                      (g : conformedGraph s)
                      (u : node)
@@ -396,7 +396,7 @@ As proposed by \HP, one of the main properties of queries in normal form is that
 
 We define the simplified semantics of \HP, and prove that, for queries in normal form, both $\llbracket \varphi \rrbracket_{G}$ and $\ll \varphi \gg_{G}$\et{formatting of these brackets is ugly, there's too much whitespace on the sides -- first, define macros for the semantics brackets, then, tune them to get them nice looking} produce the same response. We do not include the complete definition---they can be found in files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. The proof is once again performed by induction over the size of the queries. \et{any insight from the proofs?}
 
-\begin{minted}[escapeinside=||,mathescape=true]{coq}
+\begin{minted}[bgcolor=coqbg][escapeinside=||,mathescape=true]{coq}
 Theorem exec_equivalence (s : wfGraphQLSchema)
                          (g : conformedGraph s)
                          (u : node)
