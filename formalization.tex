@@ -443,21 +443,21 @@ The main difference with respect to \HP and the main similarity to the \spec is 
 
 %Our first attempt at defining the semantics was to follow \HP's post-processing approach. Our intention was to be as close as possible to their formalization to later prove their transformation and equivalence results, which we cover in Section~\ref{sec:norm}. However, the non-structural recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence very hard.
 
-\begin{figure*}[h]
+\begin{figure*}[t]
 \small
     \centering
-    \begin{align}
+    \begin{align*}
     % Empty
-    \eval{\cdot}{u} &= [\cdot] \\
+    & (1) & \eval{\cdot}{u} &= [\cdot] \\
     % SingleField
-    \evalu{\fld\; ::\; \queries} &= \begin{cases}
+    & (2) & \evalu{\fld\; ::\; \queries} &= \begin{cases}
         \resp{\texttt{coerce(\val)}} \; ::\; \evalfilteru{\queries}{\fkey}  
         & \text{if } \mathit{u.property}(\fld) = \val \\
         \resp{\nval} \; :: \; \evalfilteru{\queries}{\fkey} 
         & \text{otherwise}
     \end{cases}\\
     % Nested field
-    \evalu{\nfld{\overline{\beta}} \; ::\; \queries} &=
+    & (3) & \evalu{\nfld{\overline{\beta}} \; ::\; \queries} &=
     \begin{cases}
         \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\queries))}}{v_{i}})\; \mathit{neighbors(u)} \texttt{]}} \; :: \; \evalfilteru{\queries}{\fkey} \\  
         \hfill \text{ if } 
@@ -473,14 +473,13 @@ The main difference with respect to \HP and the main similarity to the \spec is 
     \text{ if } \mathit{type(\fkey)} \notin L_{t}  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in E \\
     \end{cases}\\
     %inline fragment
-    \evalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
+    & (4) & \evalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
     \evalu{\overline{\beta} \mdoubleplus \queries} & \mathit{does\_fragment\_type\_apply_{\texttt{t}}(u.type)} = \texttt{true}\\
     \evalu{\queries} & \sim
     \end{cases}
-    \end{align}
+    \end{align*}
     \caption{Semantics of \gql queries.
     \fo{This definition is given using syntax you have never introduced (what does :: mean? what does f:v mean? what does ++ mean?, etc, etc). Also, you must explain what all auxiliary functions (filter, property, merge, neighbors, etc, etc) do} 
-    \et{why are the equation numbers there? do you use them? if so, why not putting them left aligned on the far left?}
     \et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}
     }
     \label{fig:semantics}

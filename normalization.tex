@@ -137,7 +137,7 @@ Our definition of non-redundancy assumes that the queries are grounded \et{maybe
 The normalization procedure can be understood as a form of abstract interpretation\et{before, tell us what it does}, which evaluates queries using only static information about the type in context. Figure~\ref{fig:normalize} displays pseudocode describing the process when the head of the list of queries is a field selection with subqueries. We do not include the complete definition because of space limitations, but the complete definition can be found in the file \texttt{QueryNormalForm.v}.
 
 
-\begin{figure*}[h]
+\begin{figure*}[t]
 \centering
 \begin{tabular}{c}
 \begin{lstlisting}[
@@ -299,14 +299,13 @@ Recall that both of these results are only assumed---not proven---by \HP.
 % We now prove that any query can be normalized to an equivalent query, by 
 % proving the correctness of our normalization procedure. 
 
-\setcounter{equation}{0}% Restart equation counter
-\begin{figure*}[h]
+\begin{figure*}[t]
     \centering
-    \begin{align}
+    \begin{align*}
     % Empty
-    \seval{\cdot}{u} &= [\cdot] \\
+    & (1) & \seval{\cdot}{u} &= [\cdot] \\
     % SingleField
-    \sevalu{\fld\; ::\; \queries} &= 
+    & (2) & \sevalu{\fld\; ::\; \queries} &= 
     \begin{cases}
       \resp{\texttt{coerce(\val)}} \; ::\; \sevalu{\queries}  
       & \text{if }\mathit{u.property}(\fld) = \val \\
@@ -314,7 +313,7 @@ Recall that both of these results are only assumed---not proven---by \HP.
       \resp{\nval} \; :: \; \sevalu{\queries} 
       & \text{otherwise}
     \end{cases}\\
-    % Nested field
+    & (3) & % Nested field
     \sevalu{\nfld{\overline{\beta}} \; ::\; \queries} &=
     \begin{cases}
       \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \seval{\overline{\beta}}{v_{i}})\; 
@@ -335,12 +334,12 @@ Recall that both of these results are only assumed---not proven---by \HP.
         \text{ and } \nexists v \text{ s.t. } (u, \fkey[\alpha], v) \in E \\
     \end{cases}\\
     %inline fragment
-    \sevalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
+    & (4) & \sevalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
     \sevalu{\overline{\beta} \mdoubleplus \queries} & 
     \text{if }\mathit{does\_fragment\_type\_apply_{\texttt{t}}(u.type)} = \texttt{true}\\
     \sevalu{\queries} & \text{otherwise}
     \end{cases}
-    \end{align}
+    \end{align*}
     \caption{Simplified semantics for queries in normal form. \et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}}
     \label{fig:simpl_semantics}
 \end{figure*}
