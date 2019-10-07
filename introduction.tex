@@ -1,7 +1,7 @@
 %!TEX root = ./main.tex
 \section{Introduction}
 
-\gql is an increasingly popular language to define interfaces and queries to services data. Originally developed internally by Facebook as an alternative to RESTful Web Services, \gql was made public in 2015, along with a reference implementation\footnote{https://github.com/graphql/graphql-js} and a specification~\cite{gqlspec}\et{fix ref (version/year)}. Since early 2019, as a result of its successful adoption by major players in industry,
+\gql is an increasingly popular language to define interfaces and queries to services data. Originally developed internally by Facebook as an alternative to RESTful Web Services, \gql was made public in 2015, along with a reference implementation\footnote{https://github.com/graphql/graphql-js} and a specification---both of which have naturally evolved since~\cite{gqlspec}\et{cite the version you used}. Since early 2019, as a result of its successful adoption by major players in industry,
 \gql is driven by an independent foundation\footnote{https://foundation.graphql.org/}. The key novelty compared to traditional REST-based services is that tailored queries can be formulated directly by clients, allowing a very precise selection of which data ought to be sent back as response. This supports a much more flexible and efficient interaction model for clients of services, who do not need to gather results of multiple queries on their own, possibly wasting bandwidth with unnecessary data.
 % many REST requests can be replaced by a single \gql query; additionally, and 
 % that 
@@ -46,6 +46,8 @@ To address the trustworthiness of the \gcoql formalization, we have tried to est
  % We also test our implementation with examples from the \spec but a more thorough comparison should be made against \textit{\gqlJs} and a bigger test suite.
 While \spec leaves the underlying data model unspecified \et{or under-specified?}, 
 \HP adopts at its core a graph-based data model; \gcoql follows \HP in this regard, while the query evaluation algorithm of \gcoql can be traced closely to \spec.
+\et{\gql is data model agnostic. \HP specializes to a graph-based data model. So do we. Readers will wonder: is this necessary? why? aren't we moving away from the actual \gql by taking this path? -- this needs some careful justification}
+
 % \et{there is some contradiction between the eyeball correspondence and the "mixed approach"} 
 % Like \HP, \gcoql  \et{what is the model in \spec?}
 % With respect to the semantics of \gql, we follow a mixed approach between the \spec and \HP. The semantics are defined in a graph setting, as is in \HP, . 
@@ -75,7 +77,7 @@ We end this article by discussing the validation and limitations of \gcoql (\S\r
 
 \gcoql and the results presented in this paper have been developed in Coq v.\et{put version} and are provided as anonymous supplementary material. We often refer directly to Coq files in the paper. \gcoql extensively uses the 
 \ssreflect \et{cite} and \equations \et{cite} libraries. 
-
+The \gql specification on which this work is based is version\et{put version}.
 % \et{I think we can skip this paragraph here, not important enough for being in the intro} Finally, regarding the development itself, we use SSReflect \et{cite} intensively, relying on boolean reflection as much as possible. Also, the use of the  to define non-structural recursive functions is essential for our definitions. Other libraries, such as \textit{Function} and \textit{Program} did not provide sufficient tools to handle rewriting and inductive reasoning about our definitions, which \textit{Equations} incredibly facilitates. \coql{} is not currently extracted to other languages but we believe that it should not be a difficult task, given the design decisions considered.
 
 % \td{include note on code as anonymous supplementary material}

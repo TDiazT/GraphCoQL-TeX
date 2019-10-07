@@ -4,7 +4,7 @@
 \fo{Review this after all} In this section we describe our formalization of \gql in \coq. We start by defining a schema and its properties, then the graph data model and finally we review queries and their semantics. The definitions are as close as possible with respect to the \spec. This eyeball correspondence between the definitions in prose and the code gives a first level of trust that our formalization is correct, following the examples of X, Y and Z. Whenever there is a mismatch we point it out and explain the reasoning behind each decision.
 
 
-\subsection{\gql Schema}\label{subsec:schema}
+\subsection{Schema}\label{subsec:schema}
 We formalize schemas and type definitions following the \spec. A schema is represented as a record, containing a list of type definitions and a root type that specifies the available queries (\eg \texttt{Query} in the example from Figure \ref{fig:schema_ex}):
 %
 
@@ -128,7 +128,7 @@ Let Dog := Object "Dog" implements [:: "Animal"] {[::
 \fi
 
 
-\subsection{\gql Data model}\label{subsec:graph}
+\subsection{Data Model}\label{subsec:graph}
 Following \HP, for our formalization we adopt a data model based on graph, where data are modeled as directed property graphs, with labeled edges and typed nodes. Nodes contain a type and a set of properties (key-value pairs) and  edges contain single labels that describe the relation between nodes. Also, every property and label may contain a list of arguments (key-value pairs).
 
 To represent the values associated to properties or arguments, we consider the type \Vals. A value in \Vals may be a single scalar value or a list of values\td{This choice is based on the limitations of the model}.\fo{I think we should address this in the Discussion section, where we discuss the limitations of our formalization. We could even remove the last sentence from the paragraph.}
@@ -194,7 +194,7 @@ Record conformedGraph (s : wfGraphQLSchema) :=
 %With both the schema and the underlying data model we can proceed to define \gql queries and their semantics.
 
 
-\subsection{\gql Query}\label{subsec:query}
+\subsection{Queries}\label{subsec:query}
 To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:query_def}. A query can be a single field, a field followed by a set of subqueries or an inline fragment comprising a type condition and a set of subqueries. Field can be accompanied by a list of arguments and can also be renamed.
 
 \begin{figure*}[h]
@@ -449,15 +449,26 @@ The main difference with respect to \HP and the main similarity to the \spec is 
     \eval{\cdot}{u} &= [\cdot] \\
     % SingleField
     \evalu{\fld\; ::\; \queries} &= \begin{cases}
-    \resp{\texttt{coerce(\val)}} \; ::\; \evalfilteru{\queries}{\fkey}  & \mathit{u.property}(\fld) = \val \\
-    \resp{\nval} \; :: \; \evalfilteru{\queries}{\fkey} & \sim
+        \resp{\texttt{coerce(\val)}} \; ::\; \evalfilteru{\queries}{\fkey}  
+        & \text{ if } \mathit{u.property}(\fld) = \val \\
+        \resp{\nval} \; :: \; \evalfilteru{\queries}{\fkey} 
+        & \text{otherwise}
     \end{cases}\\
     % Nested field
     \evalu{\nfld{\overline{\beta}} \; ::\; \queries} &=
     \begin{cases}
-    \resp{\texttt{[} \mathit{map} (\lambda\; v_{i} \Rightarrow \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\queries))}}{v_{i}})\; \mathit{neighbors(u)} \texttt{]}} \; :: \; \evalfilteru{\queries}{f}  & \mathit{type(f)} \in L_{t} \text{and} \{v_{1}, \ldots, v_{k}\} = \{v_{i} \mid (u, f[\alpha], v_{i}) \in E\} \\
-    (f:\{\eval{\subqueries{\beta}}{v}\})\; :: \; \evalfilteru{\queries}{f}  & \mathit{type(f)} \notin L_{t} \text{and} (u, f[\alpha], v) \in E \\
-    (f:null)\; :: \; \evalfilteru{\queries}{f} & \mathit{type(f)} \notin L_{t} \text{and there is no } v \text{ s.t.} (u, f[\alpha], v) \in E \\
+        \resp{\texttt{[} \mathit{map} (\lambda\; v_{i} \Rightarrow \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\queries))}}{v_{i}})\; \mathit{neighbors(u)} \texttt{]}} \; :: \; \evalfilteru{\queries}{\fkey} \\  
+        \hfill \text{ if } 
+            \mathit{type(\fkey)} \in L_{t} \text{and} \{v_{1}, \ldots, v_{k}\} = 
+        \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in E\} \\
+        %
+    (\fkey:\{\eval{\subqueries{\beta}}{v}\})\; :: \; \evalfilteru{\queries}{\fkey}  
+        \hfill \text{ if } 
+        \mathit{type(\fkey)} \notin L_{t} \text{and} (u, \fkey[\alpha], v) \in E \\
+    %
+    \resp{\nval}\; :: \; \evalfilteru{\queries}{\fkey} 
+    \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad
+    \text{ if } \mathit{type(\fkey)} \notin L_{t}  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in E \\
     \end{cases}\\
     %inline fragment
     \evalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
@@ -465,7 +476,11 @@ The main difference with respect to \HP and the main similarity to the \spec is 
     \evalu{\queries} & \sim
     \end{cases}
     \end{align}
-    \caption{Semantics of \gql queries.\td{This looks bad but I don't know how to format it :/} \fo{This definition is given using syntax you have never introduced (what does :: mean? what does f:v mean? what does ++ mean?, etc, etc). Also, you must explain what all auxiliary functions (filter, property, merge, neighbors, etc, etc) do}}
+    \caption{Semantics of \gql queries.
+    \fo{This definition is given using syntax you have never introduced (what does :: mean? what does f:v mean? what does ++ mean?, etc, etc). Also, you must explain what all auxiliary functions (filter, property, merge, neighbors, etc, etc) do} 
+    \et{why are the equation numbers there? do you use them? if so, why not putting them left aligned on the far left?}
+    \et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}
+    }
     \label{fig:semantics}
 \end{figure*}
 

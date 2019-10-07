@@ -1,5 +1,5 @@
 % !TEX root = ./main.tex
-\section{Query Transformation: Normalization}\label{sec:norm}
+\section{Case Study: Normalization}\label{sec:norm}
 
 To illustrate how \gcoql can be used to reason about query transformations, we study the {\em normalization} process proposed by Hartig and Pérez (\HP)~\cite{gqlph}, which is fundamental for the complexity results they prove.
 %
@@ -9,7 +9,7 @@ In this section, we use \gcoql to define the property of being in \textit{normal
 
 It is worth mentioning that most of our formalization effort was devoted to defining and establishing the correctness of this normalization procedure. In terms of code, definitions are coded in approximately $350$ lines, while proofs amount to around $1,200$ lines. The complete definitions and proofs can be found in the files \texttt{QueryNormalForm.v} and \texttt{QueryNormalFormLemmas.v}. \et{does that include point b)?}\et{see the first paragraph of this section, I've introduced labels}
 
-\subsection{Normal form}
+\subsection{Defining Normal Forms}
 
 The notion of \textit{normal form} introduced by Hartig and Pérez consists of the conjunction of two properties: being \textit{grounded} and being \textit{non-redundant}.
 \HP refers to the former as being in \textit{ground-typed normal form}. %\et{remove/why is that confusing?} We believe this naming is confusing so we decide to rename it to the previously described property.
@@ -67,8 +67,10 @@ Lemma are_grounded_in_ground_typed_nf (s : wfGraphQLSchema)
         are_grounded s type_in_scope queries ->
         are_in_ground_typed_nf s queries.
 \end{minted}
+\et{in latter snippets, you use $\varphi$ for the queries variable.}
 
 \et{why this plural formulation?}\et{you must be kidding in your response...}\et{the question is why you don't have a lemma for a single query (and then if you need to check a sequence, you map that singular property over the sequence)}\et{notice that 4.1 talks about "*a* query is grounded"}
+
 \et{type-in-scope is a (too) long variable name - you can use use "ts" throughout, just explaining clearly when you first use it}
 %\et{watch out the argument was called type-in-scope while its used as ty.}
 
@@ -130,7 +132,7 @@ A \gql query $\varphi$ is \textit{non-redundant} if it satisfies the following c
 
 Our definition of non-redundancy assumes that the queries are grounded \et{maybe the Coq definition, but not the definition above!}, much like \HP, mainly to simplify the implementation. The difficulty arises from using inline fragments and comparing their contents appropriately. This difficulty is further increased by the fact that the \spec currently allows using fragments that can possibly span over several unrelated types\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Fragment-spread-is-possible}\footnote{https://github.com/graphql/graphql-spec/issues/367}\footnote{Example of inline fragments spanning to unrelated types - https://tinyurl.com/y4uxz3gu}\td{Should we expand on this somewhere?}.
 
-\subsection{Normalization procedure}\label{subsec:normalization}
+\subsection{Defining Normalization}\label{subsec:normalization}
 
 The normalization procedure can be understood as a form of abstract interpretation\et{before, tell us what it does}, which evaluates queries using only static information about the type in context. Figure~\ref{fig:normalize} displays pseudocode describing the process when the head of the list of queries is a field selection with subqueries. We do not include the complete definition because of space limitations, but the complete definition can be found in the file \texttt{QueryNormalForm.v}.
 
@@ -289,13 +291,13 @@ We now move onto proving correctness of the normalization procedure and the pres
 
 % Finally, with these properties and definitions we prove the premises proposed by \HP. We leave that discussion, about \HP's approach and ours, to Section~\ref{subsec:discussion}.
 
-\subsection{Proofs of correctness and preservation}
+\subsection{Correctness and Semantic Preservation}
 
-\et{the name of this "property/ies" keeps changing. Pick one, and use it throughout (ie. intro, beginning of 4)}
-
+We now establish that normalization is {\em a)} {\em correct} in that it does indeed produce queries in normal form, for any given query, and {\em b)} {\em semantics-preserving} in that a normalized query has the same evaluation semantics as the original query from which it was derived.
+Recall that both of these results are only assumed---not proven---by \HP.
 %As described initially in this paper \et{you recalled it in the header of 4, no need to say it again}, \HP base the complexity results over \gql queries on two premises; queries can be normalized, preserving their semantics, and there is an equivalent simplified function to evaluate queries in normal form. 
-We now prove that any query can be normalized to an equivalent query, by 
-proving the correctness of our normalization procedure. Recall that this key result is only assumed---not proven---by \HP.
+% We now prove that any query can be normalized to an equivalent query, by 
+% proving the correctness of our normalization procedure. 
 
 \setcounter{equation}{0}% Restart equation counter
 \begin{figure*}[h]
@@ -386,12 +388,13 @@ Theorem normalize_queries_exec (s : wfGraphQLSchema)
 This concludes our proofs of normalization and establish that the first premise used by \HP is correct in the context of our system.\et{you should mention the problems you discovered about \HP by doing this formalization}
 % The next section continues with the second premise, namely the definition of a simplified version of the semantics and the proof of equivalence.
 
-\subsection{Simplified semantics}
+\subsection{Simplified Semantics of Normalized Queries}
+\label{sec:simpl-semantics}
 
 As proposed by \HP, one of the main properties of queries in normal form is that they produce non-redundant responses\et{is that the main motivation for HP to propose normalization in the first place? (if so, say it)}\td{They actually say "unique responses" - they don't define non-redundancy for responses.}\et{why change the name? unique or non-redundant?}, without the need of any collection and merger of fields. This property allows defining a second evaluation function $\ll \varphi \gg_{G}$, similar to the original (\S\ref{subsec:semantics}), but without any filtering and collecting of fields. Figure~\ref{fig:simpl_semantics} shows the simplified semantics's formal definition. Aliased cases\et{?} are not included due to space constraints.
 \HP do not formally prove however that the simplified semantics are equivalent to the original, when considering normalized queries.
 
-We define the simplified semantics of \HP, and prove that, for queries in normal form, both $\llbracket \varphi \rrbracket_{G}$ and $\ll \varphi \gg_{G}$ produce the same response. We do not include the complete definition---they can be found in files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. The proof is once again performed by induction over the size of the queries. \et{any insight from the proofs?}
+We define the simplified semantics of \HP, and prove that, for queries in normal form, both $\llbracket \varphi \rrbracket_{G}$ and $\ll \varphi \gg_{G}$\et{formatting of these brackets is ugly, there's too much whitespace on the sides -- first, define macros for the semantics brackets, then, tune them to get them nice looking} produce the same response. We do not include the complete definition---they can be found in files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. The proof is once again performed by induction over the size of the queries. \et{any insight from the proofs?}
 
 \begin{minted}[escapeinside=||,mathescape=true]{coq}
 Theorem exec_equivalence (s : wfGraphQLSchema)
@@ -403,6 +406,7 @@ Theorem exec_equivalence (s : wfGraphQLSchema)
     s, g |$\vdash$| |$\llbracket$| |$\varphi$| |$\rrbracket$| in u with coerce =
     s, g |$\vdash$| |$\ll$| |$\varphi$| |$\gg$| in u with coerce.
 \end{minted}
+\et{why isn't the theorem stated using "normalized" instead of both premises? this high-level predicate should be defined and introduced before}
 
 \et{not useful conclusion paragraph---and not finished} This result concludes the normalization process. We have described our approach to proving both premises exploited by \HP. As mentioned earlier, these are fundamental for their complexity results over \gql queries but were not proven true. We believe our approach properly and rigorously addresses them. The following section discusses
 
