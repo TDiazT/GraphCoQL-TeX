@@ -40,28 +40,34 @@ We also address the \spec's semantics and how this is managed.\et{?}
 
 \subsection{Queries}
 
+\et{overall verbose and not very clear/insightful}
 
-Both the \spec and our formalization differ from \HP when defining queries. The main difference is that \HP include an additional rule for lists of queries. Their grammar includes a production rule for lists of queries, which is defined at the same level of the other rules. The main issue we found with this approach is that it allows building arbitrary trees instead of just a list of queries. These trees can be flattened to recover the list structure but increasing the effort when defining functions and reasoning over queries. We believe this is assumed by \HP but not explicitly mentioned otherwise.
-
-
-On a different note, we mentioned in Section~\ref{subsec:query} that we split a validation rule into two separate predicates. The reason behind this is that we noticed that the \spec's definition includes redundant recursive calls which may result in increased computational time. By splitting the definition in two parts, we expect to optimize the algorithm and also facilitate reasoning about them. At the time of writing this paper, a new algorithm was proposed by a team at XING\footnote{https://www.xing.com/} that also addresses this very same issue and is described in~\cite{xingalg}. They follow a different approach to resolving it, using sets, and provide a much more elaborate analysis of execution times than us. Comparing both approaches and analyzing execution times could be an interesting venue to explore.
+\HP differs from both the \spec and \gcoql when defining queries, as they include an additional rule for lists of queries. Their grammar includes a production rule for lists of queries, which is defined at the same level of \et{same....as...} the other rules. The main issue we found with this approach is that it allows building arbitrary trees instead of just a list of queries.\et{you say on page 5 that "a valid query has a tree structure"!} These trees can be flattened to recover the list structure but increasing the effort when defining functions and reasoning over queries. We believe this is assumed by \HP but not explicitly mentioned otherwise.
 
 
-Finally, we also noticed that the previous rule is too conservative and may consider valid queries as invalid. This occurs because the \spec allows defining fragments that are never evaluated. The issue is that the validation rule can then consider the subqueries in these fragments as invalid, even though they are never evaluated, rendering the whole query invalid\footnote{An example query can be seen in the following link: https://tinyurl.com/y3hz5vgv.}. We attempt to remove this conservativeness in the predicate that checks the merger of fields but we have not provided proofs that it does. For the predicate regarding unambiguous results, it is equally conservative as the \spec. We believe it should not be hard to modify the definition, however we decided against it at the moment, to keep it simple and facilitate reasoning over the predicate, as well as preserving some similarity to the \spec\td{Although it may not be entirely similar from the start...}.
+On a different note, we mentioned in Section~\ref{subsec:query} that we split a validation rule\et{which?} into two separate predicates\et{which?}. The reason behind this is that we noticed that the \spec's definition includes redundant recursive calls\et{meaning?} which may result in increased computational time\et{are you worrying about performance in the model?}. By splitting the definition in two parts, we expect to optimize the algorithm and also facilitate reasoning about them\et{why?}. At the time of writing this paper, a new algorithm was proposed by a team at XING\footnote{https://www.xing.com/} that also addresses this very same issue and is described in~\cite{xingalg}. They follow a different approach to resolving it, using sets, and provide a much more elaborate analysis of execution times than us\et{sure, you don't provide any ;-)}. Comparing both approaches and analyzing execution times could be an interesting venue to explore.
+
+Finally, we also noticed that the previous rule\et{which?} is too conservative and may consider valid queries as invalid. This occurs because the \spec allows defining fragments that are never evaluated. The issue is that the validation rule can then consider the subqueries in these fragments as invalid, even though they are never evaluated, rendering the whole query invalid\footnote{An example query can be seen in the following link: https://tinyurl.com/y3hz5vgv.}. We attempt to remove this conservativeness in the predicate that checks the merger of fields but we have not provided proofs that it does. For the predicate regarding unambiguous results, it is equally conservative as the \spec. We believe it should not be hard to modify the definition, however we decided against it at the moment, to keep it simple and facilitate reasoning over the predicate, as well as preserving some similarity to the \spec\td{Although it may not be entirely similar from the start...}.
 
 
 \subsection{Semantics}
 
 %We finish this section by addressing two major aspects about our formalization; completeness and errors.
 
-The first one was briefly mentioned in Section~\ref{subsec:graph}, when discussing the limitations and open questions regarding the graph model. These translate in the fact that we currently do not produce list results with nested lists of objects. For instance, the field \texttt{friendsByName:[[Human]]} is treated as if it were defined as \texttt{friendsByName:[Human]} and the results match the latter format. Otherwise, there is no restriction in the case of nested lists for scalar values. In \HP, there is no possibility to produce nested lists for either scalar or object values\footnote{The grammar itself does not permit it.} and there is no mention of this restriction.
+The first one\et{?} was briefly mentioned in Section~\ref{subsec:graph}\et{seems this has been moved}, when discussing the limitations and open questions regarding the graph model. These translate in the fact that we currently do not produce list results with nested lists of objects. For instance, the field \texttt{friendsByName:[[Human]]} is treated as if it were defined as \texttt{friendsByName:[Human]} and the results match the latter format. Otherwise, there is no restriction in the case of nested lists for scalar values\et{yep, that was in 5.2}. In \HP, there is no possibility to produce nested lists for either scalar or object values\footnote{The grammar itself does not permit it.} and there is no mention of this restriction.\et{all this was said before}
 
-Regarding error handling, we currently do not implement it. Errors may have two main sources; validation errors and execution errors.\td{Not sure how to write this}
+Regarding error handling, we currently do not implement it. Errors may have two main sources; validation errors and execution errors.\td{Not sure how to write this}\et{does not belong here---more of a "current limitation" section/future work}
+
+\et{so this section seems vacuous}
+
+\et{overall, after looking at 5.1-5.4, I think that a compressed/selected list of points good be put in a "3.6 Design considerations and discussion" section}
 
 \subsection{Normalization}
 
+\et{this section could be a similar section at the end of the normalization section}
+
 \subsubsection{Grounding}
-This definition differs slightly from the one given by \HP, because they do not use information on the type in context. We take this approach because the structure of grounded queries is deterministic and it simplifies reasoning. In \HP's approach, subqueries of fields can be either fields or inline fragments, without clear conditions. For instance, the following query, inspired from the schema in Section~\ref{sec:bg}, is in ground-typed normal form but the field \texttt{goodboi} has field subqueries in one case and fragments in the other. With our approach, only the second occurrence of \texttt{goodboi} is grounded, since its return type is an interface and the subqueries are specified down to the subtypes, using fragments.
+The \gcoql definition of grounding differs slightly from the one given by \HP, because they\et{who?} do not use information on the type in context. We take this\et{which?} approach because the structure of grounded queries is deterministic and it simplifies reasoning. In \HP's approach, subqueries of fields can be either fields or inline fragments, without clear conditions\et{about what?}. For instance, the following query, inspired from the schema in Section~\ref{sec:bg}, is in ground-typed normal form but the field \texttt{goodboi} has field subqueries in one case and fragments in the other. With our approach, only the second occurrence of \texttt{goodboi} is grounded, since its return type is an interface and the subqueries are specified down to the subtypes \et{you used to say "specify down to object types"}, using fragments.
 
 \begin{minted}[escapeinside=||, mathescape=true]{js}
         query {
@@ -79,10 +85,9 @@ This definition differs slightly from the one given by \HP, because they do not 
         }
 \end{minted}
 
-
 In this section we discuss some discoveries made regarding \HP's definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
 
-For the former, we notice that their definition is unsound\td{?}, in the sense that there are queries that are considered non-redundant but actually would produce redundant results. A simple example is the following valid query, that is considered as non-redundant by their definition but which, in fact, would produce two repeated values. It is a very minor slip, which happens because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
+For the former, we notice that their definition\et{of what?} is unsound\td{?}, in the sense that there are queries that are considered non-redundant but actually would produce redundant results\et{is being redundant a property of the query syntax or of its (semantic) results?}. A simple example is the following valid query, considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which happens because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
 
 \begin{minted}{js}
         query {
@@ -91,12 +96,11 @@ For the former, we notice that their definition is unsound\td{?}, in the sense t
         }
 \end{minted}
 
+Moving on to the equivalence rules\et{which}, there are three aspects we have to highlight. The first one is that rule number (2)\et{from where?}, which refers to the merging of fields with subqueries, is correct but does not preserve {\em ordering} of the queries \et{what does it mean? the order of each query in the sequence, or the order within a given query?}. While this is not imposed by the \spec, it is an important feature of \gql evaluation\et{who says?}. This is also important at the moment of defining and comparing semantic equivalence between queries.\et{why?}
 
-Moving onto the equivalence rules, there are three aspects we have to highlight. The first one is that rule number (2), which refers to the merging of fields with subqueries, is correct but does not preserve ordering of the queries. While this is not imposed by the \spec, it is an important feature of \gql evaluation. This is also important at the moment of defining and comparing semantic equivalence between queries.
+The second aspect is about the elements they use \td{?}\et{super unclear} in their rules. In some cases they use list of queries while in some other they define it over single queries, or sometimes mix them\et{that's our query/queries discussion here}. While this is no big issue, it was a bit confusing when trying to implement their rules in \coq.\td{Not sure how to describe this, but the thing is their rules are a bit weird. They describe rules for individual selections, but there is no... "global" rewriting. I imagine this is "simpler" to understand with their semantics, because they do not modify the queries as they evaluate them (pushing everything to the responses), but it is still weird to define it as a procedure in Coq (or even as inductive relation).}\et{unclear}
 
-The second aspect is about the elements they use \td{?} in their rules. In some cases they use list of queries while in some other they define it over single queries, or sometimes mix them. While this is no big issue, it was a bit confusing when trying to implement their rules in \coq.\td{Not sure how to describe this, but the thing is their rules are a bit weird. They describe rules for individual selections, but there is no... "global" rewriting. I imagine this is "simpler" to understand with their semantics, because they do not modify the queries as they evaluate them (pushing everything to the responses), but it is still weird to define it as a procedure in Coq (or even as inductive relation).}
-
-Finally, there is an implicit notion of type in context when they describe their rules\td{and maybe a missing rule?}. This is crucial, because otherwise there are queries that cannot be normalized. For example, the following query cannot be transformed with the rules as they are.
+Finally, there is an implicit notion of type in context when they describe their rules\td{and maybe a missing rule?}. This is crucial, because otherwise there are queries that cannot be normalized. For example, the following query cannot be transformed with the rules as they are.\et{ie. fails to normalize?}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
           query {
               name
