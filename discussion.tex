@@ -62,61 +62,7 @@ Regarding error handling, we currently do not implement it. Errors may have two 
 
 \et{overall, after looking at 5.1-5.4, I think that a compressed/selected list of points good be put in a "3.6 Design considerations and discussion" section}
 
-\subsection{Normalization}
+%\subsection{Normalization}
 
-\et{this section could be a similar section at the end of the normalization section}
+%\et{this section could be a similar section at the end of the normalization section}
 
-\subsubsection{Grounding}
-The \gcoql definition of grounding differs slightly from the one given by \HP, because they\et{who?} do not use information on the type in context. We take this\et{which?} approach because the structure of grounded queries is deterministic and it simplifies reasoning. In \HP's approach, subqueries of fields can be either fields or inline fragments, without clear conditions\et{about what?}. For instance, the following query, inspired from the schema in Section~\ref{sec:bg}, is in ground-typed normal form but the field \texttt{goodboi} has field subqueries in one case and fragments in the other. With our approach, only the second occurrence of \texttt{goodboi} is grounded, since its return type is an interface and the subqueries are specified down to the subtypes \et{you used to say "specify down to object types"}, using fragments.
-
-\begin{minted}[escapeinside=||, mathescape=true]{js}
-        query {
-            goodboi {
-              name
-            }
-            goodboi {
-              |$\ldots$| on Dog {
-                name
-              }
-              |$\ldots$| on Pig {
-                name
-              }
-            }
-        }
-\end{minted}
-
-In this section we discuss some discoveries made regarding \HP's definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
-
-For the former, we notice that their definition\et{of what?} is unsound\td{?}, in the sense that there are queries that are considered non-redundant but actually would produce redundant results\et{is being redundant a property of the query syntax or of its (semantic) results?}. A simple example is the following valid query, considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which happens because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
-
-\begin{minted}{js}
-        query {
-            name
-            name:name
-        }
-\end{minted}
-
-Moving on to the equivalence rules\et{which}, there are three aspects we have to highlight. The first one is that rule number (2)\et{from where?}, which refers to the merging of fields with subqueries, is correct but does not preserve {\em ordering} of the queries \et{what does it mean? the order of each query in the sequence, or the order within a given query?}. While this is not imposed by the \spec, it is an important feature of \gql evaluation\et{who says?}. This is also important at the moment of defining and comparing semantic equivalence between queries.\et{why?}
-
-The second aspect is about the elements they use \td{?}\et{super unclear} in their rules. In some cases they use list of queries while in some other they define it over single queries, or sometimes mix them\et{that's our query/queries discussion here}. While this is no big issue, it was a bit confusing when trying to implement their rules in \coq.\td{Not sure how to describe this, but the thing is their rules are a bit weird. They describe rules for individual selections, but there is no... "global" rewriting. I imagine this is "simpler" to understand with their semantics, because they do not modify the queries as they evaluate them (pushing everything to the responses), but it is still weird to define it as a procedure in Coq (or even as inductive relation).}\et{unclear}
-
-Finally, there is an implicit notion of type in context when they describe their rules\td{and maybe a missing rule?}. This is crucial, because otherwise there are queries that cannot be normalized. For example, the following query cannot be transformed with the rules as they are.\et{ie. fails to normalize?}
-\begin{minted}[escapeinside=||, mathescape=true]{js}
-          query {
-              name
-              |$\ldots$| on Query {
-                  name
-              }
-          }
-\end{minted}
-However, if the type in context is included, which corresponds to \texttt{Query} in this case, it is possible to do more. The queries can be wrapped in an inline fragment with type condition \texttt{Query}. Then, with a mix of other rules the normalized query can be obtained.
-
-\td{Not sure where to mention the whole process of doing this (since it took the most of our time). Things such as:
-    \begin{itemize}
-        \item Trying to implement HP's rules of equivalence.
-        \item Trying to work on a subset of queries with no invalid fragments.
-        \item Change/Discovery of their semantics and responses.
-        \item Definition of normalization in two separate functions; one for grounding and one for removing redundancy.
-        \item etc.
-    \end{itemize}
-}

@@ -64,10 +64,13 @@
 \newcommand{\coqr}{\plstyle{CoqR}}
 \newcommand{\coq}{\plstyle{Coq}}
 \newcommand{\ssreflect}{\plstyle{SSReflect}}
+\newcommand{\mathcomp}{\plstyle{Mathematical Components}}
 \newcommand{\equations}{\plstyle{Equations}}
 \newcommand{\Vals}{$\mathit{Vals}$\xspace}
 
 % semantics
+\newcommand{\filter}[2]{\mathit{filter}_{#2}(#1)}
+
 \newcommand{\eval}[2]{\llbracket #1 \rrbracket^{#2}_{G}}
 \newcommand{\evalu}[1]{\eval{#1}{u}}
 \newcommand{\evalfilteru}[2]{\eval{\mathit{filter}_{#2}(#1)}{u}}
@@ -85,6 +88,10 @@
 \newcommand{\nval}{\texttt{null}}
 \newcommand{\val}{\texttt{v}}
 
+%normalize
+\newcommand{\normalize}[1]{\mathit{normalize (#1)}}
+
+%misc
 \newcommand{\ie}{i.e.\@\xspace}
 \newcommand{\wrt}{w.r.t.\@\xspace}
 \newcommand{\eg}{e.g.\@\xspace}
