@@ -465,10 +465,14 @@ Definition execute_query (s : wfGraphQLSchema)
 
 %The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.
 
+\et{you need to explain the figure - guide the reader to understand it.}
+
 \td{Move to discussion?}
 The main difference with respect to \HP and the main similarity to the \spec is that we perform a collection of fields at the query level, whereas \HP performs a post-processing of responses. The main reasons are our approach is more similar to the \spec and that it is harder to reason using \HP's approach.
 
 %\td{Don't know how to present this or if it is relevant but I include it so you know it exists - The spec first groups fields by name and then evaluates each group. These are different steps. We define everything in one place because it was easier to reason about the semantics. The difficulty with the spec's approach is that when proving things about the semantics, you have to provide, at each step, the information on how your data is structured (every group contains only fields and every field in a group has the same response name as the group's key used to group them). This is problematic mostly because of inline fragments, which do not have response names. Definitions must always account for the case of inline fragments, even when they are thought out to be used only on fields. Our definition is maybe less compositional but thanks to Equations, it is simpler to reason about it - because Equations generate a nice reasoning principle. We also attempted defining it similarly to the spec, still preserving the information on the structure by using dependent types and Equation, but the resulting reasoning principle would end up being huge (80-100 cases) (I believe I read Matthieu saying that nesting some definitions could exponentially increase the size of the reasoning principle, which is what would occur in this case).}
+
+\et{you might want to say something in the discussion section about this choice, yes. But quick and to the point. I.e. why following spec instead of HP (query vs. response level), and why departing from spec in some aspect. The discussion about the impact on reasoning in Coq is *super relevant* for the CPP crowd!}
 
 %Our first attempt at defining the semantics was to follow \HP's post-processing approach. Our intention was to be as close as possible to their formalization to later prove their transformation and equivalence results, which we cover in Section~\ref{sec:norm}. However, the non-structural recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence very hard.
 

@@ -19,14 +19,18 @@ Considering the actual vibrancy of the \gql community, sustained by several impl
 Recently, Hartig and Pérez~\cite{gqlph} proposed the first (and so far only) formalization of \gql, called \HP hereafter. 
 \HP is a formalization ``on paper'' that was used to prove complexity boundaries for \gql queries. Having a mechanized formalization would present many additional benefits, such as potentially providing a faithful reference implementation, and serving as a solid basis to prove formal results about the \gql semantics. 
 
-For instance, the complexity results of Hartig and Pérez rely on two techniques: {\em a)} transforming queries to {\em equivalent} queries in some  normal form, {\em b)} interpreting queries in a simplified but {\em equivalent} definition of the semantics. However, Hartig and Pérez do not prove that the query transformation (called {\em normalization}) indeed produces queries in such a normal form, and that their semantics is preserved; nor do they prove that the simplified semantics is equivalent to the original one, on such queries.
+For instance, the complexity results of Hartig and Pérez rely on two techniques: {\em a)} transforming queries to {\em equivalent} queries in some  normal form, {\em b)} interpreting queries in a simplified but {\em equivalent} definition of the semantics. However, Hartig and Pérez do not provide an algorithmic definition of the {\em normalization} of queries, let alone proving it correct and semantics preserving;
+% prove that the query transformation (called ) indeed produces queries in such a normal form, and that their semantics is preserved; 
+nor do they prove that the simplified semantics is equivalent to the original one on normalized queries.
 
 % The complexity results are based on two major premises. 
 % The first one is that ``\textit{for every query $\varphi$ that conforms to a schema $\mathcal{S}$, there exists a {\normalfont non-redundant} query $\varphi$' in {\normalfont ground-typed normal form} such that $\varphi \equiv \varphi$'}''. The second one is that for queries that are \textit{non-redundant} and in \textit{ground-typed normal form}, it is possible to define a simplified version of the semantics which is equivalent to the original.
 
 % For the former, they propose a set of equivalence rules to transform queries but they do not actually prove that their application yield a query in this particular form or that they preserve the query semantics. The latter is also exploited, without providing any correctness proof. Since both are fundamental for their complexity results, we believe they must be rigorously addressed.
 
-\paragraph{\gcoql.} This work presents the first mechanized formalization of \gql, carried out in the \coq proof assistant~\cite{Coq}, called \gcoql (|græf$\cdot$co$\cdot$k{\pmschwa}l|). In addition to precisely capturing the semantics of \gql, \gcoql makes it possible to completely specify and prove the correctness of query transformations, as well as other extensions and optimizations made to the language and its algorithms. We illustrate this by proving the correctness and semantic preservation of \HP's normalization---in the process we uncover and address some imprecisions and minor issues.
+\paragraph{\gcoql.} This work presents the first mechanized formalization of \gql, carried out in the \coq proof assistant~\cite{Coq}, called \gcoql (|græf$\cdot$co$\cdot$k{\pmschwa}l|). In addition to precisely capturing the semantics of \gql, \gcoql makes it possible to completely specify and prove the correctness of query transformations, as well as other extensions and optimizations made to the language and its algorithms. We illustrate this by 
+proving the correctness and semantic preservation of \HP's normalization---in the process we provide an algorithmic definition of normalization, and address some imprecisions and minor issues that \coq forced us to uncover.
+
 We hope that \gcoql can serve as a starting point for a formal specification of \gql from which reference implementations can be extracted. Although we have not yet experimented with extraction, \gcoql facilitates this vision by relying on boolean reflection as much as possible.
 % ; this should eventually make it possible to extract reference implementations of the different components developed in \gcoql, such as the query evaluator or the normalization function. 
  % and extracting it to be its official reference implementation.
@@ -67,7 +71,7 @@ While \spec leaves the underlying data model unspecified \et{or under-specified?
 The contributions of this work are:
 \begin{itemize}
     \item The first mechanized formalization of \gql (\S\ref{sec:form}), including the definition of the Schema DSL, query definition, schema and query validation, and the semantics of queries over a graph data model.
-    \item An implementation of \HP's query normalization procedure, proven correct and semantics preserving, after fixing some imprecisions and minor issues (\S\ref{sec:norm}). We also formalize and prove the equivalence between the original query evaluation semantics and the simplified semantics used by \HP, when applied to normalized queries.
+    \item An algorithmic presentation of \HP's notion of query normalization, which we prove correct and semantics preserving, after fixing some imprecisions and minor issues (\S\ref{sec:norm}). We also formalize and prove the equivalence between the original query evaluation semantics and the simplified semantics used by \HP for normalized queries.
      % function with proofs of its correctness and preservation of semantics. This is a result used by \HP to prove complexity boundaries about \gql queries.
     % \item Proof of equivalence between the semantics and a simplified version. This is also an important result for posterior analysis made in \HP.
     \item \et{mention \S\ref{sec:discussion}}
