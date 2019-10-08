@@ -547,3 +547,75 @@ The main difference with respect to \HP and the main similarity to the \spec is 
 This concludes the base formalization of \gql schemas, graph data model, and queries and their semantics.  These definitions provide the base upon which further development and analysis can be developed.
 
 %\td{I feel there is not much to say about the semantics... The "juicy" bits are in the discussion section - limitations given by the graph model, functor approach to the spec's semantics, etc.}
+
+\subsection{Design considerations and discussion}\label{subsec:discussion}
+Intro to section
+
+%\et{I suggest to split this section in two parts: one that is related to the core (schema, data model, queries, semantics), and on that is related to normalization/simplified semantics. And to move the first to just after section 3 (either as a 3.5 or as a separate section 4 if it's length justifies it)}
+
+\subsubsection*{\HP Schema}
+
+%\et{I don't get what is the point of this paragraph, and why it matters -- what's the takeaway message? how does it relate to what we did?}
+%We believe that the \spec's definition of the schema can be slightly confusing and ambiguous. The schema is described as being ``\textit{defined in terms of the types and directives it supports as well as the root operation types for each kind of operation}''\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Schema}. However, the \spec also defines a structure called \texttt{schema}\footnote{https://graphql.github.io/graphql-spec/June2018/\#SchemaDefinition} that only contains the root operation types (query, mutation and subscription), meanwhile the type definitions and directives are defined separately. We think this introduces the first ambiguity to the definition. Now, to actually capture the notion described above, it is necessary to define what is called a \textit{Document}\footnote{https://graphql.github.io/graphql-spec/June2018/\#Document}, consisting of a list of definitions and queries. Among these definitions one can include the \texttt{schema} structure, as well as the type definitions and directives (by repeatedly using the \textit{Type System Definition}\footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition} rule). This effectively permits building the schema as expected, however we think it is unintuitive to allow mixing definitions with queries. Also, the naming of the different structures seems to introduce confusion and inconsistency.
+
+ 
+% the \spec defines each of the three elements (types, directives and root operation types) as separate entities. The first candidate is the \textit{Type System} \footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition} but it is a disjunction of the three elements: types, directives and root operation types. 
+
+
+% Secondly, the \spec defines the \texttt{schema}\footnote{https://graphql.github.io/graphql-spec/June2018/#SchemaDefinition} structure that only contains the root operation types (query, mutation and subscription). The type definitions and directives are defined separately. Even though it is not a major difference, it lends itself to possible confusion when referring to the schema of a \gql service. In addition, the previously quoted definition does
+
+
+%The previously quoted definition actually matches the \textit{Type System} structure\footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition}. Our formalization follows the latter but rename it to schema to also match the quoted description.
+
+%\et{contrast with what you did, and the tradeoffs (what's convenient, what's not)}
+The definition of \gql schemas in \HP is primarily done by defining sets over the possible field names, types and values, as well as a collection of functions to relate the different elements.
+While this is convenient in their setting because it facilitates their reasoning with graphs and simplifies many validation rules, we believe it was not the case for our formalization.
+First and mostly because it is too different from how the \spec is defined\footnote{It is worth mentioning that when \HP was published, the \spec did not provide the schema definition DSL, among other things.} and 
+we regard similarity as a component of trust \wrt to our formalization. Secondly, because we expect our implementation to be extracted in the future, the definitions should be as natural as possible to what
+a programmer would use, which we believe is achieved in our work and would otherwise not have been by following the other approach.
+
+Finally,  the definition of consistency of a schema given by \HP does not capture all of the validation rules established by the \spec. 
+In particular, it does not properly account for arguments of implemented fields in objects implementing interfaces. 
+A corrected version is provided in a recent work by Hartig\&Hidder~\cite{olafschema}.
+
+\subsubsection*{Data model and semantics}
+
+As described in Section~\ref{subsec:graph}, \gql is agnostic to the technology used and the underlying data model. We follow \HP and instantiate the semantics to a graph setting, allowing to reason about it\et{see my comment in the intro}. We describe here severe limitations \et{why is the list nesting situation "severe"?? what backs up this characterization?} that this data model introduces on the possible results generated and the open questions regarding how to properly model certain aspects of \gql schemas \et{vague}. This model is exploited by \HP and \cite{olafschema} but neither discuss nor mention the limitations. \et{you only discuss one, without really explaining why it matters, or to what extent. Does it break all established results? etc.}
+
+The main issue with this graph model is that there is no proper accounting of list types containing other list types (with any nesting depth). When it comes to list types it is not clear what they represent in a graph. Let us illustrate this with an example.
+%The different features that compose a \gql schema can be represented in a graph somehow. For instance, a field is either a property or the label of an edge, while its return type can be associated to a target node in an edge. However, when it comes to list types it is not clear what they represent in a graph. Let us illustrate this with an example.
+
+
+% Our definition is in essence the same as in \HP but differs greatly in implementation. \HP defines a \gql graph in a more ``centralized'' manner. For instance, nodes and field names are defined by sets. Node types are defined by a single function which receives a node identifier and gives its type. Properties are also defined by a single function which receives a node identifier and a field name with arguments. Contrarily, our approach attempts to recreate the structures individually. For instance, a node contains all the information pertaining to itself; its type and its properties. We believe this is a more natural approach to defining the graph from an engineering point of view.
+
+A service may declare the field \texttt{friends:[Human]} in a given type, representing the list of friends.
+In a graph this can be pictured as having a node with multiple outgoing edges labeled \texttt{friends}, reaching other nodes of type \texttt{Human}. It is possible to then extend the service by including a new field \texttt{friendsByName:[[Human]]}, in which one can request a list of friends but grouped by their names. At the moment neither our implementation, \HP nor \cite{olafschema} properly handle this situation. The open question is what does this represent in the graph? These should be outgoing edges similarly to the previous case but, what should the target nodes be? Should these be intermediate blank nodes? Is every edge labeled or only the last one that reaches a node with type \texttt{Human}? What happens if we increase the nesting? Since the information is ultimately collected from ``concrete'' nodes, should the graph be kept the same but introduce \textit{formatter} functions to match the schema? How does this differ from the \gql resolvers?
+
+These questions and more \et{what are the more? instead of spending half a page on nested lists, tell us what are the other limitations and what their possible impact is -- ie. like a typical "threats to validity" section} are not addressed nor discussed in \HP and it is actually more restrictive than expected\et{expected by whom?}, by not allowing nested lists for scalar values (in nodes's properties)\et{in the previous paragraph, you put all three approaches in the same bag, now it seems \HP does worse}. Meanwhile, our approach and the one used in \cite{olafschema} allow any list type at the property level but simply ignore any possible nesting when the list type refers to neighboring nodes (composite types), as in the example above.\et{for instance, a typical question would be: "how prevalent are those situations?" if you don't know the answer to this question, how can you evaluate if it's severe or anecdotical?}
+In the case of \cite{olafschema}, they do not address nor discuss these questions\et{you said that already}. This choice of modeling has some consequences\et{what are they?} when defining the semantics of \gql queries, because the possible results generated are restricted to a smaller subset\et{the limitation seemed to be about the data model, not the queries or their results}. It is not clear what the proper way is to handle this issue\et{still talking about nested lists?} but more is explored in Section~\ref{subsec:semantics}\et{watch out: 3.4 is now *before* this text}. 
+We also address the \spec's semantics and how this is managed.\et{?}
+
+\subsubsection*{Queries}
+
+\et{overall verbose and not very clear/insightful}
+
+\HP differs from both the \spec and \gcoql when defining queries, as they include an additional rule for lists of queries. Their grammar includes a production rule for lists of queries, which is defined at the same level of \et{same....as...} the other rules. The main issue we found with this approach is that it allows building arbitrary trees instead of just a list of queries.\et{you say on page 5 that "a valid query has a tree structure"!} These trees can be flattened to recover the list structure but increasing the effort when defining functions and reasoning over queries. We believe this is assumed by \HP but not explicitly mentioned otherwise.
+
+
+On a different note, we mentioned in Section~\ref{subsec:query} that we split a validation rule\et{which?} into two separate predicates\et{which?}. The reason behind this is that we noticed that the \spec's definition includes redundant recursive calls\et{meaning?} which may result in increased computational time\et{are you worrying about performance in the model?}. By splitting the definition in two parts, we expect to optimize the algorithm and also facilitate reasoning about them\et{why?}. At the time of writing this paper, a new algorithm was proposed by a team at XING\footnote{https://www.xing.com/} that also addresses this very same issue and is described in~\cite{xingalg}. They follow a different approach to resolving it, using sets, and provide a much more elaborate analysis of execution times than us\et{sure, you don't provide any ;-)}. Comparing both approaches and analyzing execution times could be an interesting venue to explore.
+
+Finally, we also noticed that the previous rule\et{which?} is too conservative and may consider valid queries as invalid. This occurs because the \spec allows defining fragments that are never evaluated. The issue is that the validation rule can then consider the subqueries in these fragments as invalid, even though they are never evaluated, rendering the whole query invalid\footnote{An example query can be seen in the following link: https://tinyurl.com/y3hz5vgv.}. We attempt to remove this conservativeness in the predicate that checks the merger of fields but we have not provided proofs that it does. For the predicate regarding unambiguous results, it is equally conservative as the \spec. We believe it should not be hard to modify the definition, however we decided against it at the moment, to keep it simple and facilitate reasoning over the predicate, as well as preserving some similarity to the \spec\td{Although it may not be entirely similar from the start...}.
+
+
+\subsubsection*{Semantics}
+
+%We finish this section by addressing two major aspects about our formalization; completeness and errors.
+
+The first one\et{?} was briefly mentioned in Section~\ref{subsec:graph}\et{seems this has been moved}, when discussing the limitations and open questions regarding the graph model. These translate in the fact that we currently do not produce list results with nested lists of objects. For instance, the field \texttt{friendsByName:[[Human]]} is treated as if it were defined as \texttt{friendsByName:[Human]} and the results match the latter format. Otherwise, there is no restriction in the case of nested lists for scalar values\et{yep, that was in 5.2}. In \HP, there is no possibility to produce nested lists for either scalar or object values\footnote{The grammar itself does not permit it.} and there is no mention of this restriction.\et{all this was said before}
+
+Regarding error handling, we currently do not implement it. Errors may have two main sources; validation errors and execution errors.\td{Not sure how to write this}\et{does not belong here---more of a "limitations" section (before the conclusion)}
+
+\et{so this section seems vacuous}
+
+%\et{overall, after looking at 5.1-5.4, I think that a compressed/selected list of points good be put in a "3.6 Design considerations and discussion" section}
+
