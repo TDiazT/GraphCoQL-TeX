@@ -80,7 +80,7 @@ A \gql schema is \textit{well-formed} if:
 \end{itemize}
 \end{definition}
 
-In our \coq formalization, this is captured by the Boolean predicate below. As mentioned in the introduction, our formalization heavily relies on Boolean reflection, following the SSReflect mindset.
+In our \coq formalization\et{everywhere: replace "our coq formalization" by \gcoql}, this is captured by the Boolean predicate below. As mentioned in the introduction, our formalization heavily relies on Boolean reflection, following the SSReflect mindset.
 %
 \begin{minted}[bgcolor=coqbg]{coq}
 Definition is_a_wf_schema (s : graphQLSchema) : bool :=
@@ -89,6 +89,7 @@ Definition is_a_wf_schema (s : graphQLSchema) : bool :=
       all is_wf_type_def s.(type_definitions).
 \end{minted}
 %
+\et{naming inconsistency between is\_a\_wf\_schema and is\_wf\_typedef: skip the "a" in the case of schema}
 The notion of well-formedness for type definitions requires \eg that union members contain existent object types and that object and interface types contain at least one field. Due to space limitations, we omit the full definition and refer the interested reader to file \texttt{SchemaWellFormedness.v}.
 
 %We will, though, resume the discussion about non-emptiness of fields, union and enum members, which are included in the predicate. The main reason behind this decision is that, even though the \spec embeds this information in the grammar, it still includes it in their validation rules later on. We believe that it is simpler to use common lists instead of defining new structures or using dependent types, from an implementation point of view, while still preserving the correspondence to the algorithmic description given by the \spec.
@@ -181,7 +182,7 @@ Definition is_a_conforming_graph
   nodes_conform s g.(nodes).
 \end{minted}
 %
-As a side note, this notion was only loosely defined in \HP, but it is properly addressed in a recent work of one of its authors ~\cite{olafschema}.
+% As a side note, this notion was only loosely defined in \HP, but it is properly addressed in a recent work of one of its authors ~\cite{olafschema}.
 
 Similarly to \gql schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph, containing a graph and a proof of its conformance to a particular schema.
 
@@ -409,7 +410,8 @@ Now we have all the prerequisites to define the semantics of \gql queries and th
 
 A first observation we need to make is that query semantics is not compositional, in the sense that the result of a sequence of selections is not obtained by concatenating the results of the individual selections. Therefore, our semantic function will take a (whole) sequence of selections and return a (whole) sequence of responses.  
 
-We model responses with a tree structure, similar to JSON, as shown in Figure~\ref{fig:response_def}. A response can be a value, an object mapping keys to other responses or an array of response values.
+We model responses with a tree structure, similar to JSON, as shown in Figure~\ref{fig:response_def}. A response can be a value, an object mapping keys to other responses or an array of response values. Null values in the leaves of the response tree are represented with option types.\et{fix once fig 6 defs is clarified}
+
 
 \begin{figure*}[h]
 \centering
@@ -432,7 +434,7 @@ Definition GraphQLResponse (Vals: eqType) :=
 \end{minted}
    
   \end{subfigure}
-  \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).}
+  \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).}\et{what is ResponseNode above?}
   \label{fig:response_def}
 
 \end{figure*}
@@ -443,7 +445,7 @@ Definition GraphQLResponse (Vals: eqType) :=
 %\fo{Explain the role of each constructor}
 %\fo{Shouldn't the ObjectResponse constructor take a GraphQLResponse argument?}
 
-Our model of a query response is based in that it allows us to preserve similarity to selections and provides a strong reasoning principle, as well as facilitating the preservation of order of the individual response values.  This differs from the \spec, which only states that responses are a map from keys to values\td{unspecified} and does not impose an ordering, although encourages it (\cf\S7.2.2~\cite{gqlspec}). We believe that preserving the order is one of the strong selling points for \gql (selections and their responses are very similar and easy to read). 
+
 
 %\begin{figure}[h]
 
@@ -453,7 +455,7 @@ Our model of a query response is based in that it allows us to preserve similari
 
 
 
-As we described in \S\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec, in the sense that it can be detached from a particular data model. 
+% As we described in \S\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec, in the sense that it can be detached from a particular data model. 
 Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. In this sense:
 \begin{itemize}
     \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node.
@@ -527,10 +529,10 @@ Definition execute_query (s : wfGraphQLSchema)
     & \text{ otherwise}
     \end{cases}
     \end{align*}
-    \caption{Semantics of \gql queries. The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
+    \caption{Semantics of \gql queries\et{(more precisely, selection sets) -- in fact, should you still use $\varphi$ here, for selections, since you use it in the text for queries? the text now uses $ss$ for selection set, which does not lend itself well to this overbar representation. Needs to be fixed}.\newline {\footnotesize The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
     Meanwhile, $\mathit{merge}$ joins the subqueries of the input selections. The $\mathit{type}$ function retrieves the type of the given field in the node's type.
 	The $\mathit{fragment\_type\_applies}$ predicate checks if the fragment's type condition is related to the node's type and whether its contents should be evaluated in the given node.
-	Finally, $E$ are the graph's edges, while $L_{t}$ is simply the list type.
+	Finally, $E$ are the graph's edges, while $L_{t}$ is simply the list type.\et{then why the $_t$ subscript?}}
   %  \fo{This definition is given using syntax you have never introduced (what does :: mean? what does f:v mean? what does ++ mean?, etc, etc). Also, you must explain what all auxiliary functions (filter, property, merge, neighbors, etc, etc) do} 
    % \et{explain also what are $u$ $G$ $L_t$ and $E$}
 %    \et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}
@@ -562,15 +564,15 @@ We now discuss some design considerations that manifested when developing
 % Secondly, the \spec defines the \texttt{schema}\footnote{https://graphql.github.io/graphql-spec/June2018/#SchemaDefinition} structure that only contains the root operation types (query, mutation and subscription). The type definitions and directives are defined separately. Even though it is not a major difference, it lends itself to possible confusion when referring to the schema of a \gql service. In addition, the previously quoted definition does
 %The previously quoted definition actually matches the \textit{Type System} structure\footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition}. Our formalization follows the latter but rename it to schema to also match the quoted description.
 %\et{contrast with what you did, and the tradeoffs (what's convenient, what's not)}
-The definition of \gql schemas in \HP is primarily done by defining sets over the possible field names, types and values, as well as a collection of functions to relate the different elements.
-While this is convenient in their setting because it facilitates their reasoning with graphs and simplifies many validation rules, we believe it is not the case for our formalization.
-First and mostly because it is too different from how the \spec is defined\footnote{It is worth mentioning that when \HP was published, the \spec did not provide the schema definition DSL, among other things.} and 
-we regard similarity as a component of trust. Secondly, because we expect our implementation to be extracted in the future, the definitions should be as natural as possible to what
-a programmer would use, which we believe is achieved in our work and would otherwise not have been by following \HP's  approach.
+The definition of schemas in \HP relies on defining sets of field names, types and values, and using a number of functions to relate the different elements.\et{give a simple example} In contrast, \gcoql uses a more data-structure centric approach, in which schemas are records.\et{doesn't this comment also applies to the data model? (and then e.g. to conformance checking)}
+While \HP's approach simplifies many validation rules, our approach is closer to the schema definition language from the \spec---which did not exist when \HP was published. Another advantage of the approach we take is that it is closer to an actual implementation \et{of what components exactly? make all this a bit more precise}, and hence the definitions could be directly extracted as a reference implementation.
+% While this is convenient in their setting because it facilitates their reasoning with graphs and simplifies many validation rules, we believe it is not the case for our formalization.
+% First and mostly because it is too different from how the \spec is defined\footnote{It is worth mentioning that when \HP was published, the \spec did not provide the schema definition DSL, among other things.} and 
+% we regard similarity as a component of trust. Secondly, because we expect our implementation to be extracted in the future, the definitions should be as natural as possible to what
+% a programmer would use, which we believe is achieved in our work and would otherwise not have been by following \HP's  approach.
 
-Finally,  the definition of consistency of a schema given by \HP does not capture all the validation rules established by the \spec. 
-In particular, it does not properly account for arguments of implemented fields in objects implementing interfaces. 
-Note that a corrected version of \HP has been proposed recently by Hartig and Hidder~\cite{olafschema}. \et{do they coincide with what you do/the spec say?}
+\paragraph{Schema validation.} The definition of consistency\et{should it be "well-formedness"?} of a schema given by \HP does not capture all the validation rules established by the \spec. In particular, it does not properly account for arguments of implemented fields in objects implementing interfaces. A corrected version of \HP has been proposed recently by Hartig and Hidder~\cite{olafschema}. \et{do they coincide with what you do/the spec say?}
+
 
 \paragraph{Data model.} We observe that both \HP (and its recent extension~\cite{olafschema}) and \gcoql have a slightly limited graph model that does not entirely describe the universe of a \gql service: graphs cannot model {\em nested} lists, when the underlying type is an object or abstract type.\footnote{The situation is worse in \HP, which cannot even model nested list types for scalar types.}
 For instance, these semantics cannot account for a selection over a field whose type is \texttt{[[Animal]]}.
@@ -604,8 +606,11 @@ Regardless, we believe that while this limitation might turn out problematic for
 
 
 \paragraph{Responses.}
-\mbox{}\et{Moved from 3.4 - unchecked yet} 
-Our approach has two main disadvantages: possible duplication of response names and cost of access. Since we use lists instead of maps, we can encounter duplicated names and accessing a value has a linear cost given by the lists size, instead of the constant access obtainable with a map. We still argue that the reasoning principles and simplicity to order is highly valuable. Nevertheless, we include a proof that the results obtained with the semantics have no duplicated names. Finally, we use option types to represent null values in the leaves of the response tree.
+The \spec states that responses are a map from keys to values\td{unspecified}\et{what is?}, but encourages the ordering of selections to be preserved (\cf\S7.2.2~\cite{gqlspec})---the similarity between query selections and responses being one of \gql's attraction for programmers.  We embrace this recommendation: modeling of responses as trees allows us to preserve similarity wrt selections and ordering of individual response values, in addition to providing us with a strong reasoning principle\et{why is that?}.\et{what does strong mean?}
+
+The downsides of this representation choice are possible duplication of response names, and access cost. We establish unicity of names by extrinsic proofs, and consider that the access costs are not of primary importance at this stage, compared to the simple reasoning principle that trees enjoy.\et{is it?}
+
+% Our approach has two main disadvantages: possible duplication of response names and cost of access. Since we use lists instead of maps, we can encounter duplicated names and accessing a value has a linear cost given by the lists size, instead of the constant access obtainable with a map. We still argue that the reasoning principles and simplicity to order is highly valuable. Nevertheless, we include a proof that the results obtained with the semantics have no duplicated names. 
 
 
 \paragraph{Query semantics.}

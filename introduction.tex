@@ -80,7 +80,7 @@ The contributions of this work are:
 We first briefly introduce \gql (\S\ref{sec:bg}). 
 We end this article by discussing the validation and limitations of \gcoql (\S\ref{sec:valid}), related work (\S\ref{sec:related}) and conclude in \S\ref{sec:conclusion}.
 
-\gcoql and the results presented in this paper have been developed in \coq v.8.9.1 and are provided as anonymous supplementary material. We often refer directly to \coq files in the paper. \gcoql extensively uses the libraries
+\gcoql and the results presented in this paper have been developed in \coq v.8.9.1 and are provided as anonymous supplementary material. We often refer directly to \coq files in the paper \et{for space, we might in fact *not* do this and just defer to a nice README file with the artifact}. \gcoql extensively uses the libraries
 \mathcomp~\cite{mathcomp}, \ssreflect~\cite{ssreflect} and \equations~\cite{equations}. 
 This work is based on the latest release of the \gql specification, dated June 2018.
 % \et{I think we can skip this paragraph here, not important enough for being in the intro} Finally, regarding the development itself, we use SSReflect \et{cite} intensively, relying on boolean reflection as much as possible. Also, the use of the  to define non-structural recursive functions is essential for our definitions. Other libraries, such as \textit{Function} and \textit{Program} did not provide sufficient tools to handle rewriting and inductive reasoning about our definitions, which \textit{Equations} incredibly facilitates. \coql{} is not currently extracted to other languages but we believe that it should not be a difficult task, given the design decisions considered.
