@@ -68,7 +68,7 @@ Our formalization of type definitions closely follows the \spec, as depicted in 
 
 % As can be seen in the figure, we tried to match the \spec's definition as much as possible. This eyeball correspondence gives us a degree of confidence about the implementation.  % We currently do not include the \textit{Input Object} types, as well as anything related to \textit{introspection}.
 
-On this regard, observe that the provided definitions of schema and types enable building ``invalid'' schemas. For instance, one can build an object that implements scalar types or use a nonexistent type as the query type. To avoid this problem, the \spec provides several validation rules, scattered throughout the document\footnote{Most can be found in the \textbf{Type Validation} subsection of each type described in https://graphql.github.io/graphql-spec/draft/\#sec-Type-System.}.  We collect these rules and refer to them as the \textit{well-formedness} condition of a \gql schema.
+On this regard, observe that the provided definitions of schema and types enable building ``invalid'' schemas. For instance, one can build an object that implements scalar types or use a nonexistent type as the query type. To avoid this problem, the \spec provides several validation rules, scattered throughout the document\footnote{Most can be found in the \textbf{Type Validation} subsection of each type described in \S3~\cite{gqlspec}.}.  We collect these rules and refer to them as the \textit{well-formedness} condition of a \gql schema.
 
 
 \begin{definition}
@@ -394,9 +394,10 @@ query {
 \end{minipage}
 
 
+The last two rules, for merging and unambiguous values, are defined as a single validation rule in the \spec (\cf\S5.3.2~\cite{gqlspec}). 
+We choose to split them because we noticed that they indeed can be defined separately, simplifying their implementation as well as facilitating 
+reasoning about them\footnote{Our algorithm implements an optimized version of the rule. A team at XING\footnote{https://www.xing.com/} recently published another algorithm described in~\cite{xingalg}.}.
 
-				
-These last two rules, for merging and unambiguous values, are defined as a single validation rule in the \spec\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Field-Selection-Merging}, however we decide to separate them. The first reason, which we cover more extensively in \S\ref{sec:discussion}, is that it is possible to optimize the algorithm by reducing redundant recursive calls. Secondly, splitting facilitates reasoning about the predicates.
 
 % The main issue is that the \spec allows for what we call \textit{invalid fragments}, originally described in an issue in the \spec's repository\footnote{https://github.com/graphql/graphql-spec/issues/367}. In a nutshell, the \spec allows using fragments with type conditions that can span to multiple unrelated types. These end up not being evaluated due to posterior checks\footnote{https://graphql.github.io/graphql-spec/June2018/\#DoesFragmentTypeApply()}.
 
@@ -455,7 +456,7 @@ Our model of a query response is based in that it allows us to preserve similari
 
 
 As we described in \S\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec, in the sense that it can be detached from a particular data model. 
-Informally, the evaluation of the selection set of a query represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. In this sense:
+Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. In this sense:
 \begin{itemize}
     \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node.
     \item An inline fragment conditions whether using a node to access its properties or to traverse to other nodes.
@@ -603,7 +604,7 @@ Finally, we are not entirely certain about the impact that this limitation may h
 Empirical studies, such as~\cite{empiricalgql} and~\cite{empiricalapi}, analyze the structure of \gql schemas 
 over a collection of industrial and open-source projects. Their results provide some insights such as the most 
 common object types, which can be traced to reference implementations and shown to not have nested list types 
-with depth greater than one. However, these insights are not conclusive, thus requiring a more profound analysis.\td{hint to future work? In particular~\cite{empiricalgql} seems more complete and with more tooling} 
+with depth greater than one. However, these insights are not conclusive, thus requiring a more profound analysis.\td{hint to future work? In particular~\cite{empiricalgql} seems more complete, and with more and better tooling} 
 
 Regardless of this open problem, we believe that it introduces complexity to the formalization but the results and those of \HP should still be preserved.
 \td{Why?  Idk, but the essence of the issue doesn't seem that terrible in that the results change or the semantics goes wild and generate 
@@ -626,18 +627,20 @@ is still the same.}
 %In the case of \cite{olafschema}, they do not address nor discuss these questions\et{you said that already}. This choice of modeling has some consequences\et{what are they?} when defining the semantics of \gql queries, because the possible results generated are restricted to a smaller subset\et{the limitation seemed to be about the data model, not the queries or their results}. It is not clear what the proper way is to handle this issue\et{still talking about nested lists?} but more is explored in Section~\ref{subsec:semantics}\et{watch out: 3.4 is now *before* this text}. 
 %We also address the \spec's semantics and how this is managed.\et{?}
 
-\subsubsection*{Queries}
+%\subsubsection*{Validation of queries}
 
-\et{overall verbose and not very clear/insightful}
+%\td{Actually... not sure if this is relevant to present or not. I push the discussion over to Zulip (bc tbh idk what to say)}
+% To finalize, we mention an issue in one of the \spec's validation rule and, its causes and consequences, 
+%\et{overall verbose and not very clear/insightful}
 
 %\HP differs from both the \spec and \gcoql when defining queries, as they include an additional rule for lists of queries. Their grammar includes a production rule for lists of queries, which is defined at the same level of \et{same....as...} the other rules. The main issue we found with this approach is that it allows building arbitrary trees instead of just a list of queries.\et{you say on page 5 that "a valid query has a tree structure"!} These trees can be flattened to recover the list structure but increasing the effort when defining functions and reasoning over queries. We believe this is assumed by \HP but not explicitly mentioned otherwise.
 
+%On a different note, we mentioned in Section~\ref{subsec:query} that we split a validation rule\et{which?} into two separate predicates\et{which?}. The reason behind this is that we noticed that the \spec's definition includes redundant recursive calls\et{meaning?} which may result in increased computational time\et{are you worrying about performance in the model?}. By splitting the definition in two parts, we expect to optimize the algorithm and also facilitate reasoning about them\et{why?}. At the time of writing this paper, a new algorithm was proposed by a team at XING\footnote{https://www.xing.com/} that also addresses this very same issue and is described in~\cite{xingalg}. They follow a different approach to resolving it, using sets, and provide a much more elaborate analysis of execution times than us\et{sure, you don't provide any ;-)}. Comparing both approaches and analyzing execution times could be an interesting venue to explore.
 
-On a different note, we mentioned in Section~\ref{subsec:query} that we split a validation rule\et{which?} into two separate predicates\et{which?}. The reason behind this is that we noticed that the \spec's definition includes redundant recursive calls\et{meaning?} which may result in increased computational time\et{are you worrying about performance in the model?}. By splitting the definition in two parts, we expect to optimize the algorithm and also facilitate reasoning about them\et{why?}. At the time of writing this paper, a new algorithm was proposed by a team at XING\footnote{https://www.xing.com/} that also addresses this very same issue and is described in~\cite{xingalg}. They follow a different approach to resolving it, using sets, and provide a much more elaborate analysis of execution times than us\et{sure, you don't provide any ;-)}. Comparing both approaches and analyzing execution times could be an interesting venue to explore.
-
-Finally, we also noticed that the previous rule\et{which?} is too conservative and may consider valid queries as invalid. This occurs because the \spec allows defining fragments that are never evaluated. The issue is that the validation rule can then consider the subqueries in these fragments as invalid, even though they are never evaluated, rendering the whole query invalid\footnote{An example query can be seen in the following link: https://tinyurl.com/y3hz5vgv.}. We attempt to remove this conservativeness in the predicate that checks the merger of fields but we have not provided proofs that it does. For the predicate regarding unambiguous results, it is equally conservative as the \spec. We believe it should not be hard to modify the definition, however we decided against it at the moment, to keep it simple and facilitate reasoning over the predicate, as well as preserving some similarity to the \spec\td{Although it may not be entirely similar from the start...}.
+% Finally, we also noticed that the previous rule\et{which?} is too conservative and may consider valid queries as invalid. This occurs because the \spec allows defining fragments that are never evaluated. The issue is that the validation rule can then consider the subqueries in these fragments as invalid, even though they are never evaluated, rendering the whole query invalid\footnote{An example query can be seen in the following link: https://tinyurl.com/y3hz5vgv.}. We attempt to remove this conservativeness in the predicate that checks the merger of fields but we have not provided proofs that it does. For the predicate regarding unambiguous results, it is equally conservative as the \spec. We believe it should not be hard to modify the definition, however we decided against it at the moment, to keep it simple and facilitate reasoning over the predicate, as well as preserving some similarity to the \spec\td{Although it may not be entirely similar from the start...}.
 
 
+\iffalse 
 \subsubsection*{Semantics}
 
 %We finish this section by addressing two major aspects about our formalization; completeness and errors.
@@ -647,6 +650,7 @@ The first one\et{?} was briefly mentioned in Section~\ref{subsec:graph}\et{seems
 Regarding error handling, we currently do not implement it. Errors may have two main sources; validation errors and execution errors.\td{Not sure how to write this}\et{does not belong here---more of a "limitations" section (before the conclusion)}
 
 \et{so this section seems vacuous}
+\fi
 
 %\et{overall, after looking at 5.1-5.4, I think that a compressed/selected list of points good be put in a "3.6 Design considerations and discussion" section}
 
