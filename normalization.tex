@@ -3,7 +3,7 @@
 
 To illustrate how \gcoql can be used to reason about query transformations, we study the {\em normalization} process proposed by Hartig and Pérez (\HP)~\cite{gqlph}, which is fundamental for the complexity results they prove.
 %
-Recall that these results are based on two premises: {\em a)} every query can be normalized to a semantically-equivalent query; {\em b)} on such queries, one can use a simplified, but equivalent, evaluation function. For normalization,  \HP provide a set of equivalence rules, which serve as rewriting rules\et{directedness?}\et{equivalence rules are not directed, rewriting rules should be (otherwise it wouldn't be terminating)}, but they do not prove the correctness of rewriting\et{explain: what does "correctness of rewriting" mean?}. Likewise, they do not prove the equivalence of the semantics when applied to normalized queries.
+Recall that these results are based on two premises: {\em a)} every query can be normalized to a semantically-equivalent query; {\em b)} on such queries, one can use a simplified, but equivalent, evaluation function. For normalization,  \HP provide a set of equivalence rules, which serve as rewriting rules\et{directedness?}\td{Didn't know what to say about this D:}, but they do not prove the correctness of rewriting\et{explain: what does "correctness of rewriting" mean?}. Likewise, they do not prove the equivalence of the semantics when applied to normalized queries.
 
 In this section, we use \gcoql to define the property of being in \textit{normal form}, the normalization procedure, as well as proving both correctness and semantic equivalence. Finally, we define a new simplified semantics and prove the equivalence to the original semantics from \S~\ref{subsec:semantics}.
 
@@ -419,7 +419,7 @@ Recall that both of these results are only assumed---not proven---by \HP.
     \sevalu{\queries} & \text{otherwise}
     \end{cases}
     \end{align*}
-    \caption{Simplified semantics for queries in normal form.} \td{I use $\ll \cdot \gg$ in Coq, as well as HP, not this parenthesis}%\et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}}
+    \caption{Simplified semantics for queries in normal form.} \td{I use $\ll \cdot \gg$ in Coq, as well as HP, not this parenthesis}\td{Redoing it to match these parens}%\et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}}
     \label{fig:simpl_semantics}
 \end{figure*}
 
@@ -466,7 +466,7 @@ Lemma normalize_selections_preserves_semantics
 \end{minted}
 
 As we formalized this transformation and its corresponding proofs, some problems arose, ranging from minor issues with the definition of non-redundancy, 
-unspecified or underspecified rules of equivalence, and most notably limitations on the semantics (\S~\ref{subsec:sem_lims}). We describe these more throughly in Section~\ref{subsec:norm_lims}.
+unspecified or underspecified rules of equivalence, and limitations on the data model and semantics (\S~\ref{subsec:discussion}). We describe these more throughly in Section~\ref{subsec:norm_lims}.
 
 This concludes our proofs of normalization and establish that the first premise assumed by \HP is correct in the context of our system.
 %\et{you should mention the problems you discovered about \HP by doing this formalization}
@@ -525,7 +525,7 @@ This concludes the definitions and proofs necessary for \HP's results, however, 
 
 In this section we discuss some discoveries made regarding \HP's definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
 
-For the former, we notice that their definition of non-redundancy has a problem, in that there are queries that are considered non-redundant but actually would produce redundant results\et{is being redundant a property of the query syntax or of its (semantic) results?}\td{the syntax, but it is related to the results when there is no merger of fields}. A simple example is the following valid query, considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
+For the former, we notice that their definition of non-redundancy has a problem, in that there are queries that are considered non-redundant but actually would produce redundant results\et{is being redundant a property of the query syntax or of its (semantic) results?}\td{the syntax, but it is reflected in the results when there is no merger of fields}. A simple example is the following valid query, considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
 
 \begin{minted}{js}
         query {
@@ -534,14 +534,8 @@ For the former, we notice that their definition of non-redundancy has a problem,
         }
 \end{minted}
 
-Regarding the equivalence rules defined by \HP, there are two aspects we want to address. The first one is that their current definition (\cf \S3~\ref{gqlph}) fails to normalize queries.
-
-% Moving on to the equivalence rules\et{which}, there are three aspects we have to highlight. The first one is that rule number (2)\et{from where?}, which refers to the merging of fields with subqueries, is correct but does not preserve {\em ordering} of the queries \et{what does it mean? the order of each query in the sequence, or the order within a given query?}. While this is not imposed by the \spec, it is an important feature of \gql evaluation\et{who says?}. This is also important at the moment of defining and comparing semantic equivalence between queries.\et{why?}
-
-%The second aspect is about the elements they use \td{?}\et{super unclear} in their rules. In some cases they use list of queries while in some other they define it over single queries, or sometimes mix them\et{that's our query/queries discussion here}. While this is no big issue, it was a bit confusing when trying to implement their rules in \coq.
-%\td{Not sure how to describe this, but the thing is their rules are a bit weird. They describe rules for individual selections, but there is no... "global" rewriting. I imagine this is "simpler" to understand with their semantics, because they do not modify the queries as they evaluate them (pushing everything to the responses), but it is still weird to define it as a procedure in Coq (or even as inductive relation).}\et{unclear}
-
-Finally, there is an implicit notion of type in context when they describe their rules\td{and maybe a missing rule?}. This is crucial, because otherwise there are queries that cannot be normalized. For example, the following query cannot be transformed with the rules as they are.\et{ie. fails to normalize?}
+Regarding the equivalence rules defined by \HP, we note that their current definition (\cf \S3~\cite{gqlph}) fails to normalize queries.
+For example, the following query cannot be normalized with the current set of rules.
 \begin{minted}[escapeinside=||, mathescape=true]{js}
           query {
               name
@@ -550,7 +544,20 @@ Finally, there is an implicit notion of type in context when they describe their
               }
           }
 \end{minted}
-However, if the type in context is included, which corresponds to \texttt{Query} in this case, it is possible to do more. The queries can be wrapped in an inline fragment with type condition \texttt{Query}. Then, with a mix of other rules the normalized query can be obtained.
+
+\td{Another rule does not account for order, but is not mentioned and I'm not sure if it's ok with their formalization (I mentioned it in Zulip). I don't think it adds too much info tbh}
+	 
+With these final observations we conclude the normalization transformation. 
+We have provided an algorithmic definition of the notion of query normalization proposed by \HP, proven it correct and preserving the original query's semantics.
+Finally, we define the simplified semantics used in \HP and we have proven that it is equivalent to the original semantics, property that is exploited by \HP to prove complexity results over \gql queries.
+
+
+% Moving on to the equivalence rules\et{which}, there are three aspects we have to highlight. The first one is that rule number (2)\et{from where?}, which refers to the merging of fields with subqueries, is correct but does not preserve {\em ordering} of the queries \et{what does it mean? the order of each query in the sequence, or the order within a given query?}. While this is not imposed by the \spec, it is an important feature of \gql evaluation\et{who says?}. This is also important at the moment of defining and comparing semantic equivalence between queries.\et{why?}
+
+%The second aspect is about the elements they use \td{?}\et{super unclear} in their rules. In some cases they use list of queries while in some other they define it over single queries, or sometimes mix them\et{that's our query/queries discussion here}. While this is no big issue, it was a bit confusing when trying to implement their rules in \coq.
+%\td{Not sure how to describe this, but the thing is their rules are a bit weird. They describe rules for individual selections, but there is no... "global" rewriting. I imagine this is "simpler" to understand with their semantics, because they do not modify the queries as they evaluate them (pushing everything to the responses), but it is still weird to define it as a procedure in Coq (or even as inductive relation).}\et{unclear}
+
+%Finally, there is an implicit notion of type in context when they describe their rules\td{and maybe a missing rule?}. This is crucial, because otherwise there are queries that cannot be normalized. However, if the type in context is included, which corresponds to \texttt{Query} in this case, it is possible to do more. The queries can be wrapped in an inline fragment with type condition \texttt{Query}. Then, with a mix of other rules the normalized query can be obtained.
 
 
 %\et{not useful conclusion paragraph---and not finished} This result concludes the normalization process. We have described our approach to proving both premises exploited by \HP. As mentioned earlier, these are fundamental for their complexity results over \gql queries but were not proven true. We believe our approach properly and rigorously addresses them. The following section discusses
