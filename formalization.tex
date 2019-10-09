@@ -485,13 +485,10 @@ Definition execute_query (s : wfGraphQLSchema)
 %The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.
 
 
-\td{Move to discussion?}
-The main difference with respect to \HP and the main similarity to the \spec is that we perform a collection of fields at the query level, whereas \HP performs a post-processing of responses. The main reasons are our approach is more similar to the \spec and that it is harder to reason using \HP's approach.
+
 
 %\td{Don't know how to present this or if it is relevant but I include it so you know it exists - The spec first groups fields by name and then evaluates each group. These are different steps. We define everything in one place because it was easier to reason about the semantics. The difficulty with the spec's approach is that when proving things about the semantics, you have to provide, at each step, the information on how your data is structured (every group contains only fields and every field in a group has the same response name as the group's key used to group them). This is problematic mostly because of inline fragments, which do not have response names. Definitions must always account for the case of inline fragments, even when they are thought out to be used only on fields. Our definition is maybe less compositional but thanks to Equations, it is simpler to reason about it - because Equations generate a nice reasoning principle. We also attempted defining it similarly to the spec, still preserving the information on the structure by using dependent types and Equation, but the resulting reasoning principle would end up being huge (80-100 cases) (I believe I read Matthieu saying that nesting some definitions could exponentially increase the size of the reasoning principle, which is what would occur in this case).}
 
-\et{you might want to say something in the discussion section about this choice, yes. But quick and to the point. I.e. why following spec instead of HP (query vs. response level), and why departing from spec in some aspect. The discussion about the impact on reasoning in Coq is *super relevant* for the CPP crowd!}
-\td{Not sure how to push this to the discussion section... I seem to have used it entirely to describe the graph things.}
 
 %Our first attempt at defining the semantics was to follow \HP's post-processing approach. Our intention was to be as close as possible to their formalization to later prove their transformation and equivalence results, which we cover in Section~\ref{sec:norm}. However, the non-structural recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence very hard.
 
@@ -526,8 +523,10 @@ The main difference with respect to \HP and the main similarity to the \spec is 
     \end{cases}\\
     %inline fragment
     & (4) & \evalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
-    \evalu{\overline{\beta} \mdoubleplus \queries} & \mathit{fragment\_type\_applies}_{\texttt{u.type}}(t)\\
-    \evalu{\queries} & \sim
+    \evalu{\overline{\beta} \mdoubleplus \queries} 
+    & \text{ if }\mathit{fragment\_type\_applies}_{\texttt{u.type}}(t)\\
+    \evalu{\queries} 
+    & \text{ otherwise}
     \end{cases}
     \end{align*}
     \caption{Semantics of \gql queries. The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
@@ -547,16 +546,18 @@ The main difference with respect to \HP and the main similarity to the \spec is 
 
 %The main challenge in this case is to define what this nested list types represent in a graph. If we take a simple case of a field with type \texttt{[Human]}, we can model it as neighbors of a node. However, if we increase the nesting such as \texttt{[[Human]]}, it becomes harder to model. What does this represent in the graph? Should we introduce blank nodes in between the source node and the \texttt{Human} nodes? Are these inner edges labeled? Should there be a blank node per each level of nesting or a single one with edges to itself? All these questions do not have a straightforward answer. Our semantics, as the one definded in PH, simply ignores any nesting bigger than one.\td{This is where it can be modelled using Functors. The \spec checks if it received a collection and applies map to eventually get to the concrete values. Not sure how to put this out there.}
 
-This concludes the base formalization of \gql schemas, graph data model, and queries and their semantics.  These definitions provide the base upon which further development and analysis can be developed.
+This concludes the formalization of \gql schemas, graph data model, and queries and their semantics.  These definitions provide the base upon which further development and analysis can be developed in \gcoql.
 
 %\td{I feel there is not much to say about the semantics... The "juicy" bits are in the discussion section - limitations given by the graph model, functor approach to the spec's semantics, etc.}
 
 \subsection{Design considerations and discussion}\label{subsec:discussion}
-Intro to section
+
+We now discuss some design considerations that manifested when developing 
+\gcoql, in particular with respect to the two existing sources of information on \gql, namely the \spec and \HP.
 
 %\et{I suggest to split this section in two parts: one that is related to the core (schema, data model, queries, semantics), and on that is related to normalization/simplified semantics. And to move the first to just after section 3 (either as a 3.5 or as a separate section 4 if it's length justifies it)}
 
-\subsubsection*{\HP Schema}
+\paragraph{Schema.}
 
 %\et{I don't get what is the point of this paragraph, and why it matters -- what's the takeaway message? how does it relate to what we did?}
 %We believe that the \spec's definition of the schema can be slightly confusing and ambiguous. The schema is described as being ``\textit{defined in terms of the types and directives it supports as well as the root operation types for each kind of operation}''\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Schema}. However, the \spec also defines a structure called \texttt{schema}\footnote{https://graphql.github.io/graphql-spec/June2018/\#SchemaDefinition} that only contains the root operation types (query, mutation and subscription), meanwhile the type definitions and directives are defined separately. We think this introduces the first ambiguity to the definition. Now, to actually capture the notion described above, it is necessary to define what is called a \textit{Document}\footnote{https://graphql.github.io/graphql-spec/June2018/\#Document}, consisting of a list of definitions and queries. Among these definitions one can include the \texttt{schema} structure, as well as the type definitions and directives (by repeatedly using the \textit{Type System Definition}\footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition} rule). This effectively permits building the schema as expected, however we think it is unintuitive to allow mixing definitions with queries. Also, the naming of the different structures seems to introduce confusion and inconsistency.
@@ -577,11 +578,11 @@ First and mostly because it is too different from how the \spec is defined\footn
 we regard similarity as a component of trust. Secondly, because we expect our implementation to be extracted in the future, the definitions should be as natural as possible to what
 a programmer would use, which we believe is achieved in our work and would otherwise not have been by following \HP's  approach.
 
-Finally,  the definition of consistency of a schema given by \HP does not capture all of the validation rules established by the \spec. 
+Finally,  the definition of consistency of a schema given by \HP does not capture all the validation rules established by the \spec. 
 In particular, it does not properly account for arguments of implemented fields in objects implementing interfaces. 
-A corrected version is provided in a recent work by Hartig\&Hidder~\cite{olafschema}.
+Note that a corrected version of \HP has been proposed recently by Hartig and Hidder~\cite{olafschema}. \et{do they coincide with what you do/the spec say?}
 
-\subsubsection*{Data model and semantics}
+\paragraph{Data model and semantics.}
 
 In this section, we address a limitation on the graph data model that is used in our formalization, as well as in \HP and~\cite{olafschema}.
 We first describe the limitation, then its consequences on the semantics of queries, and finally some thoughts on what causes this issue and
@@ -612,6 +613,27 @@ Regardless of this open problem, we believe that it introduces complexity to the
 \td{Why?  Idk, but the essence of the issue doesn't seem that terrible in that the results change or the semantics goes wild and generate 
 unexpected results. It should only reflect in changes in how you navigate the graph but not in the actual data one collects. The content one is looking for
 is still the same.}
+
+
+\paragraph{Query semantics.}
+\mbox{}\et{Tomas: please check that I'm saying things correctly here}
+
+The query semantics of \gcoql (Figure~\ref{fig:semantics}) is similar to the \spec in that it performs a collection of fields at the level of {\em queries}. In contrast, \HP adopt a different formulation in which collection is done at the level of {\em responses}, \ie~as a post-processing phase. Initially, we experimented with the \HP approach in order to be as close as possible to their formalization. However, the non-structurally recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence of queries very hard. In contrast, we found that following the \spec approach made such reasoning in \coq much more convenient. 
+
+Additionally, while the \spec presents the query evaluation semantics in two separate phases, first grouping fields by name and then evaluating each group, we define the whole query evaluation in a single pass. The technical reason is that following the \spec approach made \equations produce a too large and therefore inconvenient reasoning principle for the query evaluation function. With our presentation, the reasoning principle is more concise and adequate, due to a more localized handling of inline fragments.
+
+% The main difference with respect to \HP and the main similarity to the \spec is that we
+% , whereas \HP performs a post-processing of responses. The main reasons are our approach is more similar to the \spec and that it is harder to reason using \HP's approach.
+
+%\td{Don't know how to present this or if it is relevant but I include it so you know it exists - The spec first groups fields by name and then evaluates each group. These are different steps. We define everything in one place because it was easier to reason about the semantics. The difficulty with the spec's approach is that when proving things about the semantics, you have to provide, at each step, the information on how your data is structured (every group contains only fields and every field in a group has the same response name as the group's key used to group them). This is problematic mostly because of inline fragments, which do not have response names. Definitions must always account for the case of inline fragments, even when they are thought out to be used only on fields. Our definition is maybe less compositional but thanks to Equations, it is simpler to reason about it - because Equations generate a nice reasoning principle. We also attempted defining it similarly to the spec, still preserving the information on the structure by using dependent types and Equation, but the resulting reasoning principle would end up being huge (80-100 cases) (I believe I read Matthieu saying that nesting some definitions could exponentially increase the size of the reasoning principle, which is what would occur in this case).}
+
+
+%Our first attempt at defining the semantics was to follow \HP's post-processing approach. Our intention was to be as close as possible to their formalization to later prove their transformation and equivalence results, which we cover in Section~\ref{sec:norm}. However, the non-structural recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence very hard.
+
+
+
+% \et{you might want to say something in the discussion section about this choice, yes. But quick and to the point. I.e. why following spec instead of HP (query vs. response level), and why departing from spec in some aspect. The discussion about the impact on reasoning in Coq is *super relevant* for the CPP crowd!}
+% \td{Not sure how to push this to the discussion section... I seem to have used it entirely to describe the graph things.}
 
 
 %As described in Section~\ref{subsec:graph}, \gql is agnostic to the technology used and the underlying data model. We follow \HP and instantiate the semantics to a graph setting, allowing to reason about it\et{see my comment in the intro}. We describe here severe limitations \et{why is the list nesting situation "severe"?? what backs up this characterization?} that this data model introduces on the possible results generated and the open questions regarding how to properly model certain aspects of \gql schemas \et{vague}. This model is exploited by \HP and \cite{olafschema} but neither discuss nor mention the limitations. \et{you only discuss one, without really explaining why it matters, or to what extent. Does it break all established results? etc.}
