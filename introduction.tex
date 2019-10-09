@@ -50,6 +50,8 @@ To address the trustworthiness of the \gcoql formalization, we have tried to est
  % This provides a component of trustworthiness given by an , 
  % We also test our implementation with examples from the \spec but a more thorough comparison should be made against \textit{\gqlJs} and a bigger test suite.
 While \spec leaves the underlying data model unspecified \et{or under-specified?}, 
+\et{integrate: the resolvers can actually be mentioned at the intro when you mention whether readers will understand why a data model is necessary -- because 
+\gql simply assumes the existence of resolver functions.}
 \HP adopts at its core a graph-based data model; \gcoql follows \HP in this regard, while the query evaluation algorithm of \gcoql can be traced closely to \spec.
 \et{\gql is data model agnostic. \HP specializes to a graph-based data model. So do we. Readers will wonder: is this necessary? why? aren't we moving away from the actual \gql by taking this path? -- this needs some careful justification}
 
