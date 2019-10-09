@@ -68,8 +68,10 @@ Our formalization of type definitions closely follows the \spec, as depicted in 
 
 % As can be seen in the figure, we tried to match the \spec's definition as much as possible. This eyeball correspondence gives us a degree of confidence about the implementation.  % We currently do not include the \textit{Input Object} types, as well as anything related to \textit{introspection}.
 
-On this regard, observe that the provided definitions of schema and types enable building ``invalid'' schemas. For instance, one can build an object that implements scalar types or use a nonexistent type as the query type. To avoid this problem, the \spec provides several validation rules, scattered throughout the document\footnote{Most can be found in the \textbf{Type Validation} subsection of each type described in \S3~\cite{gqlspec}.}.  We collect these rules and refer to them as the \textit{well-formedness} condition of a \gql schema.
-
+On this regard, observe that the provided definitions of schema and types enable building ``invalid'' schemas. For instance, one can build an object that implements scalar types or use a nonexistent type as the query type. To avoid this problem, the \spec provides several validation rules, scattered throughout the document (though most can be found in \S3~\cite{gqlspec} under each type description).
+ % the \textbf{Type Validation} subsection of each type described in ..  
+ We gather all these rules and refer to them as the \textit{well-formedness}
+condition of a \gql schema:\footnote{This notion is called {\em consistency} in~\cite{gqlph,olafschema}.}
 
 \begin{definition}
 A \gql schema is \textit{well-formed} if: 
@@ -559,7 +561,7 @@ We now discuss some design considerations that manifested when developing
 
 %\et{I suggest to split this section in two parts: one that is related to the core (schema, data model, queries, semantics), and on that is related to normalization/simplified semantics. And to move the first to just after section 3 (either as a 3.5 or as a separate section 4 if it's length justifies it)}
 
-\paragraph{Schema.}
+\paragraph{Representation choices.}
 %\et{I don't get what is the point of this paragraph, and why it matters -- what's the takeaway message? how does it relate to what we did?}
 %We believe that the \spec's definition of the schema can be slightly confusing and ambiguous. The schema is described as being ``\textit{defined in terms of the types and directives it supports as well as the root operation types for each kind of operation}''\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Schema}. However, the \spec also defines a structure called \texttt{schema}\footnote{https://graphql.github.io/graphql-spec/June2018/\#SchemaDefinition} that only contains the root operation types (query, mutation and subscription), meanwhile the type definitions and directives are defined separately. We think this introduces the first ambiguity to the definition. Now, to actually capture the notion described above, it is necessary to define what is called a \textit{Document}\footnote{https://graphql.github.io/graphql-spec/June2018/\#Document}, consisting of a list of definitions and queries. Among these definitions one can include the \texttt{schema} structure, as well as the type definitions and directives (by repeatedly using the \textit{Type System Definition}\footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition} rule). This effectively permits building the schema as expected, however we think it is unintuitive to allow mixing definitions with queries. Also, the naming of the different structures seems to introduce confusion and inconsistency.
 % the \spec defines each of the three elements (types, directives and root operation types) as separate entities. The first candidate is the \textit{Type System} \footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition} but it is a disjunction of the three elements: types, directives and root operation types. 
@@ -567,29 +569,40 @@ We now discuss some design considerations that manifested when developing
 %The previously quoted definition actually matches the \textit{Type System} structure\footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition}. Our formalization follows the latter but rename it to schema to also match the quoted description.
 %\et{contrast with what you did, and the tradeoffs (what's convenient, what's not)}
 The definition of schemas in \HP relies on defining sets of field names, types and values, and using a number of functions to relate the different elements.
-For example, the object types of schema in Figure~\ref{fig:schema_ex} are defined as the set $O_{T} = \{\mathit{Dog, Pig, Toy\}}$ and their fields can be defined with a
+For example, the object types of the schema from Figure~\ref{fig:schema_ex} are defined as the set $O_{T} = \{\mathit{Dog, Pig, Toy\}}$ and their fields are defined with a
 function $\mathit{fields}_{\schema} : O_{T} \to 2^{F}$, where $F$ is a set of field names.
-In contrast, \gcoql uses a more data-structure centric approach, in which schemas are records.\et{doesn't this comment also applies to the data model? (and then e.g. to conformance checking)}\td{Yeah, it does actually -- I had mentioned it before but then I forgot.}
+In contrast, \gcoql uses a more data-structure centric approach, in which schemas are records.
 While \HP's approach simplifies many validation rules, our approach is closer to the schema definition language from the \spec---which did not exist when \HP was published. 
-Another advantage of the approach we take is that it is closer to an actual implementation \et{of what components exactly? make all this a bit more precise}\td{of a schema (?) -- of all its components (objects, fields, arguments, types) modulo some notation. No D:?}, and hence the definitions could be directly extracted as a reference implementation.
+Another advantage of the approach we take is that it is closer to an actual implementation
+% \et{of what components exactly? make all this a bit more precise}\td{of a schema (?) -- of all its components (objects, fields, arguments, types) modulo some notation. No D:?}, 
+and hence the definitions could be directly extracted as a reference implementation. The same observation holds for the data model.
+% \et{doesn't this comment also applies to the data model? (and then e.g. to conformance checking)}\td{Yeah, it does actually -- I had mentioned it before but then I forgot.}
+
+
 % While this is convenient in their setting because it facilitates their reasoning with graphs and simplifies many validation rules, we believe it is not the case for our formalization.
 % First and mostly because it is too different from how the \spec is defined\footnote{It is worth mentioning that when \HP was published, the \spec did not provide the schema definition DSL, among other things.} and 
 % we regard similarity as a component of trust. Secondly, because we expect our implementation to be extracted in the future, the definitions should be as natural as possible to what
 % a programmer would use, which we believe is achieved in our work and would otherwise not have been by following \HP's  approach.
 
-\paragraph{Schema validation.} The definition of well-formedness\et{should it be "well-formedness"?}\td{Yes, but they name it \textit{consistency}} of a schema given by \HP does not capture all the validation rules established by the \spec. In particular, it does not properly account for arguments of implemented fields in objects implementing interfaces. A corrected version of \HP has been proposed recently by Hartig and Hidder~\cite{olafschema}. \et{do they coincide with what you do/the spec say?}\td{Yes, although they add validation for directives (which I don't implement) and they follow a similar set approach.}
+\paragraph{Schema validation.} The definition of well-formedness
+of a schema given by \HP does not capture all the validation rules established by the \spec. In particular, it does not properly account for arguments of implemented fields in objects implementing interfaces. A corrected version of \HP has been proposed recently by Hartig and Hidder~\cite{olafschema}, which coincides with both the \spec and \gcoql (and additionally handles validation for directives\et{we never introduce directive so this probably cannot be said here}\et{keep for limitations section?}).
+%  \et{do they coincide with what you do/the spec say?}
+% \td{Hartig and Hidder add validation for directives (which I don't implement) and they follow a similar set approach.}
 
 
-\paragraph{Data model.} We observe that both \HP (and its recent extension~\cite{olafschema})\td{I wouldn't call it extension, since it only uses the schema DSL for graphs, it can provide a way to extend the formalization of \gql but it's not its goal.} and \gcoql have a slightly limited graph model that does not entirely describe the universe of a \gql service: graphs cannot model {\em nested} lists, when the underlying type is an object or abstract type.\footnote{The situation is worse in \HP, which cannot even model nested list types for scalar types.}
+\paragraph{Data model.} We observe that both \HP
+ % (and~\cite{olafschema})
+% (and the recent extension~\cite{olafschema})\td{I wouldn't call it extension, since it only uses the schema DSL for graphs, it can provide a way to extend the formalization of \gql but it's not its goal.} 
+and \gcoql have a slightly limited graph model that does not entirely describe the universe of a \gql service: graphs cannot model {\em nested} lists, when the underlying type is an object or abstract type.\footnote{The situation is worse in \HP, which cannot even model nested list types for scalar types.}
 For instance, these semantics cannot account for a selection over a field whose type is \texttt{[[Animal]]}.
-
+%
 The underlying question is how to interpret such nested lists in a graph-based data model.
-\et{the following might be too long/detailed---does the reader know what formatters/resolvers are?}\td{Yeah, I agree}
-\td{The resolvers can actually be mentioned at the intro when you mention whether readers will understand why a data model is necessary -- because 
-\gql simply assumes the existence of resolver functions.}
-Should there be blank nodes in between the source node and the neighboring nodes with the actual data? Is each edge in the path labeled?
-What occurs with each increment in the nesting depth? Since the information is ultimately collected from ``concrete'' nodes, should the graph be kept the same 
-but introduce \textit{formatter} functions to modify the responses, such that they match the expected values? How does this differ from the \gql resolvers?
+% \et{the following might be too long/detailed---does the reader know what formatters/resolvers are?}\td{Yeah, I agree}
+% \td{The resolvers can actually be mentioned at the intro when you mention whether readers will understand why a data model is necessary -- because 
+% \gql simply assumes the existence of resolver functions.}
+% Should there be blank nodes in between the source node and the neighboring nodes with the actual data? Is each edge in the path labeled?
+% What occurs with each increment in the nesting depth? Since the information is ultimately collected from ``concrete'' nodes, should the graph be kept the same 
+% but introduce \textit{formatter} functions to modify the responses, such that they match the expected values? How does this differ from the \gql resolvers?
 
 % The main consequence is that the semantics is not capable of producing every expected outcome of a query. To illustrate this, 
 % consider a 
@@ -614,21 +627,23 @@ Regardless, we believe that while this limitation might turn out problematic for
 
 
 \paragraph{Responses.}
-The \spec states that responses are a map from keys to values\td{unspecified}\et{what is?}\td{what these values are}, but encourages the ordering of selections to be preserved (\cf\S7.2.2~\cite{gqlspec})---the similarity between query selections and responses being one of \gql's attraction for programmers.  We embrace this recommendation: modeling of responses as trees allows us to preserve similarity \wrt selections and ordering of individual response values. %, in addition to providing us with a strong reasoning principle\et{why is that?}.\et{what does strong mean?}
+The \spec only states that responses are a map from keys to values, 
+% \td{unspecified}\et{what is?}\td{what these values are}
+but encourages the ordering of selections to be preserved (\cf\S7.2.2~\cite{gqlspec})---the similarity between query selections and responses being one of \gql's attraction for programmers.  We embrace this recommendation: modeling of responses as trees allows us to preserve similarity \wrt selections and ordering of response values. %, in addition to providing us with a strong reasoning principle\et{why is that?}.\et{what does strong mean?}
 
 The downsides of this representation choice are possible duplication of response names, and access cost. 
 We establish unicity of names by extrinsic proofs, and consider that the access costs are not of primary importance at this stage of development. %compared to the simple reasoning principle that trees enjoy.\et{is it?}
-\td{I removed the reasoning principle factor, because tbh idk if it easier than something else or how much it facilitates reasoning. My main reasons are the ones described above.}
+% \td{I removed the reasoning principle factor, because tbh idk if it easier than something else or how much it facilitates reasoning. My main reasons are the ones described above.}
 % Our approach has two main disadvantages: possible duplication of response names and cost of access. Since we use lists instead of maps, we can encounter duplicated names and accessing a value has a linear cost given by the lists size, instead of the constant access obtainable with a map. We still argue that the reasoning principles and simplicity to order is highly valuable. Nevertheless, we include a proof that the results obtained with the semantics have no duplicated names. 
 
 
 \paragraph{Query semantics.}
-\mbox{}\et{Tomas: please check that I'm saying things correctly here}
-\td{Yep, nailed it. 
-A small annotation (which I believe you already noted with the sentence about fragments)  is that I tried defining it as the \spec by using dependent types -- which caused the explosion of cases with \equations -- to declare that after collection there were no fragments.
-Also, I ran across several bugs in \equations while doing this, so the combination was too much.
-To be fair, I don't know if this was partly my inexperience with Coq or it simply was hard to define as it is...}
-\td{Otherwise it is on point}
+% \mbox{}\et{Tomas: please check that I'm saying things correctly here}
+% \td{Yep, nailed it. 
+% A small annotation (which I believe you already noted with the sentence about fragments)  is that I tried defining it as the \spec by using dependent types -- which caused the explosion of cases with \equations -- to declare that after collection there were no fragments.
+% Also, I ran across several bugs in \equations while doing this, so the combination was too much.
+% To be fair, I don't know if this was partly my inexperience with Coq or it simply was hard to define as it is...}
+% \td{Otherwise it is on point}
 
 The query semantics of \gcoql (Figure~\ref{fig:semantics}) is similar to the \spec in that it performs a collection of fields at the level of {\em queries}. In contrast, \HP adopt a different formulation in which collection is done at the level of {\em responses}, \ie~as a post-processing phase. Initially, we experimented with the \HP approach in order to be as close as possible to their formalization. However, the non-structurally recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence of queries very hard. In contrast, we found that following the \spec approach made such reasoning in \coq much more convenient. 
 

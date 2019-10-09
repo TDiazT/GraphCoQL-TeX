@@ -477,9 +477,9 @@ Lemma normalize_selections_preserves_semantics
         in u with coerce =
     s, g |$\vdash$| |$\llbracket$| ss |$\rrbracket$| in u with coerce. 
 \end{minted}
+\et{I guess you need the Lemma first, to be able to prove the Theorem.}
 
-As we formalized this transformation and its corresponding proofs, some problems arose, ranging from minor issues with the definition of non-redundancy, 
-unspecified or underspecified rules of equivalence, and limitations on the data model and semantics (\S\ref{subsec:discussion}). We describe these more thoroughly in \S\ref{subsec:norm_lims}.
+\et{what are these "coerce" stuff?}
 
 % This concludes our proofs of normalization and establish that the first premise assumed by \HP is correct in the context of our system.
 %\et{you should mention the problems you discovered about \HP by doing this formalization}
@@ -526,11 +526,15 @@ expected by the schema -> we include a coercion function}
  
 \subsection{Observations}\label{subsec:norm_lims}
 
-\et{I'm here}
+Mechanizing normalization and its corresponding proofs led us to identify 
+some minor problems in \HP's definitions. While these are all minor, they confirm the value of mechanized formalization.
+% , ranging from minor issues with the definition of non-redundancy, unspecified or underspecified rules of equivalence, to limitations on the data model and semantics.
+ % (\S\ref{subsec:discussion}). We describe these more thoroughly in \S\ref{subsec:norm_lims}.
+% We now discuss some discoveries made regarding \HP's definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
 
-We now discuss some discoveries made regarding \HP's definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
-
-For the former, we notice that their definition of non-redundancy has a problem, in that there are queries that are considered non-redundant but actually would produce redundant results\et{is being redundant a property of the query syntax or of its (semantic) results?}\td{the syntax, but it is reflected in the results when there is no merger of fields}. A simple example is the following valid query, considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
+First, some queries are considered non-redundant by \HP although they actually produce redundant results.
+% \et{is being redundant a property of the query syntax or of its (semantic) results?}\td{the syntax, but it is reflected in the results when there is no merger of fields}. 
+A simple example is the following query:
 
 \begin{minted}{js}
         query {
@@ -538,9 +542,13 @@ For the former, we notice that their definition of non-redundancy has a problem,
             name:name
         }
 \end{minted}
+which produces two repeated values. This occurs because \HP's definition of non-redundancy does not consider the case when an unaliased field and an aliased field share the same response name. This cornercase is properly handled in \gcoql, by grouping fields by their response names.
+\et{do you remember when/how you discovered that? by proving which lemma/theorem?}
 
-Regarding the equivalence rules defined by \HP, we note that their current definition (\cf \S3~\cite{gqlph}) fails to normalize queries.
-For example, the following query cannot be normalized with the current set of rules.
+% Our implementation addresses this by grouping fields by their response names.
+% considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which 
+% occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
+Second, using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries cannot be normalized. For instance:
 \begin{minted}[escapeinside=||, mathescape=true]{js}
           query {
               name
@@ -549,12 +557,18 @@ For example, the following query cannot be normalized with the current set of ru
               }
           }
 \end{minted}
+\et{like above explain why this is, and tell us how you discovered the problem}
+% Regarding the equivalence rules defined by \HP, we note that their current definition  fails to normalize queries.
+% For example, the following query cannot be normalized with the current set of rules.
+% \td{Another rule does not account for order, but is not mentioned and I'm not sure if it's ok with their formalization (I mentioned it in Zulip). I don't think it adds too much info tbh}
 
-\td{Another rule does not account for order, but is not mentioned and I'm not sure if it's ok with their formalization (I mentioned it in Zulip). I don't think it adds too much info tbh}
-	 
-With these final observations we conclude the normalization transformation. 
-We have provided an algorithmic definition of the notion of query normalization proposed by \HP, proven it correct and preserving the original query's semantics.
-Finally, we define the simplified semantics used in \HP and we have proven that it is equivalent to the original semantics, property that is exploited by \HP to prove complexity results over \gql queries.
+\et{before you mentioned that you also identified "limitations on the data model and semantics" -- those are all discussed in section 3.5?}
+
+\et{any discovery when working on the simplified semantics + equivalence?}
+
+% With these final observations we conclude the normalization transformation. 
+% We have provided an algorithmic definition of the notion of query normalization proposed by \HP, proven it correct and preserving the original query's semantics.
+% Finally, we define the simplified semantics used in \HP and we have proven that it is equivalent to the original semantics, property that is exploited by \HP to prove complexity results over \gql queries.
 
 
 % Moving on to the equivalence rules\et{which}, there are three aspects we have to highlight. The first one is that rule number (2)\et{from where?}, which refers to the merging of fields with subqueries, is correct but does not preserve {\em ordering} of the queries \et{what does it mean? the order of each query in the sequence, or the order within a given query?}. While this is not imposed by the \spec, it is an important feature of \gql evaluation\et{who says?}. This is also important at the moment of defining and comparing semantic equivalence between queries.\et{why?}
