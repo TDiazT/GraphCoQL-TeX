@@ -3,10 +3,11 @@
 
 To illustrate how \gcoql can be used to reason about query transformations, we study the {\em normalization} process proposed by Hartig and Pérez (\HP)~\cite{gqlph}, which is fundamental for the complexity results they prove.
 %
-Recall that these results are based on two premises: {\em a)} every query can be normalized to a semantically-equivalent query; {\em b)} on such queries, one can use a simplified, but equivalent, evaluation function. For normalization,  \HP provide a set of equivalence rules, which serve as rewriting rules\et{directedness?}\td{Didn't know what to say about this D:}, but they do not prove the correctness of rewriting\et{explain: what does "correctness of rewriting" mean?}. Likewise, they do not prove the equivalence of the semantics when applied to normalized queries.
+Recall that these results are based on two premises: {\em a)} every query can be normalized to a semantically-equivalent query; {\em b)} on such queries, one can use a simplified evaluation function. For normalization,  \HP provide a set of equivalence rules to establish the existence of a normal form. However they do not provide an algorithm for query normalization, let alone prove it correct and semantics preserving. Likewise, they do not prove the equivalence of the simplified semantics when applied to normalized queries.
 
-In this section, we use \gcoql to define the property of being in \textit{normal form}, the normalization procedure, as well as proving both correctness and semantic equivalence. Finally, we define a new simplified semantics and prove the equivalence to the original semantics from \S~\ref{subsec:semantics}.
+In this section, we show how to define the property of being in \textit{normal form} in \gcoql, define a normalization procedure, and prove it both correct and semantics preserving. Finally, we define the simplified semantics given by \HP, and prove it equivalent to the original semantics (\S~\ref{subsec:semantics}) when applied to normalized queries.
 
+\et{this paragraph can be skipped for gaining space}
 It is worth mentioning that most of our formalization effort was devoted to defining and establishing the correctness of this normalization procedure. In terms of code, definitions are coded in approximately $350$ lines, while proofs amount to around $1,200$ lines. The definition of the normalization procedure and the proofs that it produces normalized queries can be found in the files \texttt{QueryNormalForm.v} and \texttt{QueryNormalFormLemmas.v}. Meanwhile, the proofs about semantic preservation (point {\em a)} above) and semantic equivalence (point {\em b)} above) can be found in the file \texttt{QuerySemanticsLemmas.v}.
 
 \subsection{Defining Normal Forms}
@@ -17,9 +18,9 @@ The notion of \textit{normal form} introduced by Hartig and Pérez consists of t
 %\et{skip/move} Similarly to what is described in Section~\ref{subsec:query}, the normalization process requires information on the type in context where the queries might be defined. This is crucial as it guides the process on how queries are transformed.
 
 % Throuhgout our development, we noticed that this definition given by \cite{gqlph} was too general when proving correctness of our normalization procedure. In particular, the definition states that the subqueries of a field selection can be either fields or fragments. This means that if there are two field selections with the same response name, one may have subqueries consisting of fields, while the other contains only inline fragments. This would cause issues when trying to remove redundancies in queries because one could not directly establish if the resulting queries satisfied the property.
-\subsubsection*{Ground-typed normal form}
+\paragraph{Ground-typed normal form.}
 %\et{should it be "groundedness"? (being bounded is boundedness, being rounded is roundedness, etc.)}
-Informally, the \textit{groundedness} property refers to whether queries are completely specified down to object types. Consider the queries below, based on the schema from Figure~\ref{fig:schema_ex}\td{Might be a stretch to pull that figure from the beginning}, which request the name of an animal. The query to the left is not grounded because the field \texttt{name} is made over the abstract type \texttt{Animal} type. In contrast, the query on the right is requesting the same information, but it is grounded because it fully specifies the (concrete) object types on which it requests the information.
+Informally, a query is in ground-typed normal form, or {\em grounded} for short, if it is completely specified down to object types. Consider the queries below, based on the schema from Figure~\ref{fig:schema_ex}, which request the name of an animal: 
 %\td{Align to top or as it is? Aligning to top leaves a huge empty space :/}
 
 \begin{minipage}[t]{.25\textwidth}
@@ -45,16 +46,17 @@ query {
 } } }
 \end{minted} 
 \end{minipage}
-
+The left query is not grounded because the field \texttt{name} is selected on the abstract type \texttt{Animal} type. In contrast, the right query is grounded because it specifies the (concrete) object types \texttt{Dog} and \texttt{Pig} on which it requests the information.
 %\et{verbose/repetitive} The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype. 
 \begin{definition}
-A \gql selection $sel$ is in \textit{ground-typed normal form} if it satisfies the following conditions. %where \texttt{ty} is the type in scope.
+A \gql selection $sel$\et{fix variable (see comments below Fig7)} is in \textit{ground-typed normal form} if it satisfies the following conditions. %where \texttt{ty} is the type in scope.
 \begin{itemize}
 	\item If it is a field then its subselections are either all fields or all inline fragments, or
 	\item if it is an inline fragment, then its type condition is an object type and its subselections are only fields, and
 	\item subselections are in ground-typed normal form.
 \end{itemize}
 \end{definition}
+\et{there is a disjunction and a conjunction, but it's not explained how they are combined. I guess it's "(a or b) and c", but the writing is ambiguous}
 
 \begin{definition}
 A \gql query $\varphi$ is in \textit{ground-typed normal form} if it satisfies the following conditions. %where \texttt{ty} is the type in scope.
@@ -63,6 +65,7 @@ A \gql query $\varphi$ is in \textit{ground-typed normal form} if it satisfies t
 	\item every selection is in ground-typed normal form.
 \end{itemize}
 \end{definition}
+\et{This reads like it should be both, but I guess it's either one. Why isn't it simpy "if all the selections in the selection set are in ground-type normal form"?}
 
 \iffalse
 We formalize the latter with the following definition in Coq.
@@ -95,7 +98,7 @@ Lemma are_grounded_in_ground_typed_nf (s : wfGraphQLSchema)
 
 %\et{why do we care about this lemma instead of the definition of is-grounded?}
 
-\subsubsection*{Non-redundancy}
+\paragraph{Non-redundancy.}
 
 Informally, 
 % \et{bad phrasing: what is "non-redundant" is a "query", not "whether there are no queries"} the notion of non-redundancy refers to whether there are no queries that may produce repeated results. 
@@ -135,17 +138,18 @@ query {
 \end{minipage}
 %\et{fix layout}
 
-The query on the left requests the field \texttt{name} twice to the same type, and uses two fragments with the same type condition. If no collection and merger of fields is performed during the evaluation, this will produce two values with key \texttt{name}. Meanwhile, the query on the right requests information about each type only once. It is important to notice that, even though it requests the field \texttt{name} in both, this is considered not redundant because only one fragment will actually be executed at a time, 
-depending on the concrete object value that is used to evaluate the query.
+The left query is redundant for two reasons: it requests the field \texttt{name} twice to the same type, and it uses two fragments with the same type condition. If no collection and merger of fields is performed during the evaluation, this will produce two values with the key \texttt{name}. 
+Conversely, the right query is non-redundant because it requests information about each type only once; only one fragment will actually be executed at a time, depending on the concrete object value that is used to evaluate the query.
+% It is important to notice that, even though it requests the field \texttt{name} in both, this is considered not redundant because 
 
 \begin{definition}
-A \gql selection set $ss$ is \textit{non-redundant} if it satisfies the following conditions:
+A \gql selection set $ss$\et{fix var} is \textit{non-redundant} if it satisfies the following conditions:
 \begin{itemize}
     \item There is at most one field selection with a given response name, for a particular depth of the selection tree.\td{Depth?}
 
     \item There is at most one inline fragment with a given type condition, for a particular depth of the selection tree.
     
-    \item Subselections are non-redundant.
+    \item Subselections are non-redundant.\et{ill-typed: the property isn't defined on an arbitrary subselection}
 \end{itemize}
 \end{definition}
 
@@ -153,19 +157,21 @@ A \gql selection set $ss$ is \textit{non-redundant} if it satisfies the followin
 A \gql query $\varphi$ is \textit{non-redundant} if its selection set is non-redundant.
 \end{definition}
 
-\td{I removed the paragraph about non-redundancy assuming groundedness. I feel it just adds noise.}
+\et{why don't the GTNF definition and the NR definition follow the same pattern?}
+
+% \td{I removed the paragraph about non-redundancy assuming groundedness. I feel it just adds noise.}
 %Our definition of non-redundancy assumes that the queries are grounded \et{maybe the Coq definition, but not the definition above!}, much like \HP, mainly to simplify the implementation. The difficulty arises from using inline fragments and comparing their contents appropriately. This difficulty is further increased by the fact that the \spec currently allows using fragments that can possibly span over several unrelated types\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Fragment-spread-is-possible}\footnote{https://github.com/graphql/graphql-spec/issues/367}\footnote{Example of inline fragments spanning to unrelated types - https://tinyurl.com/y4uxz3gu}\td{Should we expand on this somewhere?}.
 
 \subsection{Defining Normalization}\label{subsec:normalization}
 
-The normalization procedure transforms a query into a normalized one by grounding and removing redundancies in its selection set. The transformation process can be understood as a form of abstract interpretation, which evaluates selections using only static information about the type in context. 
+The normalization procedure transforms a query into a normalized one by grounding and removing redundancies in its selection set. The transformation can be understood as a form of abstract interpretation, which evaluates selections using only static information about the type in context.
 
-The process of transforming selection sets is described in Figure~\ref{fig:normalize}. Whenever a field selection is encountered (equation (2) and (3)), the process removes any repeated occurrence from the list, by filtering other fields who share the same response name. This step ensures the non-redundancy of the resulting selection. 
-However, in order to not lose information during filtering, the process collects fields with same response name and merges their subselections in the first occurrence (equation (3)), which also serves to preserve order of selections. 
+The normalization of selection sets is described in Figure~\ref{fig:normalize}. Whenever a field selection is encountered (2-3), normalization
+removes any repeated occurrence\et{of what?} from the list, by filtering other fields that share the same response name. This step ensures the non-redundancy of the resulting selection set. 
+However, in order not to lose information during filtering, normalization collects fields with the same response name and merges their subselections in the first occurrence (3). This also serves to preserve the order of selections.
 
-Finally, to obtain a selection in ground-typed normal form the normalization procedure performs two separate steps, depending on whether the selection is a field (equation (3)) or an inline fragment (equation (4)). 
-First, for field selections the process either directly normalizes the subselections or wraps them with inline fragments, based on the field's type.
-Secondly, the process will either remove fragments or lift their subselections, depending on whether they apply to the given type in context.
+Finally, to obtain a selection in ground-typed normal form, normalization performs two separate steps, depending on whether the selection is a field (3) or an inline fragment (4). For the former, the process either directly normalizes the subselections or wraps them with inline fragments, based on the field's type.
+For the latter, the process either removes fragments or lifts their subselections, depending on whether they apply to the given type in context.
 
 \begin{figure*}[t]
 \small
@@ -196,7 +202,7 @@ Secondly, the process will either remove fragments or lift their subselections, 
     %inline fragment
     & (4) & \evalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
     \evalu{\overline{\beta} \mdoubleplus \queries} & 
-    \text{if }\mathit{fragment\_type\_applies}_{\texttt{u.type}}(\ifrag{t})\\
+    \text{if }\mathit{fragment\_type\_applies}_{\texttt{u.type}}(\texttt{t})\\
     \evalu{\queries} & \text{otherwise}
     \end{cases}
     \end{align*}
@@ -282,7 +288,7 @@ query {
 
 %\td{Unnecessary?} \et{yeah, I think all this is taking too much space for the actual technical content and insights it provides. Think of a more concise way to describe normalization, ie. by guiding the reader walk through FIgure 9}\et{examples are not necessary, you illustrated before when introducing the notions} \et{for now, I'm skipping the rest of 4.2, jumping to 4.3}
 %Next, to tackle inline fragments that are unnecessary or that specialize selections in the context of an object type, let us consider the following queries. The first query includes two fragments that are not necessary; a fragment with type condition \texttt{Query} and one with type condition \texttt{Animal}. The procedure eliminates both fragments, by lifting the subqueries.
-The following queries depict the complete normalization process, with query to the left not in normal form and to the right the resulting normalized query. Subselections from fragment with type condition \texttt{Query} are lifted and the multiple occurrences of field \texttt{goodboi} are merged into a single occurence. 
+\et{this paragraph can be skipped for gaining space} The following queries depict the complete normalization process, with query to the left not in normal form and to the right the resulting normalized query. Subselections from fragment with type condition \texttt{Query} are lifted and the multiple occurrences of field \texttt{goodboi} are merged into a single occurence. 
 Since the type of the field \texttt{goodboi} is the abstract type \texttt{Animal}, the subselections are wrapped in fragments that are specified to the concrete object subtypes, namely \texttt{Dog} and \texttt{Pig}. 
 Thus, the result to the right is a non-redundant query in ground-typed normal form.
 
@@ -367,14 +373,14 @@ query {
 
 %As a final note, it is worth mentioning that the subprocesses mentioned are not defined as separate functions, but occur interleaved in the normalization function. As a consequence, the definition is highly\td{?} non-structural but can be easily expressed using the Equations library. The  similarity between the normalization function and the semantics also eases reasoning about the preservation of the semantics. \td{Mention something about how we first split the definition into these 2 subprocesses but ended up being harder to reason about?}
 
-Our previous definitions do not ensure that the resulting query is neither in normal form nor that the resulting query has the same semantics. Hence we must prove it correct and that the semantics are preserved.
+
 
 % Finally, with these properties and definitions we prove the premises proposed by \HP. We leave that discussion, about \HP's approach and ours, to Section~\ref{subsec:discussion}.
 
 \subsection{Correctness and Semantic Preservation}
 
-We now establish that normalization is {\em a)} {\em correct} in that it does indeed produce queries in normal form, for any given query, and {\em b)} {\em semantics-preserving} in that a normalized query has the same evaluation semantics as the original query from which it was derived.
-Recall that both of these results are only assumed---not proven---by \HP.
+Of course, defining a normalization procedure in itself does not ensure anything. We now establish that normalization is {\em a)} {\em correct} in that it does indeed produce queries in normal form, for any given query, and {\em b)} {\em semantics-preserving} in that a normalized query has the same evaluation semantics as the original query from which it was derived.
+% Recall that both of these results are only assumed---not proven---by \HP.
 %As described initially in this paper \et{you recalled it in the header of 4, no need to say it again}, \HP base the complexity results over \gql queries on two premises; queries can be normalized, preserving their semantics, and there is an equivalent simplified function to evaluate queries in normal form. 
 % We now prove that any query can be normalized to an equivalent query, by 
 % proving the correctness of our normalization procedure. 
@@ -420,13 +426,12 @@ Recall that both of these results are only assumed---not proven---by \HP.
     \sevalu{\queries} & \text{otherwise}
     \end{cases}
     \end{align*}
-    \caption{Simplified semantics for queries in normal form.} \td{I use $\ll \cdot \gg$ in Coq, as well as HP, not this parenthesis}\td{Redoing it to match these parens}\et{the problem was that latex does not parse those symbols as parentheses, but as operators, hence then big spaces around!}
+    \caption{Simplified semantics for queries in normal form.\et{this is exactly as in HP? if so, we should cite here as well (e.g. "(from [X])" or "(adapted from [X])" if there are some light changes)--we might want to put the "adapted from" in other figures as well to prevent plagiarism attacks!}} \td{I use $\ll \cdot \gg$ in Coq, as well as HP, not this parenthesis}\td{Redoing it to match these parens}\et{the problem was that latex does not parse those symbols as parentheses, but as operators, hence then big spaces around!}
     \label{fig:simpl_semantics}
 \end{figure*}
 
-
-First, we prove that the normalization procedure correctly produces queries in normal form. The proof is performed by generalizing the statement and proving that the normalization of selection sets results in non-redundant selections and that they are in ground-typed normal form.
-Both cases are performed by well-founded induction over the size of the selection tree and auxiliary lemmas about subtyping. 
+First, we prove that the normalization procedure correctly produces queries in normal form. The proof is performed by generalizing the statement and proving that the normalization of selection sets results in non-redundant selections that are also in ground-typed normal form.
+Both cases are performed by well-founded induction over the size of the selection tree\et{watchout: "selection tree" vs. "selection set": is there any difference?} and auxiliary lemmas about subtyping. 
 
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Theorem normalized_query_is_in_nf 
@@ -444,9 +449,8 @@ Lemma normalized_selections_are_non_redundant
     are_non_redundant (normalize_selections s ts ss).
 \end{minted}
 
-Next, we prove that the normalization preserves the semantics of queries. We follow a similar approach as in the correctness of the procedure and prove a generalized statement about the execution of selection sets. 
-Whereas the evaluation of a query is performed over the root node of the graph, the statement about preservation of semantics for selections is over any node in the graph. 
-As well as in the previous case, the proof is done by well-founded induction over the size of the selection tree.
+Next, we prove that normalization preserves the semantics of queries. We follow a similar approach as above and prove a generalized statement about the execution of selection sets. Whereas the evaluation of a query is performed over the root node of the graph, the statement about preservation of semantics for selections is over any node in the graph. 
+Likewise, the proof follows by well-founded induction over the size of the selection tree.
 
 %Next, we prove normalization preserves the semantics of queries. To begin with, we prove the case where the type in context is the same as the type of the node where queries are being normalized. Lifting this to the top level, it corresponds to normalizing over the Query type and evaluating on the root node (whose type is the same, due to graph conformance). We then extend this notion to normalization over any type in context, \texttt{ty}\et{here you're using "ty" - ts or ty is good for me but be consistent throughout}, but with the restriction that the node's type must be subtype of \texttt{ty}. Once again, this is valid at top level over the Query type and the root node. Conformance of the graph also ensures that normalization and evaluation over neighboring nodes is preserved\et{why? I don't get it}. The proof also follows by well-founded induction over the queries size and auxiliary lemmas about graph conformance.
 
@@ -467,20 +471,26 @@ Lemma normalize_selections_preserves_semantics
 \end{minted}
 
 As we formalized this transformation and its corresponding proofs, some problems arose, ranging from minor issues with the definition of non-redundancy, 
-unspecified or underspecified rules of equivalence, and limitations on the data model and semantics (\S~\ref{subsec:discussion}). We describe these more throughly in Section~\ref{subsec:norm_lims}.
+unspecified or underspecified rules of equivalence, and limitations on the data model and semantics (\S\ref{subsec:discussion}). We describe these more thoroughly in \S\ref{subsec:norm_lims}.
 
-This concludes our proofs of normalization and establish that the first premise assumed by \HP is correct in the context of our system.
+% This concludes our proofs of normalization and establish that the first premise assumed by \HP is correct in the context of our system.
 %\et{you should mention the problems you discovered about \HP by doing this formalization}
 % The next section continues with the second premise, namely the definition of a simplified version of the semantics and the proof of equivalence.
 
 \subsection{Simplified Semantics of Normalized Queries}
 \label{sec:simpl-semantics}
 
-As proposed by \HP, one of the main properties of queries in normal form is that they produce non-redundant responses\et{is that the main motivation for HP to propose normalization in the first place? (if so, say it)}\td{Idk, but I guess it is, since they exploit the equivalence of both semantics when proving complexity}, thus allowing to define a simplified evaluation function $\seval{\varphi}{}$. Figure~\ref{fig:simpl_semantics} shows the simplified semantics's formal definition. %Aliased cases\et{?} are not included due to space constraints.
-\HP do not formally prove however that the simplified semantics are equivalent to the original, when considering normalized queries.
+One of the main properties of queries in normal form is that they produce non-redundant responses.
+% \et{is that the main motivation for HP to propose normalization in the first place? (if so, say it)}\td{Idk, but I guess it is, since they exploit the equivalence of both semantics when proving complexity}
+This in turn permits defining a simplified evaluation function $\seval{\varphi}{}$, shown in Figure~\ref{fig:simpl_semantics}, which \HP use to establish their complexity results.
+ % shows the simplified semantics's formal definition. %Aliased cases\et{?} are not included due to space constraints.
+However, \HP do not formally prove that this simplified semantics is equivalent to the original, when considering normalized queries.
 
-We define the simplified semantics of \HP, and prove that, for queries in normal form, both $\eval{\varphi}{}$ and $\seval{\varphi}{}$ produce the same response. We do not include the complete definition---they can be found in files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. 
-The proof is once again performed by induction over the size of the queries. \et{any insight from the proofs?}\td{Not really? Once the normalization was ok the proof came out smoothly.}
+In \gcoql, we define the simplified semantics of \HP, and prove that, for queries in normal form, both $\eval{\varphi}{}$ and $\seval{\varphi}{}$ produce the same response. \et{can skip this sentence} The complete definitions can be found in files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. 
+%
+The proof is once again performed by induction over the size of the queries.
+\et{size of the selection sets (unless you've defined somewhere the size of queries)} 
+% \et{any insight from the proofs?}\td{Not really? Once the normalization was ok the proof came out smoothly.}
 
 \begin{minted}[bgcolor=coqbg, escapeinside=||,mathescape=true]{coq}
 Theorem exec_query_eq_simpl_exec 
@@ -517,16 +527,21 @@ Corollary exec_normalized_selections_eq_simpl_exec
 \end{minted}
 \et{fix parentheses above}
 
+\et{what are these "coerce" stuff?}
+
 \et{why isn't the theorem stated using "normalized" instead of both premises? this high-level predicate should be defined and introduced before}
 \td{Should it be? I mean, the premise used in HP only states that equiv. for normal form queries. Using normalized (which we proved is ok) is valid, but it is not what they declare...
 (The definition is simpler though, I agree)}
 \td{I add both so you choose whichever you like best. For conciseness I prefer using normalized but still, not exactly the same premise.}
+\et{better use the exact statements, and explain in text what needs to be explained.}
 
-This concludes the definitions and proofs necessary for \HP's results, however, before closing this section we will refer to some issues we encountered, as well as some general observations. 
+% This concludes the definitions and proofs necessary for \HP's results, however, before closing this section we will refer to some issues we encountered, as well as some general observations. 
  
 \subsection{Observations}\label{subsec:norm_lims}
 
-In this section we discuss some discoveries made regarding \HP's definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
+\et{I'm here}
+
+We now discuss some discoveries made regarding \HP's definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
 
 For the former, we notice that their definition of non-redundancy has a problem, in that there are queries that are considered non-redundant but actually would produce redundant results\et{is being redundant a property of the query syntax or of its (semantic) results?}\td{the syntax, but it is reflected in the results when there is no merger of fields}. A simple example is the following valid query, considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
 
