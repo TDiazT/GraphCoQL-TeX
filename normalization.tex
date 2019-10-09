@@ -49,22 +49,22 @@ query {
 The left query is not grounded because the field \texttt{name} is selected on the abstract type \texttt{Animal} type. In contrast, the right query is grounded because it specifies the (concrete) object types \texttt{Dog} and \texttt{Pig} on which it requests the information.
 %\et{verbose/repetitive} The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype. 
 
-\td{Changing this definition}
+% \td{Changing this definition}
 \begin{definition}
-A \gql selection $\sel$ is in \textit{ground-typed normal form} if it satisfies the following conditions. %where \texttt{ty} is the type in scope.
+A \gql selection $\sel$ is in \textit{ground-typed normal form} if it satisfies all the following conditions: %where \texttt{ty} is the type in scope.
 \begin{itemize}
-	\item If it is a field then its subselections are either all fields or all inline fragments, or
-	\item if it is an inline fragment, then its type condition is an object type and its subselections are only fields, and
-	\item subselections are in ground-typed normal form.
+	\item If it is a field then its subselections are either all fields or all inline fragments
+	\item If it is an inline fragment, then its type condition is an object type and its subselections are only fields, and
+	\item Its subselections are in ground-typed normal form.
 \end{itemize}
 \end{definition}
-\et{there is a disjunction and a conjunction, but it's not explained how they are combined. I guess it's "(a or b) and c", but the writing is ambiguous}
+% \et{there is a disjunction and a conjunction, but it's not explained how they are combined. I guess it's "(a or b) and c", but the writing is ambiguous}
 
 \begin{definition}
-A \gql query $\varphi$ is in \textit{ground-typed normal form} if it satisfies the following conditions. %where \texttt{ty} is the type in scope.
+A \gql query $\varphi$ is in \textit{ground-typed normal form} if it satisfies the following conditions: %where \texttt{ty} is the type in scope.
 \begin{itemize}
 	\item Its selection set consists of only fields, and
-	\item every selection is in ground-typed normal form.
+	\item Every selection is in ground-typed normal form.
 \end{itemize}
 \end{definition}
 %\et{This reads like it should be both, but I guess it's either one. Why isn't it simpy "if all the selections in the selection set are in ground-type normal form"?}
@@ -147,11 +147,12 @@ Conversely, the right query is non-redundant because it requests information abo
 \begin{definition}
 A \gql selection set $\sel$ is \textit{non-redundant} if it satisfies the following conditions:
 \begin{itemize}
-    \item There is at most one field selection with a given response name, for a particular depth of the selection set.\td{Depth?}
+    \item There is at most one field selection with a given response name, for a particular depth of the selection set.\td{Depth?}\et{define depth and size for selection sets in section 3}
 
     \item There is at most one inline fragment with a given type condition, for a particular depth of the selection set.
     
-    \item Subselections are non-redundant.\et{ill-typed: the property isn't defined on an arbitrary subselection}
+    \item Its subselections are non-redundant.
+    % \et{ill-typed: the property isn't defined on an arbitrary subselection}
 \end{itemize}
 \end{definition}
 
@@ -428,18 +429,18 @@ Of course, defining a normalization procedure in itself does not ensure anything
     \sevalu{\queries} & \text{otherwise}
     \end{cases}
     \end{align*}
-    \caption{Simplified semantics for selections in normal form, adapted from~\cite{gqlph}.
-    \et{this is exactly as in HP? if so, we should cite here as well (e.g. "(from [X])" or "(adapted from [X])" if there are some light changes)--we might want to put the "adapted from" in other figures as well to prevent plagiarism attacks!}}
-    \td{It is mostly the same, except that their definition is on atomic selections, that we use coercion of values + the fact that they define everything with set and functions (mentioned in \S\ref{subsec:discussion})}
+    \caption{Simplified semantics for selections in normal form, adapted from~\cite{gqlph}.}
+    % \et{this is exactly as in HP? if so, we should cite here as well (e.g. "(from [X])" or "(adapted from [X])" if there are some light changes)--we might want to put the "adapted from" in other figures as well to prevent plagiarism attacks!}}
+    % \td{It is mostly the same, except that their definition is on atomic selections, that we use coercion of values + the fact that they define everything with set and functions (mentioned in \S\ref{subsec:discussion})}
     \label{fig:simpl_semantics}
 \end{figure*}
 
 First, we prove that the normalization procedure correctly produces queries in normal form. The proof is performed by generalizing the statement and proving that the normalization of selection sets results in non-redundant selections that are also in ground-typed normal form.
-Both cases are performed by well-founded induction over the size of the selection set and auxiliary lemmas about subtyping. 
-\et{watchout: "selection tree" vs. "selection set": is there any difference?} 
-\td{The selection set is a list, but selections have a tree structure... So, idk. Probably just simpler to say
-selection set}
-\td{The size  of the selection set is not simply the size of the list, it is the size of the tree (length of list + depth)}
+Both cases are proven by well-founded induction over the size of the selection set and auxiliary lemmas about subtyping. 
+% \et{watchout: "selection tree" vs. "selection set": is there any difference?} 
+% \td{The selection set is a list, but selections have a tree structure... So, idk. Probably just simpler to say
+% selection set}
+% \td{The size  of the selection set is not simply the size of the list, it is the size of the tree (length of list + depth)}
 
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Theorem normalized_query_is_in_nf 
@@ -478,8 +479,6 @@ Theorem normalize_preserves_query_semantics
     execute_query s g coerce |$\query$|.
 \end{minted}
 %\et{I guess you need the Lemma first, to be able to prove the Theorem.}
-
-\et{what are these "coerce" stuff?}
 
 % This concludes our proofs of normalization and establish that the first premise assumed by \HP is correct in the context of our system.
 %\et{you should mention the problems you discovered about \HP by doing this formalization}
@@ -521,13 +520,12 @@ Lemma exec_sel_eq_simpl_exec
 \et{what are these "coerce" stuff?}
 \td{Something missing from the definition of semantics. The \spec says that values obtained from your "universe" must be coerced to the proper type 
 expected by the schema -> we include a coercion function}
-
+\et{make sure this is explained clearly in section 3}
 % This concludes the definitions and proofs necessary for \HP's results, however, before closing this section we will refer to some issues we encountered, as well as some general observations. 
  
 \subsection{Observations}\label{subsec:norm_lims}
 
-Mechanizing normalization and its corresponding proofs led us to identify 
-some minor problems in \HP's definitions. While these are all minor, they confirm the value of mechanized formalization.
+Mechanizing normalization and the simplified semantics, as well as their corresponding proofs, led us to identify some minor problems in \HP's definitions. While these are all minor, they confirm the value of mechanized formalization.
 % , ranging from minor issues with the definition of non-redundancy, unspecified or underspecified rules of equivalence, to limitations on the data model and semantics.
  % (\S\ref{subsec:discussion}). We describe these more thoroughly in \S\ref{subsec:norm_lims}.
 % We now discuss some discoveries made regarding \HP's definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
@@ -542,14 +540,15 @@ A simple example is the following query:
             name:name
         }
 \end{minted}
-which produces two repeated values. This occurs because \HP's definition of non-redundancy does not consider the case when an unaliased field and an aliased field share the same response name. This cornercase is properly handled in \gcoql, by grouping fields by their response names.
-\et{do you remember when/how you discovered that? by proving which lemma/theorem?}
-\td{Not sure, it was probably when that proving non-redundancy of the normalization function.}
-\td{Ahhh no ! It was actually when proving the equivalence of the simplified semantics}
+which produces two repeated values. This occurs because \HP's definition of non-redundancy does not consider the case when an unaliased field and an aliased field share the same response name. This cornercase is properly handled in \gcoql, by grouping fields by their response names. We discovered this case when proving the equivalence of the simplified semantics.
+% \et{do you remember when/how you discovered that? by proving which lemma/theorem?}
+% \td{Not sure, it was probably when that proving non-redundancy of the normalization function.}
+% \td{Ahhh no ! It was actually when proving the equivalence of the simplified semantics}
 % Our implementation addresses this by grouping fields by their response names.
 % considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which 
 % occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
-Second, using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries cannot be normalized. For instance:
+
+Second, we realized that using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries cannot be normalized. For instance:
 \begin{minted}[escapeinside=||, mathescape=true]{js}
           query {
               name
@@ -558,18 +557,18 @@ Second, using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries canno
               }
           }
 \end{minted}
-\et{like above explain why this is, and tell us how you discovered the problem}
+\et{like above explain why this problem happens in HP}
+%
+We uncovered this issue when working on the semantics preservation proof of the normalization function. In fact, at the time we were formalizing the query semantics following \HP's approach. Working on fixing this issue and the others discussed in \S\ref{subsec:discussion} led us to change the approach of the query semantics, and to adjust the definition of responses.
 % Regarding the equivalence rules defined by \HP, we note that their current definition  fails to normalize queries.
 % For example, the following query cannot be normalized with the current set of rules.
 % \td{Another rule does not account for order, but is not mentioned and I'm not sure if it's ok with their formalization (I mentioned it in Zulip). I don't think it adds too much info tbh}
-
-\et{before you mentioned that you also identified "limitations on the data model and semantics" -- those are all discussed in section 3.5?}
-\td{Yeah. I discovered those issues when I was originally working with \HP's semantics (with post-processing) and trying to prove that the
-normalization function preserved the semantics. We were not being able to prove something and then we noticed that \HP's responses did not cover the 
-whole possible spectrum. That finally triggered changing the semantics to be as the spec and fix the definition of responses we had, etc.}
-
-\et{any discovery when working on the simplified semantics + equivalence?}
-\td{That non-redundancy was wrong}
+% \et{before you mentioned that you also identified "limitations on the data model and semantics" -- those are all discussed in section 3.5?}
+% \td{Yeah. I discovered those issues when I was originally working with \HP's semantics (with post-processing) and trying to prove that the
+% normalization function preserved the semantics. We were not being able to prove something and then we noticed that \HP's responses did not cover the 
+% whole possible spectrum. That finally triggered changing the semantics to be as the spec and fix the definition of responses we had, etc.}
+% \et{any discovery when working on the simplified semantics + equivalence?}
+% \td{That non-redundancy was wrong}
 
 % With these final observations we conclude the normalization transformation. 
 % We have provided an algorithmic definition of the notion of query normalization proposed by \HP, proven it correct and preserving the original query's semantics.
