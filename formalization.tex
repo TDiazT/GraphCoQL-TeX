@@ -5,7 +5,7 @@
 
 
 \subsection{Schema}\label{subsec:schema}
-We formalize schemas and type definitions following the \spec. A schema is represented as a record, containing a list of type definitions and a root type that specifies the available queries (\eg \texttt{Query} in the example from Figure \ref{fig:schema_ex}):
+We formalize schemas and type definitions following the \spec. A schema is represented as a record, containing a list of type definitions and a root type that specifies the available queries\td{Should we rename as selections?} (\eg \texttt{Query} in the example from Figure \ref{fig:schema_ex}):
 %
 
 \begin{minted}[bgcolor=coqbg]{coq}
@@ -14,7 +14,7 @@ Record graphQLSchema := GraphQLSchema {
     type_definitions : seq TypeDefinition }.
 \end{minted}
 %
-Schemas may also include additional root types for specifying mutations and subscriptions\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Schema}. These operations are, however, out of the scope of our formalization.
+Schemas may also include additional root types for specifying mutations and subscriptions (\cf\S3.2.1~\cite{gqlspec}). These operations are, however, out of the scope of our formalization.
 
 Our formalization of type definitions closely follows the \spec, as depicted in Figure~ \ref{fig:types_def}. A type may be a scalar type, an object type, which possibly implements a set of interfaces, an interface type, a union type or an enumeration type. Object and interface type definitions comprise an (ordered) set of fields; union types are defined by a set of type names and enumeration types by a set of values. For the corresponding type definitions to be valid, all such three sets should not be empty. While the \spec enforces this requirement syntactically (see the grammar on the left of Figure~ \ref{fig:types_def}), we perform this validation when verifying the (overall) well-formedness schemas.     
 %
@@ -80,16 +80,17 @@ A \gql schema is \textit{well-formed} if:
 \end{itemize}
 \end{definition}
 
-In our \coq formalization\et{everywhere: replace "our coq formalization" by \gcoql}, this is captured by the Boolean predicate below. As mentioned in the introduction, our formalization heavily relies on Boolean reflection, following the SSReflect mindset.
+In \gcoql, this is captured by the Boolean predicate below. %As mentioned in the introduction, our formalization heavily relies on Boolean reflection, following the SSReflect mindset.
 %
 \begin{minted}[bgcolor=coqbg]{coq}
 Definition is_a_wf_schema (s : graphQLSchema) : bool :=
       is_object_type s s.(query_type) &&
       uniq s.(schema_names) &&
-      all is_wf_type_def s.(type_definitions).
+      all is_a_wf_type_def s.(type_definitions).
 \end{minted}
 %
 \et{naming inconsistency between is\_a\_wf\_schema and is\_wf\_typedef: skip the "a" in the case of schema}
+\td{I had actually renamed it is\_a\_wf\_typedef. I prefer with the "a" tbh}
 The notion of well-formedness for type definitions requires \eg that union members contain existent object types and that object and interface types contain at least one field. Due to space limitations, we omit the full definition and refer the interested reader to file \texttt{SchemaWellFormedness.v}.
 
 %We will, though, resume the discussion about non-emptiness of fields, union and enum members, which are included in the predicate. The main reason behind this decision is that, even though the \spec embeds this information in the grammar, it still includes it in their validation rules later on. We believe that it is simpler to use common lists instead of defining new structures or using dependent types, from an implementation point of view, while still preserving the correspondence to the algorithmic description given by the \spec.
@@ -98,7 +99,7 @@ The notion of well-formedness for type definitions requires \eg that union membe
 
 % There are two main reasons why we push this rule to a separate predicate instead of embedding it in the structure itself. The first one is that, even though the \spec embeds it in the grammar, it still includes it in a validation rule later on. To match their definition and preserve the eyeball correspondence, we also include it. The second reason is that we use SSReflect and it is simpler to use \mintinline{coq}{seq} directly and all its theory, instead of defining coercions and repeating definitions for a new structure.
 
-For convenience, we encapsulate schemas with their well-formedness proof in a single structure. This structure also contains predicate \mintinline{coq}{is_a_valid_value}, which determines whether a value used in a query indeed matches the scalar type expected by the schema. For example, if a field argument has type \texttt{Float}, the \spec requires that the actual argument used in query represent a double-precision fractional value.\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include this base restrictions but leave it open to implementation.}
+For convenience, we encapsulate schemas with their well-formedness proof in a single structure. This structure also contains the predicate \mintinline{coq}{is_a_valid_value}, which determines whether a value used in a query indeed matches the scalar type expected by the schema. For example, if a field argument has type \texttt{Float}, the \spec requires that the actual argument used in query represent a double-precision fractional value.\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include this base restrictions but leave it open to implementation.}
 %
 \begin{minted}[bgcolor=coqbg]{coq}
 Record wfGraphQLSchema := WFGraphQLSchema {
@@ -111,7 +112,7 @@ Record wfGraphQLSchema := WFGraphQLSchema {
 
 % Due to space constraints, we omit the definition of \textit{well-formedness} for type definitions. This property includes things such as: interfaces and objects must declare at least one field, objects correctly implement their declared interfaces, union types are not empty and contain only object types, amongst others. These definitions are collected from the \spec \td{Scattered throughout the \spec*}.
 
-Having reviewed or formalization of schemas, we now discuss our formalization of the data model. 
+Having reviewed our formalization of schemas, we now discuss our formalization of the data model. 
 
 
 \iffalse
@@ -143,7 +144,7 @@ A \emph{\gql graph} over \Vals{} is defined by the following elements:
 \end{itemize}
 \end{definition}
 
-In our formalization, this is captured by the following structures, where \texttt{label} represents labels over an edge or keys in a node's property. 
+In \gcoql, this is captured by the following structures, where \texttt{label} represents labels over an edge or keys in a node's property. 
 %\td{Probably the name is not the best}\fo{Fully agree. I suggest changing \texttt{fld} to \texttt{label}, \texttt{Field} to \texttt{Label} and \texttt{label} to \texttt{name} (or \texttt{lname} if there is a clash) }. 
 %
 \begin{minted}[bgcolor=coqbg]{coq}
@@ -159,7 +160,7 @@ Record graphQLGraph :=
 %
 \fo{Tomás, why did you represent graphs as a seq---rather than as a set--of edges?} The root node of a \gql graph represents the starting point from where queries are evaluated.
 
-Intuitively, the data modeled by a \gql graph is expected to follow (the type system described by) a schema. However, the definition of graphs is fully independent schemas. To relate the data to the type system, we define the notion of \textit{conformance} of a graph \wrt a schema.
+Intuitively, the data modeled by a \gql graph is expected to follow (the type system described by) a schema. However, the definition of graphs is completely independent schemas. To relate the data to the type system, we define the notion of \textit{conformance} of a graph \wrt a schema.
 %
 \begin{definition}
 A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if:
@@ -230,7 +231,7 @@ To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:qu
                    (arguments : seq (Name * Vals))
     | NestedField (name : Name)
                   (arguments : seq (Name * Vals))
-                  (subqueries : seq Query)
+                  (subqueries : seq Selection)
     | NestedAliasedField (alias : Name)
                          (name : Name)
                          (arguments : seq (Name * Vals))
@@ -239,7 +240,7 @@ To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:qu
                      (subqueries : seq Selection).
     \end{minted}
   \end{subfigure}
-  \caption{Definition of \gql queries, the \spec's grammar (left) and the \coq implementation (right).}\td{To be completely accurate, the parenthesis in field selections are not necessary unless there are arguments}\td{This might add some noise?}\et{yeah I think that'd be too much (and not very relevant)}
+  \caption{Definition of \gql queries, the \spec's grammar (left) and the \coq implementation (right).} %\td{To be completely accurate, the parenthesis in field selections are not necessary unless there are arguments}\td{This might add some noise?}\et{yeah I think that'd be too much (and not very relevant)}
   \label{fig:query_def}
 \end{figure*}
 
@@ -257,7 +258,7 @@ Intuitively, a valid query has a tree structure, where leaves correspond to fiel
 
 % Similar to the schema definition, we follow the \spec's grammar as closely as possible, as can be seen from Figure~\ref{fig:query_def}. We do not embed the property of non-emptiness of subqueries in the definition because the \spec pushes it to a different validation rule, even though it is already embedded in the grammar, and we believe it is simpler to reuse the \texttt{seq} library and its existent functionalities. 
 
-Observe that the definition of queries in Figure~\ref{fig:query_def} is not bound to any schema, requiring thus a separate validation process to ensure that they respect or adhere to a given schema. We introduce the notion of query \textit{conformance}, based on a set of validation rules scattered throughout the \spec (\cf\S5~\cite{gqlspec}). The validity of queries depends on the validity of their selection sets, which in turn requires the notion of \textit{type in context} at a given selection location.\footnote{The \spec refers to it as type in scope or parent type. Some algorithmic descriptions make use of the types in context but are not explicit in their signatures.} % Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied.
+Observe that the definition of queries in Figure~\ref{fig:query_def} is not bound to any schema, requiring thus a separate validation process to ensure that they respect or adhere to a given schema. We introduce the notion of query \textit{conformance}, based on a set of validation rules scattered throughout the \spec (\cf\S5~\cite{gqlspec}). The validity of queries depends on the validity of their selection sets, which in turn requires the notion of \textit{type in context} at a given selection location\footnote{The \spec refers to it as type in scope or parent type. Some algorithmic descriptions make use of the types in context but are not explicit in their signatures.}. % Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied.
 To illustrate this, consider the following query with two occurrences of field \texttt{name}.
 
 %\begin{minipage}[t]{.25\textwidth}
@@ -288,7 +289,7 @@ query {
 %\et{for space reason, we may want to take some liberties wrt the formatting of queries and responses (see some examples on this page)}
 
 
-\noindent In one case, the field is requesting information about the \texttt{Dog} type, while in the other it is requesting information about case about the \texttt{Pig} type. (These are the respective types in context for the first and second occurrence of the field.) The distinction is important because some field selections might be valid in some contexts but not in others. This is the case, for instance, for field \texttt{favoriteToy}: It is valid in the context of a \texttt{Dog} type but it is invalid in the context of a \texttt{Pig} type, as \texttt{Pig} type does not contain any such field. Similarly, the above query would also be invalid if \texttt{Pig} type contained a so-called field, but of type different from \texttt{Toy} ---the type the same field in type \texttt{Dog}.
+\noindent In one case, the field is requesting information about the \texttt{Dog} type, while in the other it is requesting information about the \texttt{Pig} type. (These are the respective types in context for the first and second occurrence of the field.)\td{?} The distinction is important because some field selections might be valid in some contexts but not in others. This is the case, for instance, for field \texttt{favoriteToy}: It is valid in the context of a \texttt{Dog} type but it is invalid in the context of a \texttt{Pig} type, as \texttt{Pig} type does not contain any such field. %Similarly, the above query would also be invalid if \texttt{Pig} type contained a so-called field, but of type different from \texttt{Toy} ---the type of the same field in type \texttt{Dog}.
 
 %Just as in the case of well-formedness of schemas or conformance of graphs, queries must go through a validation process. We define the property of \textit{conformance} of queries, based on validation rules scattered throughout the \textit{Validation} section of the \spec\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}.
 
@@ -300,9 +301,9 @@ Now that we have clarified the notion of type in context, we are in condition of
 
 %\td{A query conforms when its selections conform to the Query type}
 \begin{definition}
-A \gql selection set $ss$ \textit{conforms} to a schema \schema over a type in context $ts$ if:
+A \gql selection set $\sset$ \textit{conforms} to a schema $\schema$ over a type in context $ts$ if:\td{Should use $\overline{\sset}$ or simply $\sigma$?} 
 \begin{itemize}
-    \item every selection in $ss$ is consistent, 
+    \item every selection in $\sset$ is consistent, 
 
     \item field merging between field selections is possible, and
     % During the evaluation process, fields with the same response name are collected and merged to ensure that they are all executed at the same time. This validation rule checks that it makes sense to merge those fields. The following example illustrates two queries that have the same response name but should not be merged. The first one is accessing the field \texttt{name} while the second is accessing the field \texttt{age} but renaming it to \texttt{name}. Both are selections on different fields of the same type but with the same response name.
@@ -329,26 +330,26 @@ A \gql selection set $ss$ \textit{conforms} to a schema \schema over a type in c
 \end{definition}
 
 \begin{definition}
-A \gql query $\varphi$ \textit{conforms} to a schema \schema if its selection set conforms to \schema over the query root type.
+A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection set conforms to $\schema$ over the query root type.
 \end{definition}
 
 %\et{this is the beginning of the problem I'm having with your statements about queries. There is the notion of *a query*, noted $\varphi$, yet from now on your statements are about *queries*. The definition below mixes "the content" (consistency, compatible response, etc.) with "the sequence" (all, list comprehension, etc). Worse, later on in the development, you use $\varphi$ as the variable name of type "seq Queries" (while fig6 uses a bar over). See also my later comments about your "plural formulations"}
 
-In our formalization, this is captured as follows:
+In \gcoql, this is captured as with the following predicates.
 
 %The implementation can be seen in the code below, however due to space limitations we only informally describe the %three mentioned rules. The complete definitions can be found in the file \texttt{QueryConformance.v}.
 
 \begin{minted}[bgcolor=coqbg, escapeinside=@@, mathescape=true]{coq}
 Definition query_conforms 
-    (s : wfGraphQLSchema) (@$\varphi$@ : query) : bool :=
-    selections_conform s s.(query_type) @$\varphi$@.(selection_set).
+    (s : wfGraphQLSchema) (@$\query$@ : query) : bool :=
+    selections_conform s s.(query_type) @$\query$@.(selection_set).
     
 Definition selections_conform (s : wfGraphQLSchema)
-    (ts : Name) (selections : seq Selection) : bool :=
-        all (is_consistent ts) selections &&
-        is_field_merging_possible ts selections &&
+    (ts : Name) (@$\sset$@ : seq Selection) : bool :=
+        all (is_consistent ts) @$\sset$@ &&
+        is_field_merging_possible ts @$\sset$@ &&
         have_compatible_response_shapes
-            [seq (ts, s) | s <- selections].
+            [seq (ts, s) | s <- @$\sset$@].
 
 \end{minted}
 %\fo{This introduces the conformance of a query \wrt a schema, but the schema is never mentioned in the definition. It needs to be fixed!!!}
@@ -403,14 +404,14 @@ reasoning about them\footnote{Our algorithm implements an optimized version of t
 % The main issue is that the \spec allows for what we call \textit{invalid fragments}, originally described in an issue in the \spec's repository\footnote{https://github.com/graphql/graphql-spec/issues/367}. In a nutshell, the \spec allows using fragments with type conditions that can span to multiple unrelated types. These end up not being evaluated due to posterior checks\footnote{https://graphql.github.io/graphql-spec/June2018/\#DoesFragmentTypeApply()}.
 
 
-This concludes the definition of \gql queries and the validation process. \td{Examples can be found in the files \texttt{SpecExamples.v} and \texttt{HPExample.v}}. For the rest of the paper, it is assumed that queries conform to a given schema. 
+This concludes the definition of \gql queries and the validation process. For the rest of the paper, it is assumed that queries conform to a given schema. 
 
 \subsection{Semantics}\label{subsec:semantics}
 Now we have all the prerequisites to define the semantics of \gql queries and their selection sets. We begin by briefly examining the responses generated by executing queries and then we give an informal description of the semantics, finishing with the formal definition. %We finish by discussing some implementation choices and comparison with the \spec and \HP.
 
 A first observation we need to make is that query semantics is not compositional, in the sense that the result of a sequence of selections is not obtained by concatenating the results of the individual selections. Therefore, our semantic function will take a (whole) sequence of selections and return a (whole) sequence of responses.  
 
-We model responses with a tree structure, similar to JSON, as shown in Figure~\ref{fig:response_def}. A response can be a value, an object mapping keys to other responses or an array of response values. Null values in the leaves of the response tree are represented with option types.\et{fix once fig 6 defs is clarified}
+We model responses with a tree structure, similar to JSON, as shown in Figure~\ref{fig:response_def}. A response can be a value, an object mapping keys to other responses or an array of response values. Null values in the leaves of the response tree are represented with option types.%\et{fix once fig 6 defs is clarified}
 
 
 \begin{figure*}[h]
@@ -430,11 +431,11 @@ Inductive ResponseValue (A : Type) : Type :=
 | Array : seq ResponseValue -> ResponseValue.
 
 Definition GraphQLResponse (Vals: eqType) :=
-    seq (Name * (@ResponseNode (option Vals))).
+    seq (Name * (@ResponseValue (option Vals))).
 \end{minted}
    
   \end{subfigure}
-  \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).}\et{what is ResponseNode above?}
+  \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).}%\et{what is ResponseNode above?}
   \label{fig:response_def}
 
 \end{figure*}
@@ -464,7 +465,7 @@ Informally, the evaluation of a query's selection set represents a navigation ov
 \end{itemize}
 
 \begin{definition}
-Let $\mathcal{G}$ be a graph and $ss$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $ss$ over $\mathcal{G}$ from node $u \in \mathit{nodes}(\mathcal{G})$, denoted $\llbracket ss \rrbracket^{u}_{\mathcal{G}}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
+Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $\sset$ over $\graph$ from node $u \in \mathit{nodes}(\graph)$\footnote{Where $\mathit{nodes}$ is a function that retrieves all nodes from a graph}, denoted $\llbracket \sset \rrbracket^{u}_{\graph}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
 \end{definition}
 
 The definition of the evaluation function for selections, displayed in Figure~\ref{fig:semantics}, only refers to the base case of an empty list, field selections without renaming and inline fragments. The complete definition can be found in the file \texttt{QuerySemantics.v}.
@@ -472,7 +473,7 @@ The definition of the evaluation function for selections, displayed in Figure~\r
 \td{Fed mentioned he'd do it}
 
 \begin{definition}
-Let $\mathcal{G}$ be a graph and $\varphi$ a query containing a selection set $ss$, both conforming to a schema $\mathcal{S}$. The semantics of $\varphi$ over $\mathcal{G}$ is defined as the result of evaluating $ss$ from the root node of $\mathcal{G}$.
+Let $\graph$ be a graph and $\query$ a query containing a selection set $\sset$, both conforming to a schema $\schema$. The semantics of $\query$ over $\graph$ is defined as the result of evaluating $\sset$ from the root node of $\graph$.
 \end{definition}
 
 The semantics of queries is then formalized as follows:
@@ -499,42 +500,41 @@ Definition execute_query (s : wfGraphQLSchema)
     % Empty
     & (1) & \eval{\cdot}{u} &= [\cdot] \\
     % SingleField
-    & (2) & \evalu{\fld\; ::\; \queries} &= \begin{cases}
-        \resp{\texttt{coerce(\val)}} \; ::\; \evalfilteru{\queries}{\fkey}  
+    & (2) & \evalu{\fld\; ::\; \sset} &= \begin{cases}
+        \resp{\texttt{coerce(\val)}} \; ::\; \evalfilteru{\sset}{\fkey}  
         & \text{if } \mathit{u.property}(\fld) = \val \\
-        \resp{\nval} \; :: \; \evalfilteru{\queries}{\fkey} 
+        \resp{\nval} \; :: \; \evalfilteru{\sset}{\fkey} 
         & \text{otherwise}
     \end{cases}\\
     % Nested field
-    & (3) & \evalu{\nfld{\overline{\beta}} \; ::\; \queries} &=
+    & (3) & \evalu{\nfld{\overline{\beta}} \; ::\; \sset} &=
     \begin{cases}
-        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\queries))}}{v_{i}})\; \mathit{neighbors(u)} \texttt{]}} \; :: \; \evalfilteru{\queries}{\fkey} \\  
+        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\sset))}}{v_{i}})\; \mathit{neighbors(u)} \texttt{]}} \; :: \; \evalfilteru{\sset}{\fkey} \\  
         \hfill \text{ if } 
             \mathit{type}_{\mathit{u.type}}(\fkey) \text{ is } \; L_{t} \text{ and } \{v_{1}, \ldots, v_{k}\} = 
         \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in E\} \\
         %
-    (\fkey:\{\eval{\subqueries{\beta}}{v}\})\; :: \; \evalfilteru{\queries}{\fkey}  
+    (\fkey:\{\eval{\subqueries{\beta}}{v}\})\; :: \; \evalfilteru{\sset}{\fkey}  
         \hfill \text{ if } 
         \mathit{type(\fkey)} \text{ is not } L_{t} \text{ and } (u, \fkey[\alpha], v) \in E \\
     %
-    \resp{\nval}\; :: \; \evalfilteru{\queries}{\fkey} 
+    \resp{\nval}\; :: \; \evalfilteru{\sset}{\fkey} 
     \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad
     \text{ if } \mathit{type(\fkey)} \text{ is not } L_{t}  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in E \\
     \end{cases}\\
     %inline fragment
-    & (4) & \evalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
-    \evalu{\overline{\beta} \mdoubleplus \queries} 
+    & (4) & \evalu{\ifrag{t}{\overline{\beta}}\; ::\; \sset} &= \begin{cases}
+    \evalu{\overline{\beta} \mdoubleplus \sset} 
     & \text{ if }\mathit{fragment\_type\_applies}_{\texttt{u.type}}(t)\\
-    \evalu{\queries} 
+    \evalu{\sset} 
     & \text{ otherwise}
     \end{cases}
     \end{align*}
-    \caption{Semantics of \gql queries\et{(more precisely, selection sets) -- in fact, should you still use $\varphi$ here, for selections, since you use it in the text for queries? the text now uses $ss$ for selection set, which does not lend itself well to this overbar representation. Needs to be fixed}.\et{a simple option is to use $\varphi~(\overline{\varphi})$ 
-    for selection (sets) and use $q$ for query. Another is to use $\sigma$ for selection, leaving $\varphi$ for queries}
+    \caption{Semantics of \gql selection sets. 
     \newline {\footnotesize The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
     Meanwhile, $\mathit{merge}$ joins the subqueries of the input selections. The $\mathit{type}$ function retrieves the type of the given field in the node's type.
 	The $\mathit{fragment\_type\_applies}$ predicate checks if the fragment's type condition is related to the node's type and whether its contents should be evaluated in the given node.
-	Finally, $E$ are the graph's edges, while $L_{t}$ is simply the list type.\et{then why the $_t$ subscript?}}
+	Finally, $E$ are the graph's edges, while $L_{t}$ is simply the list type.\et{then why the $_t$ subscript?}\td{Simply bc its "List type" -- I took the same notation as in \HP to somehow show the similarity between both definitions.}}
   %  \fo{This definition is given using syntax you have never introduced (what does :: mean? what does f:v mean? what does ++ mean?, etc, etc). Also, you must explain what all auxiliary functions (filter, property, merge, neighbors, etc, etc) do} 
    % \et{explain also what are $u$ $G$ $L_t$ and $E$}
 %    \et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}
@@ -566,21 +566,27 @@ We now discuss some design considerations that manifested when developing
 % Secondly, the \spec defines the \texttt{schema}\footnote{https://graphql.github.io/graphql-spec/June2018/#SchemaDefinition} structure that only contains the root operation types (query, mutation and subscription). The type definitions and directives are defined separately. Even though it is not a major difference, it lends itself to possible confusion when referring to the schema of a \gql service. In addition, the previously quoted definition does
 %The previously quoted definition actually matches the \textit{Type System} structure\footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition}. Our formalization follows the latter but rename it to schema to also match the quoted description.
 %\et{contrast with what you did, and the tradeoffs (what's convenient, what's not)}
-The definition of schemas in \HP relies on defining sets of field names, types and values, and using a number of functions to relate the different elements.\et{give a simple example} In contrast, \gcoql uses a more data-structure centric approach, in which schemas are records.\et{doesn't this comment also applies to the data model? (and then e.g. to conformance checking)}
-While \HP's approach simplifies many validation rules, our approach is closer to the schema definition language from the \spec---which did not exist when \HP was published. Another advantage of the approach we take is that it is closer to an actual implementation \et{of what components exactly? make all this a bit more precise}, and hence the definitions could be directly extracted as a reference implementation.
+The definition of schemas in \HP relies on defining sets of field names, types and values, and using a number of functions to relate the different elements.
+For example, the object types of schema in Figure~\ref{fig:schema_ex} are defined as the set $O_{T} = \{\mathit{Dog, Pig, Toy\}}$ and their fields can be defined with a
+function $\mathit{fields}_{\schema} : O_{T} \to 2^{F}$, where $F$ is a set of field names.
+In contrast, \gcoql uses a more data-structure centric approach, in which schemas are records.\et{doesn't this comment also applies to the data model? (and then e.g. to conformance checking)}\td{Yeah, it does actually -- I had mentioned it before but then I forgot.}
+While \HP's approach simplifies many validation rules, our approach is closer to the schema definition language from the \spec---which did not exist when \HP was published. 
+Another advantage of the approach we take is that it is closer to an actual implementation \et{of what components exactly? make all this a bit more precise}\td{of a schema (?) -- of all its components (objects, fields, arguments, types) modulo some notation. No D:?}, and hence the definitions could be directly extracted as a reference implementation.
 % While this is convenient in their setting because it facilitates their reasoning with graphs and simplifies many validation rules, we believe it is not the case for our formalization.
 % First and mostly because it is too different from how the \spec is defined\footnote{It is worth mentioning that when \HP was published, the \spec did not provide the schema definition DSL, among other things.} and 
 % we regard similarity as a component of trust. Secondly, because we expect our implementation to be extracted in the future, the definitions should be as natural as possible to what
 % a programmer would use, which we believe is achieved in our work and would otherwise not have been by following \HP's  approach.
 
-\paragraph{Schema validation.} The definition of consistency\et{should it be "well-formedness"?} of a schema given by \HP does not capture all the validation rules established by the \spec. In particular, it does not properly account for arguments of implemented fields in objects implementing interfaces. A corrected version of \HP has been proposed recently by Hartig and Hidder~\cite{olafschema}. \et{do they coincide with what you do/the spec say?}
+\paragraph{Schema validation.} The definition of well-formedness\et{should it be "well-formedness"?}\td{Yes, but they name it \textit{consistency}} of a schema given by \HP does not capture all the validation rules established by the \spec. In particular, it does not properly account for arguments of implemented fields in objects implementing interfaces. A corrected version of \HP has been proposed recently by Hartig and Hidder~\cite{olafschema}. \et{do they coincide with what you do/the spec say?}\td{Yes, although they add validation for directives (which I don't implement) and they follow a similar set approach.}
 
 
-\paragraph{Data model.} We observe that both \HP (and its recent extension~\cite{olafschema}) and \gcoql have a slightly limited graph model that does not entirely describe the universe of a \gql service: graphs cannot model {\em nested} lists, when the underlying type is an object or abstract type.\footnote{The situation is worse in \HP, which cannot even model nested list types for scalar types.}
+\paragraph{Data model.} We observe that both \HP (and its recent extension~\cite{olafschema})\td{I wouldn't call it extension, since it only uses the schema DSL for graphs, it can provide a way to extend the formalization of \gql but it's not its goal.} and \gcoql have a slightly limited graph model that does not entirely describe the universe of a \gql service: graphs cannot model {\em nested} lists, when the underlying type is an object or abstract type.\footnote{The situation is worse in \HP, which cannot even model nested list types for scalar types.}
 For instance, these semantics cannot account for a selection over a field whose type is \texttt{[[Animal]]}.
 
 The underlying question is how to interpret such nested lists in a graph-based data model.
-\et{the following might be too long/detailed---does the reader know what formatters/resolvers are?}
+\et{the following might be too long/detailed---does the reader know what formatters/resolvers are?}\td{Yeah, I agree}
+\td{The resolvers can actually be mentioned at the intro when you mention whether readers will understand why a data model is necessary -- because 
+\gql simply assumes the existence of resolver functions.}
 Should there be blank nodes in between the source node and the neighboring nodes with the actual data? Is each edge in the path labeled?
 What occurs with each increment in the nesting depth? Since the information is ultimately collected from ``concrete'' nodes, should the graph be kept the same 
 but introduce \textit{formatter} functions to modify the responses, such that they match the expected values? How does this differ from the \gql resolvers?
@@ -608,15 +614,21 @@ Regardless, we believe that while this limitation might turn out problematic for
 
 
 \paragraph{Responses.}
-The \spec states that responses are a map from keys to values\td{unspecified}\et{what is?}, but encourages the ordering of selections to be preserved (\cf\S7.2.2~\cite{gqlspec})---the similarity between query selections and responses being one of \gql's attraction for programmers.  We embrace this recommendation: modeling of responses as trees allows us to preserve similarity wrt selections and ordering of individual response values, in addition to providing us with a strong reasoning principle\et{why is that?}.\et{what does strong mean?}
+The \spec states that responses are a map from keys to values\td{unspecified}\et{what is?}\td{what these values are}, but encourages the ordering of selections to be preserved (\cf\S7.2.2~\cite{gqlspec})---the similarity between query selections and responses being one of \gql's attraction for programmers.  We embrace this recommendation: modeling of responses as trees allows us to preserve similarity \wrt selections and ordering of individual response values. %, in addition to providing us with a strong reasoning principle\et{why is that?}.\et{what does strong mean?}
 
-The downsides of this representation choice are possible duplication of response names, and access cost. We establish unicity of names by extrinsic proofs, and consider that the access costs are not of primary importance at this stage, compared to the simple reasoning principle that trees enjoy.\et{is it?}
-
+The downsides of this representation choice are possible duplication of response names, and access cost. 
+We establish unicity of names by extrinsic proofs, and consider that the access costs are not of primary importance at this stage of development. %compared to the simple reasoning principle that trees enjoy.\et{is it?}
+\td{I removed the reasoning principle factor, because tbh idk if it easier than something else or how much it facilitates reasoning. My main reasons are the ones described above.}
 % Our approach has two main disadvantages: possible duplication of response names and cost of access. Since we use lists instead of maps, we can encounter duplicated names and accessing a value has a linear cost given by the lists size, instead of the constant access obtainable with a map. We still argue that the reasoning principles and simplicity to order is highly valuable. Nevertheless, we include a proof that the results obtained with the semantics have no duplicated names. 
 
 
 \paragraph{Query semantics.}
 \mbox{}\et{Tomas: please check that I'm saying things correctly here}
+\td{Yep, nailed it. 
+A small annotation (which I believe you already noted with the sentence about fragments)  is that I tried defining it as the \spec by using dependent types -- which caused the explosion of cases with \equations -- to declare that after collection there were no fragments.
+Also, I ran across several bugs in \equations while doing this, so the combination was too much.
+To be fair, I don't know if this was partly my inexperience with Coq or it simply was hard to define as it is...}
+\td{Otherwise it is on point}
 
 The query semantics of \gcoql (Figure~\ref{fig:semantics}) is similar to the \spec in that it performs a collection of fields at the level of {\em queries}. In contrast, \HP adopt a different formulation in which collection is done at the level of {\em responses}, \ie~as a post-processing phase. Initially, we experimented with the \HP approach in order to be as close as possible to their formalization. However, the non-structurally recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence of queries very hard. In contrast, we found that following the \spec approach made such reasoning in \coq much more convenient. 
 
