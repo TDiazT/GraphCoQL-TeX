@@ -238,7 +238,7 @@ To define queries we faithfully follow the \spec, as shown in Figure~\ref{fig:qu
                      (subqueries : seq Selection).
     \end{minted}
   \end{subfigure}
-  \caption{Definition of \gql queries, the \spec's grammar (left) and the \coq implementation (right).}\td{To be completely accurate, the parenthesis in field selections are not necessary unless there are arguments}\td{This might add some noise?}
+  \caption{Definition of \gql queries, the \spec's grammar (left) and the \coq implementation (right).}\td{To be completely accurate, the parenthesis in field selections are not necessary unless there are arguments}\td{This might add some noise?}\et{yeah I think that'd be too much (and not very relevant)}
   \label{fig:query_def}
 \end{figure*}
 
@@ -451,8 +451,6 @@ Our model of a query response is based in that it allows us to preserve similari
 %\label{fig:responses}
 %\end{figure}
 
-\td{Move to discussion?} Our approach has two main disadvantages: possible duplication of response names and cost of access. Since we use lists instead of maps, we can encounter duplicated names and accessing a value has a linear cost given by the lists size, instead of the constant access obtainable with a map. We still argue that the reasoning principles and simplicity to order is highly valuable. Nevertheless, we include a proof that the results obtained with the semantics have no duplicated names. Finally, we use option types to represent null values in the leaves of the response tree.
-
 
 
 As we described in \S\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec, in the sense that it can be detached from a particular data model. 
@@ -558,19 +556,11 @@ We now discuss some design considerations that manifested when developing
 %\et{I suggest to split this section in two parts: one that is related to the core (schema, data model, queries, semantics), and on that is related to normalization/simplified semantics. And to move the first to just after section 3 (either as a 3.5 or as a separate section 4 if it's length justifies it)}
 
 \paragraph{Schema.}
-
 %\et{I don't get what is the point of this paragraph, and why it matters -- what's the takeaway message? how does it relate to what we did?}
 %We believe that the \spec's definition of the schema can be slightly confusing and ambiguous. The schema is described as being ``\textit{defined in terms of the types and directives it supports as well as the root operation types for each kind of operation}''\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Schema}. However, the \spec also defines a structure called \texttt{schema}\footnote{https://graphql.github.io/graphql-spec/June2018/\#SchemaDefinition} that only contains the root operation types (query, mutation and subscription), meanwhile the type definitions and directives are defined separately. We think this introduces the first ambiguity to the definition. Now, to actually capture the notion described above, it is necessary to define what is called a \textit{Document}\footnote{https://graphql.github.io/graphql-spec/June2018/\#Document}, consisting of a list of definitions and queries. Among these definitions one can include the \texttt{schema} structure, as well as the type definitions and directives (by repeatedly using the \textit{Type System Definition}\footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition} rule). This effectively permits building the schema as expected, however we think it is unintuitive to allow mixing definitions with queries. Also, the naming of the different structures seems to introduce confusion and inconsistency.
-
- 
 % the \spec defines each of the three elements (types, directives and root operation types) as separate entities. The first candidate is the \textit{Type System} \footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition} but it is a disjunction of the three elements: types, directives and root operation types. 
-
-
 % Secondly, the \spec defines the \texttt{schema}\footnote{https://graphql.github.io/graphql-spec/June2018/#SchemaDefinition} structure that only contains the root operation types (query, mutation and subscription). The type definitions and directives are defined separately. Even though it is not a major difference, it lends itself to possible confusion when referring to the schema of a \gql service. In addition, the previously quoted definition does
-
-
 %The previously quoted definition actually matches the \textit{Type System} structure\footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition}. Our formalization follows the latter but rename it to schema to also match the quoted description.
-
 %\et{contrast with what you did, and the tradeoffs (what's convenient, what's not)}
 The definition of \gql schemas in \HP is primarily done by defining sets over the possible field names, types and values, as well as a collection of functions to relate the different elements.
 While this is convenient in their setting because it facilitates their reasoning with graphs and simplifies many validation rules, we believe it is not the case for our formalization.
@@ -582,37 +572,40 @@ Finally,  the definition of consistency of a schema given by \HP does not captur
 In particular, it does not properly account for arguments of implemented fields in objects implementing interfaces. 
 Note that a corrected version of \HP has been proposed recently by Hartig and Hidder~\cite{olafschema}. \et{do they coincide with what you do/the spec say?}
 
-\paragraph{Data model and semantics.}
+\paragraph{Data model.} We observe that both \HP (and its recent extension~\cite{olafschema}) and \gcoql have a slightly limited graph model that does not entirely describe the universe of a \gql service: graphs cannot model {\em nested} lists, when the underlying type is an object or abstract type.\footnote{The situation is worse in \HP, which cannot even model nested list types for scalar types.}
+For instance, these semantics cannot account for a selection over a field whose type is \texttt{[[Animal]]}.
 
-In this section, we address a limitation on the graph data model that is used in our formalization, as well as in \HP and~\cite{olafschema}.
-We first describe the limitation, then its consequences on the semantics of queries, and finally some thoughts on what causes this issue and
-its potential impact.
-
-The limitation we discovered with the graph model is that it does not entirely describe the universe of a \gql service. 
-The graphs cannot model list types of nesting depth greater than one, when the wrapped type is an object or abstract type. 
-\HP takes this a step further, also not being able to model nested list types for scalar types.\td{neither HP nor the other work mention this}
-
-The main consequence is that the semantics is not capable of producing every expected outcome of a query. To illustrate this, 
-consider a selection over a field whose type is \texttt{[[Animal]]}. 
-The expected \gql output when evaluating this field is a list of list of objects.
-However, the corresponding graph for this scenario cannot be described with our model, hence the semantics simply ignores the 
-nesting and generates a list of objects for the given field.
-
-The main issue is that it is not entirely clear for us what these nested list types represent in a graph or how they should be modeled. 
+The underlying question is how to interpret such nested lists in a graph-based data model.
+\et{the following might be too long/detailed---does the reader know what formatters/resolvers are?}
 Should there be blank nodes in between the source node and the neighboring nodes with the actual data? Is each edge in the path labeled?
 What occurs with each increment in the nesting depth? Since the information is ultimately collected from ``concrete'' nodes, should the graph be kept the same 
 but introduce \textit{formatter} functions to modify the responses, such that they match the expected values? How does this differ from the \gql resolvers?
 
-Finally, we are not entirely certain about the impact that this limitation may have on realistic \gql services. 
-Empirical studies, such as~\cite{empiricalgql} and~\cite{empiricalapi}, analyze the structure of \gql schemas 
-over a collection of industrial and open-source projects. Their results provide some insights such as the most 
-common object types, which can be traced to reference implementations and shown to not have nested list types 
-with depth greater than one. However, these insights are not conclusive, thus requiring a more profound analysis.\td{hint to future work? In particular~\cite{empiricalgql} seems more complete, and with more and better tooling} 
+% The main consequence is that the semantics is not capable of producing every expected outcome of a query. To illustrate this, 
+% consider a 
+% The expected \gql output when evaluating this field is a list of list of objects.
+% However, the corresponding graph for this scenario cannot be described with our model, hence the semantics simply ignores the 
+% nesting and generates a list of objects for the given field.
+% The main issue is that it is not entirely clear for us what these nested list types represent in a graph or how they should be modeled. 
 
-Regardless of this open problem, we believe that it introduces complexity to the formalization but the results and those of \HP should still be preserved.
-\td{Why?  Idk, but the essence of the issue doesn't seem that terrible in that the results change or the semantics goes wild and generate 
-unexpected results. It should only reflect in changes in how you navigate the graph but not in the actual data one collects. The content one is looking for
-is still the same.}
+The importance of this limitation in practice remains to be assessed. Recent empirical studies that analyze the structure of \gql schemas 
+over a collection of industrial and open-source projects provide some 
+insights such as the most 
+common object types, which can be traced to reference implementations, and turn out to not have nested list types~\cite{empiricalgql,empiricalapi}. 
+% Finally, we are not entirely certain about the impact that this limitation may have on realistic \gql services. 
+% However, these insights are not conclusive, thus requiring a more profound analysis.\td{hint to future work? In particular~\cite{empiricalgql} seems more complete, and with more and better tooling} 
+Regardless, we believe that while this limitation might turn out problematic for an extracted reference implementation of \gql, it should play little role in metatheoretical results, as those studied in \S\ref{sec:norm}.
+
+
+% Regardless of this open problem, we believe that it introduces complexity to the formalization but the results and those of \HP should still be preserved.
+% \td{Why?  Idk, but the essence of the issue doesn't seem that terrible in that the results change or the semantics goes wild and generate 
+% unexpected results. It should only reflect in changes in how you navigate the graph but not in the actual data one collects. The content one is looking for
+% is still the same.}
+
+
+\paragraph{Responses.}
+\mbox{}\et{Moved from 3.4 - unchecked yet} 
+Our approach has two main disadvantages: possible duplication of response names and cost of access. Since we use lists instead of maps, we can encounter duplicated names and accessing a value has a linear cost given by the lists size, instead of the constant access obtainable with a map. We still argue that the reasoning principles and simplicity to order is highly valuable. Nevertheless, we include a proof that the results obtained with the semantics have no duplicated names. Finally, we use option types to represent null values in the leaves of the response tree.
 
 
 \paragraph{Query semantics.}
