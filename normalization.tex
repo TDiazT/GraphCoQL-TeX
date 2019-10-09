@@ -547,7 +547,8 @@ which produces two repeated values. This occurs because \HP's definition of non-
 % Our implementation addresses this by grouping fields by their response names.
 % considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which 
 % occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
-Second, using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries cannot be normalized. For instance:
+
+Second, we realized that using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries cannot be normalized. For instance:
 \begin{minted}[escapeinside=||, mathescape=true]{js}
           query {
               name
