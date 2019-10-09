@@ -195,8 +195,9 @@ Secondly, the process will either remove fragments or lift their subselections, 
     \end{cases}\\
     %inline fragment
     & (4) & \evalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
-    \evalu{\overline{\beta} \mdoubleplus \queries} & \mathit{fragment\_type\_applies}_{\texttt{u.type}}(t)\\
-    \evalu{\queries} & \sim
+    \evalu{\overline{\beta} \mdoubleplus \queries} & 
+    \text{if }\mathit{fragment\_type\_applies}_{\texttt{u.type}}(\ifrag{t})\\
+    \evalu{\queries} & \text{otherwise}
     \end{cases}
     \end{align*}
     \caption{Normalization procedure for \gql selections. }
@@ -419,7 +420,7 @@ Recall that both of these results are only assumed---not proven---by \HP.
     \sevalu{\queries} & \text{otherwise}
     \end{cases}
     \end{align*}
-    \caption{Simplified semantics for queries in normal form.} \td{I use $\ll \cdot \gg$ in Coq, as well as HP, not this parenthesis}\td{Redoing it to match these parens}%\et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}}
+    \caption{Simplified semantics for queries in normal form.} \td{I use $\ll \cdot \gg$ in Coq, as well as HP, not this parenthesis}\td{Redoing it to match these parens}\et{the problem was that latex does not parse those symbols as parentheses, but as operators, hence then big spaces around!}
     \label{fig:simpl_semantics}
 \end{figure*}
 

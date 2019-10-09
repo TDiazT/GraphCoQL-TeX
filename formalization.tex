@@ -529,7 +529,9 @@ Definition execute_query (s : wfGraphQLSchema)
     & \text{ otherwise}
     \end{cases}
     \end{align*}
-    \caption{Semantics of \gql queries\et{(more precisely, selection sets) -- in fact, should you still use $\varphi$ here, for selections, since you use it in the text for queries? the text now uses $ss$ for selection set, which does not lend itself well to this overbar representation. Needs to be fixed}.\newline {\footnotesize The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
+    \caption{Semantics of \gql queries\et{(more precisely, selection sets) -- in fact, should you still use $\varphi$ here, for selections, since you use it in the text for queries? the text now uses $ss$ for selection set, which does not lend itself well to this overbar representation. Needs to be fixed}.\et{a simple option is to use $\varphi~(\overline{\varphi})$ 
+    for selection (sets) and use $q$ for query. Another is to use $\sigma$ for selection, leaving $\varphi$ for queries}
+    \newline {\footnotesize The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
     Meanwhile, $\mathit{merge}$ joins the subqueries of the input selections. The $\mathit{type}$ function retrieves the type of the given field in the node's type.
 	The $\mathit{fragment\_type\_applies}$ predicate checks if the fragment's type condition is related to the node's type and whether its contents should be evaluated in the given node.
 	Finally, $E$ are the graph's edges, while $L_{t}$ is simply the list type.\et{then why the $_t$ subscript?}}
