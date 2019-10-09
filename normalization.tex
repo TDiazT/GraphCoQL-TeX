@@ -51,32 +51,41 @@ The left query is not grounded because the field \texttt{name} is selected on th
 
 % \td{Changing this definition}
 \begin{definition}
-A \gql selection $\sel$ is in \textit{ground-typed normal form} if it satisfies all the following conditions: %where \texttt{ty} is the type in scope.
+A \gql selection set $\sset$ is in \textit{ground-typed normal form} if it satisfies the following grammar, where \texttt{t} is an object type: %where \texttt{ty} is the type in scope.
+\begin{displaymath}
+	\begin{array}{rcl}
+	\sset & ::= & \chi \ldots \chi \\
+	& | & \psi \ldots \psi\\
+	\psi & ::= & \ifrag{t}{\chi \ldots \chi}\\
+	\chi & ::= & \fld \\
+	& | & \afld\\
+	& | & \nfld{\sset}\\
+	& | & \anfld{\sset}	
+	\end{array}
+\end{displaymath}
+	
+	\end{definition}
+\iffalse
 \begin{itemize}
 	\item If it is a field then its subselections are either all fields or all inline fragments
 	\item If it is an inline fragment, then its type condition is an object type and its subselections are only fields, and
 	\item Its subselections are in ground-typed normal form.
 \end{itemize}
 \end{definition}
+\fi
 % \et{there is a disjunction and a conjunction, but it's not explained how they are combined. I guess it's "(a or b) and c", but the writing is ambiguous}
 
 \begin{definition}
-A \gql query $\varphi$ is in \textit{ground-typed normal form} if it satisfies the following conditions: %where \texttt{ty} is the type in scope.
-\begin{itemize}
-	\item Its selection set consists of only fields, and
-	\item Every selection is in ground-typed normal form.
-\end{itemize}
+A \gql query $\varphi$ is in \textit{ground-typed normal form} if its selection set is in ground-typed normal form.
+ %\et{This reads like it should be both, but I guess it's either one. Why isn't it simpy "if all the selections in the selection set are in ground-type normal form"?}
 \end{definition}
-%\et{This reads like it should be both, but I guess it's either one. Why isn't it simpy "if all the selections in the selection set are in ground-type normal form"?}
 
 \iffalse
 We formalize the latter with the following definition in Coq.
-\begin{minted}[bgcolor=coqbg]{coq}
+\begin{minted}[bgcolor=coqbg, escapeinside=||, mathescape=true]{coq}
 Definition is_a_grounded_typed_nf_query 
-    (s : wfGraphQLSchema) (q : @query Vals) :=
-    all (fun sel =>
-          sel.(is_field) && is_in_ground_typed_nf s sel) 
-              q.(selection_set).
+  (s : wfGraphQLSchema) (|$\query$| : query) :=
+    are_in_ground_typed_nf s |$\query$|.(selection_set).
   \end{minted}
   \fi 
 %This definition of groundedness differs slightly from that of \HP \et{how is it different? why?}\td{See response in Zulip}\et{you can't just say that "it differs slightly" to the reader---you're  saying too much or too little. You can be approximate here and then clarify in the discussion section, or mention it here and saying that you'll expand on this in that later section}\et{I'd suggest to give you 2-3 lines to mention the main differences and put a forward ref to \S5)} nevertheless, we prove that our definition still implies being in ground-typed normal form \et{if you prove that it means you have also formalized the exact def from HP? so?}.
