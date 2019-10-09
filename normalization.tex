@@ -48,8 +48,10 @@ query {
 \end{minipage}
 The left query is not grounded because the field \texttt{name} is selected on the abstract type \texttt{Animal} type. In contrast, the right query is grounded because it specifies the (concrete) object types \texttt{Dog} and \texttt{Pig} on which it requests the information.
 %\et{verbose/repetitive} The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype. 
+
+\td{Changing this definition}
 \begin{definition}
-A \gql selection $sel$\et{fix variable (see comments below Fig7)} is in \textit{ground-typed normal form} if it satisfies the following conditions. %where \texttt{ty} is the type in scope.
+A \gql selection $\sel$ is in \textit{ground-typed normal form} if it satisfies the following conditions. %where \texttt{ty} is the type in scope.
 \begin{itemize}
 	\item If it is a field then its subselections are either all fields or all inline fragments, or
 	\item if it is an inline fragment, then its type condition is an object type and its subselections are only fields, and
@@ -65,7 +67,7 @@ A \gql query $\varphi$ is in \textit{ground-typed normal form} if it satisfies t
 	\item every selection is in ground-typed normal form.
 \end{itemize}
 \end{definition}
-\et{This reads like it should be both, but I guess it's either one. Why isn't it simpy "if all the selections in the selection set are in ground-type normal form"?}
+%\et{This reads like it should be both, but I guess it's either one. Why isn't it simpy "if all the selections in the selection set are in ground-type normal form"?}
 
 \iffalse
 We formalize the latter with the following definition in Coq.
@@ -143,7 +145,7 @@ Conversely, the right query is non-redundant because it requests information abo
 % It is important to notice that, even though it requests the field \texttt{name} in both, this is considered not redundant because 
 
 \begin{definition}
-A \gql selection set $ss$\et{fix var} is \textit{non-redundant} if it satisfies the following conditions:
+A \gql selection set $\sel$ is \textit{non-redundant} if it satisfies the following conditions:
 \begin{itemize}
     \item There is at most one field selection with a given response name, for a particular depth of the selection tree.\td{Depth?}
 
@@ -157,7 +159,7 @@ A \gql selection set $ss$\et{fix var} is \textit{non-redundant} if it satisfies 
 A \gql query $\varphi$ is \textit{non-redundant} if its selection set is non-redundant.
 \end{definition}
 
-\et{why don't the GTNF definition and the NR definition follow the same pattern?}
+%\et{why don't the GTNF definition and the NR definition follow the same pattern?}
 
 % \td{I removed the paragraph about non-redundancy assuming groundedness. I feel it just adds noise.}
 %Our definition of non-redundancy assumes that the queries are grounded \et{maybe the Coq definition, but not the definition above!}, much like \HP, mainly to simplify the implementation. The difficulty arises from using inline fragments and comparing their contents appropriately. This difficulty is further increased by the fact that the \spec currently allows using fragments that can possibly span over several unrelated types\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Fragment-spread-is-possible}\footnote{https://github.com/graphql/graphql-spec/issues/367}\footnote{Example of inline fragments spanning to unrelated types - https://tinyurl.com/y4uxz3gu}\td{Should we expand on this somewhere?}.
@@ -167,7 +169,7 @@ A \gql query $\varphi$ is \textit{non-redundant} if its selection set is non-red
 The normalization procedure transforms a query into a normalized one by grounding and removing redundancies in its selection set. The transformation can be understood as a form of abstract interpretation, which evaluates selections using only static information about the type in context.
 
 The normalization of selection sets is described in Figure~\ref{fig:normalize}. Whenever a field selection is encountered (2-3), normalization
-removes any repeated occurrence\et{of what?} from the list, by filtering other fields that share the same response name. This step ensures the non-redundancy of the resulting selection set. 
+removes any field that shares the same response name. This step ensures the non-redundancy of the resulting selection set. 
 However, in order not to lose information during filtering, normalization collects fields with the same response name and merges their subselections in the first occurrence (3). This also serves to preserve the order of selections.
 
 Finally, to obtain a selection in ground-typed normal form, normalization performs two separate steps, depending on whether the selection is a field (3) or an inline fragment (4). For the former, the process either directly normalizes the subselections or wraps them with inline fragments, based on the field's type.
@@ -426,12 +428,18 @@ Of course, defining a normalization procedure in itself does not ensure anything
     \sevalu{\queries} & \text{otherwise}
     \end{cases}
     \end{align*}
-    \caption{Simplified semantics for queries in normal form.\et{this is exactly as in HP? if so, we should cite here as well (e.g. "(from [X])" or "(adapted from [X])" if there are some light changes)--we might want to put the "adapted from" in other figures as well to prevent plagiarism attacks!}} \td{I use $\ll \cdot \gg$ in Coq, as well as HP, not this parenthesis}\td{Redoing it to match these parens}\et{the problem was that latex does not parse those symbols as parentheses, but as operators, hence then big spaces around!}
+    \caption{Simplified semantics for selections in normal form, adapted from~\cite{gqlph}.
+    \et{this is exactly as in HP? if so, we should cite here as well (e.g. "(from [X])" or "(adapted from [X])" if there are some light changes)--we might want to put the "adapted from" in other figures as well to prevent plagiarism attacks!}}
+    \td{It is mostly the same, except that their definition is on atomic selections, that we use coercion of values + the fact that they define everything with set and functions (mentioned in \S\ref{subsec:discussion})}
     \label{fig:simpl_semantics}
 \end{figure*}
 
 First, we prove that the normalization procedure correctly produces queries in normal form. The proof is performed by generalizing the statement and proving that the normalization of selection sets results in non-redundant selections that are also in ground-typed normal form.
-Both cases are performed by well-founded induction over the size of the selection tree\et{watchout: "selection tree" vs. "selection set": is there any difference?} and auxiliary lemmas about subtyping. 
+Both cases are performed by well-founded induction over the size of the selection set and auxiliary lemmas about subtyping. 
+\et{watchout: "selection tree" vs. "selection set": is there any difference?} 
+\td{The selection set is a list, but selections have a tree structure... So, idk. Probably just simpler to say
+selection set}
+\td{The size  of the selection set is not simply the size of the list, it is the size of the tree (length of list + depth)}
 
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Theorem normalized_query_is_in_nf 
@@ -488,52 +496,31 @@ However, \HP do not formally prove that this simplified semantics is equivalent 
 
 In \gcoql, we define the simplified semantics of \HP, and prove that, for queries in normal form, both $\eval{\varphi}{}$ and $\seval{\varphi}{}$ produce the same response. \et{can skip this sentence} The complete definitions can be found in files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. 
 %
-The proof is once again performed by induction over the size of the queries.
-\et{size of the selection sets (unless you've defined somewhere the size of queries)} 
+The proof is once again performed by induction over the size of the selection set.
+%\et{size of the selection sets (unless you've defined somewhere the size of queries)} 
 % \et{any insight from the proofs?}\td{Not really? Once the normalization was ok the proof came out smoothly.}
 
 \begin{minted}[bgcolor=coqbg, escapeinside=||,mathescape=true]{coq}
 Theorem exec_query_eq_simpl_exec 
   (s : wfGraphQLSchema) (g : conformedGraph s)
-  (coerce : wfCoercion) (q : query) : 
-    is_in_normal_form s q -> 
-    execute_query s g coerce q =
-    simpl_execute_query s g coerce q.
+  (coerce : wfCoercion) (|$\query$| : query) : 
+    is_in_normal_form s |$\query$| -> 
+    execute_query s g coerce |$\query$| =
+    simpl_execute_query s g coerce |$\query$|.
     
 Lemma exec_sel_eq_simpl_exec
   (s : wfGraphQLSchema) (g : conformedGraph s) 
-  (coerce : wfCoercion) (ss : seq Selection) (u : node) :
-   (all (fun sel => sel.(is_field)) ss || 
-    all (fun sel => sel.(is_inline_fragment)) ss) ->
-    all (is_in_ground_typed_nf s) sel ->
-    are_non_redundant sel -> 
-    s, g |$\vdash$| |$\llbracket$| ss |$\rrbracket$| in u with coerce =
-    s, g |$\vdash$| |$\ll$| ss |$\gg$| in u with coerce.
+  (coerce : wfCoercion) (|$\sel$| : seq Selection) (u : node) :
+    are_in_normal_form s |$\sel$| -> 
+    s, g |$\vdash$| |$\llbracket$| |$\sel$| |$\rrbracket$| in u with coerce =
+    s, g |$\vdash$| |$\llparenthesis$| |$\sel$| |$\rrparenthesis$| in u with coerce.
  
- 
-Corollary exec_normalized_query_eq_simpl_exec
-  (s : wfGraphQLSchema) (g : conformedGraph s)
-  (coerce : wfCoercion) (q : query) :
-    execute_query s g coerce (normalize s q) =
-    simpl_execute_query s g coerce (normalize s q).
-    
-Corollary exec_normalized_selections_eq_simpl_exec 
-  (s : wfGraphQLSchema) (g : conformedGraph s)
-  (coerce : wfCoercion) (q : query) (u : node) :
-    s, g |$\vdash$| |$\llbracket$| normalize_selections s u.(ntype) ss |$\rrbracket$| 
-      in u with coerce =
-    s, g |$\vdash$| |$\ll$| normalize_selections s u.(type) ss |$\gg$| 
-      in u with coerce.
 \end{minted}
-\et{fix parentheses above}
+%\et{fix parentheses above}
 
 \et{what are these "coerce" stuff?}
-
-\et{why isn't the theorem stated using "normalized" instead of both premises? this high-level predicate should be defined and introduced before}
-\td{Should it be? I mean, the premise used in HP only states that equiv. for normal form queries. Using normalized (which we proved is ok) is valid, but it is not what they declare...
-(The definition is simpler though, I agree)}
-\td{I add both so you choose whichever you like best. For conciseness I prefer using normalized but still, not exactly the same premise.}
-\et{better use the exact statements, and explain in text what needs to be explained.}
+\td{Something missing from the definition of semantics. The \spec says that values obtained from your "universe" must be coerced to the proper type 
+expected by the schema -> we include a coercion function}
 
 % This concludes the definitions and proofs necessary for \HP's results, however, before closing this section we will refer to some issues we encountered, as well as some general observations. 
  
