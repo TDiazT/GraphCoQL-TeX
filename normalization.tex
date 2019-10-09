@@ -147,9 +147,9 @@ Conversely, the right query is non-redundant because it requests information abo
 \begin{definition}
 A \gql selection set $\sel$ is \textit{non-redundant} if it satisfies the following conditions:
 \begin{itemize}
-    \item There is at most one field selection with a given response name, for a particular depth of the selection tree.\td{Depth?}
+    \item There is at most one field selection with a given response name, for a particular depth of the selection set.\td{Depth?}
 
-    \item There is at most one inline fragment with a given type condition, for a particular depth of the selection tree.
+    \item There is at most one inline fragment with a given type condition, for a particular depth of the selection set.
     
     \item Subselections are non-redundant.\et{ill-typed: the property isn't defined on an arbitrary subselection}
 \end{itemize}
@@ -458,26 +458,26 @@ Lemma normalized_selections_are_non_redundant
 \end{minted}
 
 Next, we prove that normalization preserves the semantics of queries. We follow a similar approach as above and prove a generalized statement about the execution of selection sets. Whereas the evaluation of a query is performed over the root node of the graph, the statement about preservation of semantics for selections is over any node in the graph. 
-Likewise, the proof follows by well-founded induction over the size of the selection tree.
+Likewise, the proof follows by well-founded induction over the size of the selection set.
 
 %Next, we prove normalization preserves the semantics of queries. To begin with, we prove the case where the type in context is the same as the type of the node where queries are being normalized. Lifting this to the top level, it corresponds to normalizing over the Query type and evaluating on the root node (whose type is the same, due to graph conformance). We then extend this notion to normalization over any type in context, \texttt{ty}\et{here you're using "ty" - ts or ty is good for me but be consistent throughout}, but with the restriction that the node's type must be subtype of \texttt{ty}. Once again, this is valid at top level over the Query type and the root node. Conformance of the graph also ensures that normalization and evaluation over neighboring nodes is preserved\et{why? I don't get it}. The proof also follows by well-founded induction over the queries size and auxiliary lemmas about graph conformance.
 
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
-Theorem normalize_preserves_query_semantics 
-  (s : wfGraphQLSchema) (g : conformedGraph s)
-  (coerce : wfCoercion) (q : query) :
-    execute_query s g coerce (normalize s q) =
-    execute_query s g coerce q.
-    
 Lemma normalize_selections_preserves_semantics
   (s : wfGraphQLSchema) (g : conformedGraph s) 
-  (coerce : wfCoercion) (ss : seq Selection) (u : node) :
+  (coerce : wfCoercion) (|$\sel$| : seq Selection) (u : node) :
     u |\textbackslash|in g.(nodes) ->
-    s, g |$\vdash \llbracket$| normalize_selections s u.(ntype) ss |$\rrbracket$|
+    s, g |$\vdash \llbracket$| normalize_selections s u.(ntype) |$\sel$| |$\rrbracket$|
         in u with coerce =
-    s, g |$\vdash$| |$\llbracket$| ss |$\rrbracket$| in u with coerce. 
+    s, g |$\vdash$| |$\llbracket$| |$\sel$| |$\rrbracket$| in u with coerce. 
+    
+Theorem normalize_preserves_query_semantics 
+  (s : wfGraphQLSchema) (g : conformedGraph s)
+  (coerce : wfCoercion) (|$\query$| : query) :
+    execute_query s g coerce (normalize s |$\query$|) =
+    execute_query s g coerce |$\query$|.
 \end{minted}
-\et{I guess you need the Lemma first, to be able to prove the Theorem.}
+%\et{I guess you need the Lemma first, to be able to prove the Theorem.}
 
 \et{what are these "coerce" stuff?}
 
@@ -544,7 +544,8 @@ A simple example is the following query:
 \end{minted}
 which produces two repeated values. This occurs because \HP's definition of non-redundancy does not consider the case when an unaliased field and an aliased field share the same response name. This cornercase is properly handled in \gcoql, by grouping fields by their response names.
 \et{do you remember when/how you discovered that? by proving which lemma/theorem?}
-
+\td{Not sure, it was probably when that proving non-redundancy of the normalization function.}
+\td{Ahhh no ! It was actually when proving the equivalence of the simplified semantics}
 % Our implementation addresses this by grouping fields by their response names.
 % considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which 
 % occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
@@ -563,8 +564,12 @@ Second, using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries canno
 % \td{Another rule does not account for order, but is not mentioned and I'm not sure if it's ok with their formalization (I mentioned it in Zulip). I don't think it adds too much info tbh}
 
 \et{before you mentioned that you also identified "limitations on the data model and semantics" -- those are all discussed in section 3.5?}
+\td{Yeah. I discovered those issues when I was originally working with \HP's semantics (with post-processing) and trying to prove that the
+normalization function preserved the semantics. We were not being able to prove something and then we noticed that \HP's responses did not cover the 
+whole possible spectrum. That finally triggered changing the semantics to be as the spec and fix the definition of responses we had, etc.}
 
 \et{any discovery when working on the simplified semantics + equivalence?}
+\td{That non-redundancy was wrong}
 
 % With these final observations we conclude the normalization transformation. 
 % We have provided an algorithmic definition of the notion of query normalization proposed by \HP, proven it correct and preserving the original query's semantics.
