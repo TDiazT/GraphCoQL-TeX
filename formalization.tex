@@ -169,12 +169,9 @@ To represent the values associated to properties and arguments, we consider the 
 A \emph{\gql graph} over \Vals{} is defined by:
 \begin{itemize}
     \item a root node, and
-    \item a collection of edges of the form ($u$,
-      \texttt{f[}$\alpha$\texttt{]}, $v$), where $u, v$ are nodes and
-      \texttt{f[}$\alpha$\texttt{]} is a label with arguments
-      (key-value pairs).  \fo{Since a label can
-        have multiple arguments, using $\overline{\alpha}$ is
-        preferable to $\alpha$.}
+    \item a collection of edges of the form ($u$, $\fld$, $v$), where $u, v$ are nodes and
+      $\fld$ is a label with arguments
+      (key-value pairs).
 \end{itemize}
 \end{definition}
 
@@ -190,10 +187,11 @@ Record node :=
   Node { ntype : Name; nprops : seq (label * Vals) }.
 
 Record graphQLGraph := 
-  GraphQLGraph { root : node; E : seq (node * label * node) }.
+  GraphQLGraph { root : node; 
+                 edges : seq (node * label * node) }.
 \end{minted}
-\td{Should rename E to edges, so it is clearer?}\fo{Yes. Also push it
-  to a newline, to avoid the column overflow.}
+%\td{Should rename E to edges, so it is clearer?}\fo{Yes. Also push it
+ % to a newline, to avoid the column overflow.}
 %
 \fo{Tomás, why did you represent graphs as a seq---rather than as a set--of edges?} The root node of a \gql graph represents the starting point from where queries are evaluated.
 
