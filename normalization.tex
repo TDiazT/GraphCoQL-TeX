@@ -557,7 +557,7 @@ which produces two repeated values. This occurs because \HP's definition of non-
 % considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which 
 % occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
 
-Second, we realized that using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries cannot be normalized. For instance:
+Secondly, we realized that using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries cannot be normalized. For instance:
 \begin{minted}[escapeinside=||, mathescape=true]{js}
           query {
               name
@@ -566,7 +566,11 @@ Second, we realized that using \HP's equivalence rules (\cf \S3~\cite{gqlph}), s
               }
           }
 \end{minted}
-\et{like above explain why this problem happens in HP}
+%\et{like above explain why this problem happens in HP}
+The problem is that there are no rules that explicitly consider and use the type in scope to transform the selections. In the previous case, by considering the \texttt{Query} type, either 
+the fragment's contents could be lifted or the field could be wrapped in a fragment, and then the existent rules would apply. 
+
+
 %
 We uncovered this issue when working on the semantics preservation proof of the normalization function. In fact, at the time we were formalizing the query semantics following \HP's approach. Working on fixing this issue and the others discussed in \S\ref{subsec:discussion} led us to change the approach of the query semantics, and to adjust the definition of responses.
 % Regarding the equivalence rules defined by \HP, we note that their current definition  fails to normalize queries.
