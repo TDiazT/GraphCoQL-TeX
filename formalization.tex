@@ -212,6 +212,8 @@ A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if:
 \end{itemize}
 \end{definition}
 %
+
+
 The conformance of nodes includes rules such as checking that a node
 type is declared as an object type in the schema and that its
 properties are defined as fields in the corresponding type. Among
@@ -380,31 +382,56 @@ depends on the notion of selection set conformance.
 \begin{definition}
 A \gql selection set $\sset$ \textit{conforms} to a schema $\schema$ over a type in context $\mathit{ts}$ if:
 \begin{itemize}
-    \item every selection in $\sset$ is consistent, 
+\item every selection in $\sset$ is  well-formed, and
 
-    \item field merging between field selections is possible, and
-    % During the evaluation process, fields with the same response name are collected and merged to ensure that they are all executed at the same time. This validation rule checks that it makes sense to merge those fields. The following example illustrates two queries that have the same response name but should not be merged. The first one is accessing the field \texttt{name} while the second is accessing the field \texttt{age} but renaming it to \texttt{name}. Both are selections on different fields of the same type but with the same response name.
-    % \begin{minted}{graphql}
-    %                query {
-    %                    name
-    %                    name:age
-    %                }
-    %\end{minted}
-
-    \item fields with same response name have compatible response shapes.\fo{We should be more precise about what we mean by ``shape''}
-    % This checks whether two fields with the same response name will produce response values that are consistent to each other. These values should be unambiguous for a user. For instance, the following example\td{These examples look a bit off I think.} shows two queries that produce similar responses but with ambiguous values. In the first one, we ask for dog's \texttt{name}s, which are strings, and in the second for pig's \texttt{age}s, which are integers. We also rename the \texttt{age} value to \texttt{name}. The responses we get will have some cases where \texttt{name} is associated to a string and other where it is associated to integers.
-    % \begin{minted}[escapeinside=||,mathescape=true]{graphql}
-    %                query {
-    %                    |$\ldots$| on Dog {
-    %                        name
-    %                    }
-    %                    |$\ldots$| on Pig {
-    %                        name:age
-    %                    }
-    %                }
-    % \end{minted}
+\item any two field selections in $\sset$ are type-compatible and
+  renaming-consistent\footnote{In the \spec
+    (\cf\S5.3.2~\cite{gqlspec}), these two notions roughly correspond
+    to \emph{having-the-same-response-shape} and
+    \emph{fields-can-merge}, respectively.}.
+       
 \end{itemize}
 \end{definition}
+
+The first rule ensures that every selection is well-formed on its own, with
+respect to the type in context. Its requirements vary according to the
+kind of selection. For instance, if the selection is a field, the rule
+checks that the field is part of the type in context and that its
+arguments are correctly provided; if the selection is an inline
+fragment, then the type condition must at least share one subtype with
+the type in context.
+
+
+In the second rule, the type-compatibility requirement forbids the
+selection set in \eg the following query:
+
+\fo{Add example and briefly explain} 
+
+The definition of field \emph{type-compatibility} is recursive. Two nested
+field selections are type-compatible if whenever
+they have the same response name, any two fields in the concatenation of their
+subselections are also type-compatible. Two single field selections
+are always type-compatible, unless that they have the same response
+name and different (scalar or enum) type.
+
+Finally, the renaming-consistency condition ensures that fields with
+the same response name refer to the same piece of information. For
+instance, \ldots
+
+\fo{Add example and briefly explain} 
+
+Two field selections are \emph{renaming-consistent} if whenever they have the
+same response name and lie under overlapping types in context
+\fo{@Eric, is there any standard terminology for this
+  ``overlapping'', meaning that they share at least one subtype?},
+they have the same (actual) name, the same arguments and any two
+fields in the concatenation of their subselections are also
+renaming-consistent.
+
+The last two rules are defined as a single validation rule in the \spec (\cf\S5.3.2~\cite{gqlspec}). 
+We choose to split them because we noticed that they indeed can be defined separately, simplifying their implementation as well as facilitating 
+reasoning about them\footnote{Our algorithm implements an optimized version of the rule. A team at XING\footnote{https://www.xing.com/} recently published another algorithm described in~\cite{xingalg}.}.
+
 
 \begin{definition}
 A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection set conforms to $\schema$ over the query root type.
@@ -433,52 +460,55 @@ Definition selections_conform (s : wfGraphQLSchema)
  \et{you can use "$\sel$s"}
 %\fo{This introduces the conformance of a query \wrt a schema, but the schema is never mentioned in the definition. It needs to be fixed!!!}
 
-The first rule specifies when a selection holds by itself. For instance, if the selection is a field, the rule checks that the field is part of the type in context and that its arguments are correctly provided; if the selection is an inline fragment, then the type condition must at least share one subtype with the type in context. 
+
 %has to be valid with respect to the type in context \fo{when can it not be valid?}\td{If both the type condition and the type in context do not share at least one subtype (subtype is reflexive). Not sure if this is relevant here though}.%The \spec defines this rule in several different sections.
 
-The second rule validates when fields can be correctly merged during evaluation, which is an essential aspect of the semantics, since it ensures that repeated fields are only evaluated once. To illustrate this, consider the following query, where a user requests information on the fields \texttt{name} and \texttt{oink} of pigs. The user decides to rename the field \texttt{oink} to \texttt{name}, however this is invalid, since both fields cannot be merged and evaluated once; both fields refer to distinct pieces of information in the system.
+% The second rule validates when fields can be correctly merged during evaluation, which is an essential aspect of the semantics, since it ensures that repeated fields are only evaluated once. To illustrate this, consider the following query, where a user requests information on the fields \texttt{name} and \texttt{oink} of pigs. The user decides to rename the field \texttt{oink} to \texttt{name}, however this is invalid, since both fields cannot be merged and evaluated once; both fields refer to distinct pieces of information in the system.
 
-\begin{minted}[escapeinside=||,mathescape=true]{js}
-query {
-  goodboi {
-    |$\ldots$| on Pig {
-	  name
-	  name:oink
-} } }
-\end{minted}
+% \begin{minted}[escapeinside=||,mathescape=true]{js}
+% query {
+%   goodboi {
+%     name    
+%     |$\ldots$| on Pig {
+%       name
+%       toy:oink
+%     }
+%     |$\ldots$| on Dog {
+%       name
+%       toy:age
+%       }
+% } } }
+% \end{minted}
 
-The last rule is necessary to check when fields generate consistent values when evaluated. For instance, in the query below a user might request the names of dogs and the oinkness of pigs, but renaming the latter to have the same response name as the former. This query is considered invalid because evaluating it might produce a response that contains entries where the key \texttt{name} is associated to both string values and floating point numbers. 
+% The last rule is necessary to check when fields generate consistent values when evaluated. For instance, in the query below a user might request the names of dogs and the oinkness of pigs, but renaming the latter to have the same response name as the former. This query is considered invalid because evaluating it might produce a response that contains entries where the key \texttt{name} is associated to both string values and floating point numbers. 
 
-\begin{minipage}[t]{.22\textwidth}
-\begin{minted}[escapeinside=||,mathescape=true]{js}
-query {
-  goodboi {
-    friends {
-      |$\ldots$| on Dog {
-        name
-      }
-      |$\ldots$| on Pig {
-        name:oink
-} } } }
-\end{minted}
-\end{minipage}%
-\begin{minipage}[t]{.22\textwidth}
-\begin{minted}[escapeinside=||,mathescape=true]{js}
-// Possible invalid output
-{
-  "goodboi" : {
-    "friends" : [
-        { "name" : "Marle" },
-        { "name" : 9000 }
-    ]
-} }
-\end{minted}
-\end{minipage}
+% \begin{minipage}[t]{.22\textwidth}
+% \begin{minted}[escapeinside=||,mathescape=true]{js}
+% query {
+%   goodboi {
+%     friends {
+%       |$\ldots$| on Dog {
+%         name
+%       }
+%       |$\ldots$| on Pig {
+%         name:oink
+% } } } }
+% \end{minted}
+% \end{minipage}%
+% \begin{minipage}[t]{.22\textwidth}
+% \begin{minted}[escapeinside=||,mathescape=true]{js}
+% // Possible invalid output
+% {
+%   "goodboi" : {
+%     "friends" : [
+%         { "name" : "Marle" },
+%         { "name" : 9000 }
+%     ]
+% } }
+% \end{minted}
+% \end{minipage}
 
 
-The last two rules, for merging and unambiguous values, are defined as a single validation rule in the \spec (\cf\S5.3.2~\cite{gqlspec}). 
-We choose to split them because we noticed that they indeed can be defined separately, simplifying their implementation as well as facilitating 
-reasoning about them\footnote{Our algorithm implements an optimized version of the rule. A team at XING\footnote{https://www.xing.com/} recently published another algorithm described in~\cite{xingalg}.}.
 
 
 % The main issue is that the \spec allows for what we call \textit{invalid fragments}, originally described in an issue in the \spec's repository\footnote{https://github.com/graphql/graphql-spec/issues/367}. In a nutshell, the \spec allows using fragments with type conditions that can span to multiple unrelated types. These end up not being evaluated due to posterior checks\footnote{https://graphql.github.io/graphql-spec/June2018/\#DoesFragmentTypeApply()}.
