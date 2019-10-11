@@ -1,0 +1,35 @@
+% !TEX root = ./main.tex
+\section{Limitations}\label{sec:limitations}
+
+We briefly mention the features that are not currently implemented in \gcoql. 
+Each feature will point to the corresponding section or sections in~\cite{gqlspec} where they are defined.
+
+To begin with, the missing executable definitions are:
+\begin{itemize}
+	\item Mutations (\cf\S2.3).
+	\item Subscriptions (\cf\S2.3).
+	\item Fragments (\cf\S2.8).\td{This is different from inline fragments !}
+\end{itemize}
+
+Regarding the possible operations and definitions on types, the following are not defined.
+\begin{itemize}
+	\item Non-null types (\cf\S2.11, 3.4.1, 3.12). 
+	\item Type System extensions, either schema or type extensions (\cf\S3.2.2, 3.4.3).
+	\item Arguments default values (\cf\S3.6.1).
+	\item Input object types (\cf\S3.10).
+	\item Directives (\cf\S3.13) 
+\end{itemize}
+\td{There are directive definitions (which fall into type definition) and directive usage (which are in selections...)}
+
+Then, the features related to queries and their execution that are not currently supported.
+\begin{itemize}
+	\item Input object values (\cf\S2.9.8).
+	\item Variables (\cf\S2.10).
+	\item Variables and arguments coercion (\cf\S6.1.2, 6.4.1).
+	\item Normal and serial execution (\cf\S6.3.1)
+	\item Error handling (\cf\S6.4.4). 
+\end{itemize}
+
+Finally, there is nothing on the \textit{Introspection} (\cf\S4) system. 
+
+
