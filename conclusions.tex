@@ -2,18 +2,33 @@
 \section{Conclusions}
 \label{sec:conclusion}
 
-\et{what has been achieved}
+In this paper, we presented the first mechanized formalization of \gql's specification, implemented in the \coq proof assistant.
+We formalize a considerable portion\td{Missing things} of the schema definition DSL, queries and the validity of both, and their semantics over a graph data model. 
+With this formalization, we then study the query transformation proposed and exploited by \HP. 
+We provide an algorithmic definition of the normalization process, proving it correct and semantics preserving. after 
+addressing some minor issues in the original definitions.
+
+While this serves as a foundational step towards fully formalizing \gql, there are several lines of future development.
+\paragraph{Extending \gcoql} The current implementation does not include some features such as mutation, directives and non-null types. 
+By following a similar approach as in~\cite{empiricalgql}, one could identify key features to be included in future releases.
+
+\paragraph{Automation} Extending \gcoql to include new features should be fairly simple. In particular, this means that existent proofs should 
+not be easily broken or they should be easily fixable. In order to do so, it is necessary to modularize and improve the current state of tactics used in
+our proofs.
+
+\paragraph{Extraction \& Testing} While the current implementation attempts to be as close as possible to the grammar and algorithmic descriptions
+given in the \spec, it can be improved by extracting it to other languages and comparing it directly to the reference implementation, following the examples of~\cite{jscert, coqr}.
+We believe that the current design decisions allow for a smooth extraction.
+
+\paragraph{Data model \& Spec semantics} A new evaluation function can be implemented, such that it is closer to the \spec's and defined over any data model. 
+The current semantics over graphs can then be a particular instance of this evaluation function, after addressing the limitations of the data model (\S\ref{subsec:discussion}). 
+We believe that the main difficulty lies in faithfully representing nested list types in a graph.
+\td{As we once talked, the spec's semantics can be defined using functors. Modularizing the current semantics 
+should be quite simple tbh -- I haven't done so bc: 
+1) I'm not entirely sure how to model functors in Coq lol (I have seen implementations, but I haven't had the time to properly use them, understand them, etc),
+2) Still the issue with the nested list types in graphs}
 
 
-\et{future work}
 
-Extend to include more things (handle errors, handle variables, etc.)
-
-Extraction / reference implementation
-
-Testing and comparing with ref implementation (as we did for CoqR)
-
-Automation of proofs
-
-Collab with GraphQL foundation/community
+\td{Collab with GraphQL foundation/community?}
 
