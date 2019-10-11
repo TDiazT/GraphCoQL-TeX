@@ -256,7 +256,7 @@ Figure~\ref{fig:query_def}. A query consists of an optional name
   \begin{displaymath}
 	\begin{array}{rcl}
 	\query & ::= & \textbf{\texttt{query \{}} \sset \textbf{\texttt{\}}} \\
-	&&\\
+	&& \text{\et{misses optional name}}\\
 	\sel & ::= & \fld \\
 	& | & \afld \\		
 	& | & \nfld{\sset} \\
@@ -430,7 +430,7 @@ Definition selections_conform (s : wfGraphQLSchema)
 
 \end{minted}
 \td{Cannot define $\sset$ in Coq (lexer error), so I had to go with $\sel$ instead of the selection set and simply \texttt{sel} for an atomic selection}
- 
+ \et{you can use "$\sel$s"}
 %\fo{This introduces the conformance of a query \wrt a schema, but the schema is never mentioned in the definition. It needs to be fixed!!!}
 
 The first rule specifies when a selection holds by itself. For instance, if the selection is a field, the rule checks that the field is part of the type in context and that its arguments are correctly provided; if the selection is an inline fragment, then the type condition must at least share one subtype with the type in context. 
@@ -566,7 +566,7 @@ Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema
 The definition starts with the base case of empty selection set, which results in an empty response. 
 Fields without subselections (equation 2) correspond to accessing a node's property that matches the field name. 
 As specified in the \spec (\cf\S6.4.3~\cite{gqlspec}), scalar values must be coerced and verified that the resulting value matches the scalar type expected by the schema, otherwise the value is considered null.
-We model this with the function $coerce : Vals \to ResponseValue$\td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.
+We model this with the function \et{use "mathit" to write words in math mode, eg. $\mathit{Vals}$ and not $Vals$ (notice the weird spacing you get between characters otherwise)}  $coerce : Vals \to ResponseValue$\td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.
 The case of fields with subselections (equation 3) represent a traversal to neighboring edges. The semantics searches for nodes that are connected by an edge whose label matches the field
 and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
 In both field cases, the evaluation process has to ensure that selections with the same response name are only evaluated once. 
@@ -624,7 +624,7 @@ Definition execute_query (s : wfGraphQLSchema)
         \mathit{ftype}_{\mathit{type}(u)}(\fkey)  \text{ is not } L_{t} \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     %
     \resp{\nval} :: \evalfilteru{\sset}{\fkey} 
-    \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad
+    \qquad \qquad \qquad \qquad \qquad
     \text{ if } \mathit{ftype}_{\mathit{type}(u)}(\fkey)  \text{ is not } L_{t}  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     \end{cases}\\
     %inline fragment
