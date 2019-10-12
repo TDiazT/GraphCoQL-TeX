@@ -433,6 +433,7 @@ same response name and lie under overlapping types in context
 \fo{@Eric, is there any standard terminology for this
   ``overlapping'', meaning that they share at least one subtype?},
   \et{sharing a subtype means that their "(subtyping) meet/glb" exists--is that what you're referring to?}
+  \td{Yeah, at least I believe it is}
 they have the same (actual) name, the same arguments and any two
 fields in the concatenation of their subselections are also
 renaming-consistent.
@@ -458,15 +459,15 @@ Definition query_conforms
     selections_conform s s.(query_type) @$\query$@.(selection_set).
     
 Definition selections_conform (s : wfGraphQLSchema)
-    (ts : Name) (@$\sel$@ : seq Selection) : bool :=
-        all (is_consistent ts) @$\sel$@ &&
-        is_field_merging_possible ts @$\sel$@ &&
+    (ts : Name) (@$\sel$@s : seq Selection) : bool :=
+        all (is_consistent ts) @$\sel$@s &&
+        is_field_merging_possible ts @$\sel$@s &&
         have_compatible_response_shapes
-            [seq (ts, sel) | sel <- @$\sel$@].
+            [seq (ts, @$\sel$@) | @$\sel$@ <- @$\sel$@s].
 
 \end{minted}
-\td{Cannot define $\sset$ in Coq (lexer error), so I had to go with $\sel$ instead of the selection set and simply \texttt{sel} for an atomic selection}
- \et{you can use "$\sel$s"}
+%\td{Cannot define $\sset$ in Coq (lexer error), so I had to go with $\sel$ instead of the selection set and simply \texttt{sel} for an atomic selection}
+ %\et{you can use "$\sel$s"}
 %\fo{This introduces the conformance of a query \wrt a schema, but the schema is never mentioned in the definition. It needs to be fixed!!!}
 
 
@@ -569,7 +570,7 @@ Definition GraphQLResponse (Vals: eqType) :=
   \end{subfigure}
   \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).
    \newline{\footnotesize The keywords \texttt{v} and \fkey represent leaf values and keys in a key-value pair, respectively.}
-  }%\et{what is ResponseNode above?}
+  }
   \label{fig:response_def}
 
 \end{figure*}
@@ -599,20 +600,20 @@ Informally, the evaluation of a query's selection set represents a navigation ov
 \end{itemize}
 
 \begin{definition}
-Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $\sset$ over $\graph$ from node $u \in \mathit{nodes}(\graph)$\footnote{Where $\mathit{nodes}$ is a function that retrieves all nodes from a graph}, denoted $\llbracket \sset \rrbracket^{u}_{\graph}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
+Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $\sset$ over $\graph$ from node $u \in \mathit{nodes}(\graph)$\footnote{Where $\mathit{nodes}$ is a function that retrieves all nodes from a graph.}, denoted $\llbracket \sset \rrbracket^{u}_{\graph}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
 \end{definition}
 
 The definition starts with the base case of empty selection set, which results in an empty response. 
 Fields without subselections (equation 2) correspond to accessing a node's property that matches the field name. 
 As specified in the \spec (\cf\S6.4.3~\cite{gqlspec}), scalar values must be coerced and verified that the resulting value matches the scalar type expected by the schema, otherwise the value is considered null.
-We model this with the function \et{use "mathit" to write words in math mode, eg. $\mathit{Vals}$ and not $Vals$ (notice the weird spacing you get between characters otherwise)}  $coerce : Vals \to ResponseValue$\td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.
-The case of fields with subselections (equation 3) represent a traversal to neighboring edges. The semantics searches for nodes that are connected by an edge whose label matches the field
+We model this with the function  $\mathit{coerce} : \mathit{Vals} \to \mathit{ResponseValue}$\td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.
+The case of fields with subselections (equation 3) represent a traversal to neighboring nodes. The semantics searches for nodes that are connected by an edge whose label matches the field
 and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
 In both field cases, the evaluation process has to ensure that selections with the same response name are only evaluated once. 
 This is performed by calling the $\mathit{collect}$, $\mathit{merge}$ and $\mathit{filter}$ functions, which respectively gather fields sharing the same response name, merge their subselections 
 and remove their repeated occurrences. 
 Finally, inline fragments simply condition whether their subselections should be evaluated in the current node. 
-The $\mathit{fragment\_type\_applies}$ predicate verifies that the type condition is related\td{share at least one subtype} to the node's type and if the fragment should be evaluated.\footnote{Aliased fields are not included since they are evaluated the same way as unaliased fields, but differ in that the key-value pair produced is renamed.}
+The decision is based on the $\mathit{fragment\_type\_applies}$ predicate that verifies whether the type condition is the same or a super type of the node's type.\footnote{Aliased fields are not included since they are evaluated the same way as unaliased fields, but differ in that the key-value pair produced is renamed accordingly.}
 
 %The definition of the evaluation function for selections, displayed in Figure~\ref{fig:semantics}, only refers to the base case of an empty list, field selections without renaming and inline fragments. The complete definition can be found in the file \texttt{QuerySemantics.v}.
 
@@ -676,7 +677,7 @@ Definition execute_query (s : wfGraphQLSchema)
     \end{align*}
     \caption{Semantics of \gql selection sets. 
     \newline {\footnotesize 
-    The $\mathit{property}$ and $\mathit{type}$ functions are accusers to a node's property and type, respectively. 
+    The $\mathit{property}$ and $\mathit{type}$ functions are accessors to a node's property and type, respectively. 
     Meanwhile, the functions $\mathit{edges}$ and  $\mathit{neighbors}$ correspondently get the set of edges of the graph 
     and the neighboring nodes, whose edge is labeled with the given field.
     Finally, $\mathit{is\_valid\_response}$ validates the coerced value, $\mathit{ftype}$ retrieves the field's type in the given type in the schema, and $L$ represents the list type.}}
