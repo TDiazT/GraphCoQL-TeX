@@ -7,8 +7,8 @@ Recall that these results are based on two premises: {\em a)} every query can be
 
 In this section, we show how to define the property of being in \textit{normal form} in \gcoql, define a normalization procedure, and prove it both correct and semantics preserving. Finally, we define the simplified semantics given by \HP, and prove it equivalent to the original semantics (\S~\ref{subsec:semantics}) when applied to normalized queries.
 
-\et{this paragraph can be skipped for gaining space}
-It is worth mentioning that most of our formalization effort was devoted to defining and establishing the correctness of this normalization procedure. In terms of code, definitions are coded in approximately $350$ lines, while proofs amount to around $1,200$ lines. The definition of the normalization procedure and the proofs that it produces normalized queries can be found in the files \texttt{QueryNormalForm.v} and \texttt{QueryNormalFormLemmas.v}. Meanwhile, the proofs about semantic preservation (point {\em a)} above) and semantic equivalence (point {\em b)} above) can be found in the file \texttt{QuerySemanticsLemmas.v}.
+% \et{this paragraph can be skipped for gaining space}
+% It is worth mentioning that most of our formalization effort was devoted to defining and establishing the correctness of this normalization procedure. In terms of code, definitions are coded in approximately $350$ lines, while proofs amount to around $1,200$ lines. The definition of the normalization procedure and the proofs that it produces normalized queries can be found in the files \texttt{QueryNormalForm.v} and \texttt{QueryNormalFormLemmas.v}. Meanwhile, the proofs about semantic preservation (point {\em a)} above) and semantic equivalence (point {\em b)} above) can be found in the file \texttt{QuerySemanticsLemmas.v}.
 
 \subsection{Defining Normal Forms}
 
@@ -52,7 +52,7 @@ The left query is not grounded because the field \texttt{name} is selected on th
 % \td{Changing this definition}
 \begin{definition}
 A \gql selection set $\sset$ is in \textit{ground-typed normal form} if it satisfies the following grammar, where \texttt{t} is an object type: %where \texttt{ty} is the type in scope.
-\begin{displaymath}
+\begin{displaymath}\small
 	\begin{array}{rcl}
 	\sset & ::= & \chi \ldots \chi \\
 	& | & \psi \ldots \psi\\
@@ -176,6 +176,38 @@ A \gql query $\varphi$ is \textit{non-redundant} if its selection set is non-red
 
 \subsection{Defining Normalization}\label{subsec:normalization}
 
+\begin{figure}[t]
+\begin{minipage}[t]{.25\textwidth}
+\begin{minted}[escapeinside=||, mathescape=true]{js}
+// Query not in normal form
+query {
+  |$\ldots$| on Query {
+    goodboi {
+      name
+  }
+  }
+  goodboi {
+    name
+} }
+\end{minted}
+\end{minipage}%
+\begin{minipage}[t]{.25\textwidth}
+\begin{minted}[escapeinside=||, mathescape=true]{js}
+// Normalized query
+query {
+  goodboi {
+    |$\ldots$| on Dog {
+    name
+  }
+  |$\ldots$| on Pig {
+    name
+} } }
+\end{minted} 
+\end{minipage}
+\caption{Query normalization example.}
+\label{fig:norm-example}
+\end{figure}
+
 The normalization procedure transforms a query into a normalized one by grounding and removing redundancies in its selection set. The transformation can be understood as a form of abstract interpretation, which evaluates selections using only static information about the type in context.
 
 The normalization of selection sets is described in Figure~\ref{fig:normalize}. Whenever a field selection is encountered (2-3), normalization
@@ -298,39 +330,14 @@ query {
 \fi
 
 
+
 %\td{Unnecessary?} \et{yeah, I think all this is taking too much space for the actual technical content and insights it provides. Think of a more concise way to describe normalization, ie. by guiding the reader walk through FIgure 9}\et{examples are not necessary, you illustrated before when introducing the notions} \et{for now, I'm skipping the rest of 4.2, jumping to 4.3}
 %Next, to tackle inline fragments that are unnecessary or that specialize selections in the context of an object type, let us consider the following queries. The first query includes two fragments that are not necessary; a fragment with type condition \texttt{Query} and one with type condition \texttt{Animal}. The procedure eliminates both fragments, by lifting the subqueries.
-\et{this paragraph can be skipped for gaining space} The following queries depict the complete normalization process, with query to the left not in normal form and to the right the resulting normalized query. Subselections from fragment with type condition \texttt{Query} are lifted and the multiple occurrences of field \texttt{goodboi} are merged into a single occurence. 
-Since the type of the field \texttt{goodboi} is the abstract type \texttt{Animal}, the subselections are wrapped in fragments that are specified to the concrete object subtypes, namely \texttt{Dog} and \texttt{Pig}. 
-Thus, the result to the right is a non-redundant query in ground-typed normal form.
+% \et{this paragraph can be skipped for gaining space} 
+Figure~\ref{fig:norm-example} illustrates normalization, with a query (on the left) and its normalized version (on the right). Subselections from fragment with type condition \texttt{Query} are lifted and the multiple occurrences of field \texttt{goodboi} are merged into a single occurrence. 
+Since the type of the field \texttt{goodboi} is the abstract type \texttt{Animal}, the subselections are wrapped in fragments for each concrete object subtype, namely \texttt{Dog} and \texttt{Pig}. The normalized query is both non-redundant and in ground-typed normal form. 
 
-\begin{minipage}[t]{.25\textwidth}
-\begin{minted}[escapeinside=||, mathescape=true]{js}
-// Query not in normal form
-query {
-  |$\ldots$| on Query {
-    goodboi {
-      name
-	}
-  }
-  goodboi {
-    name
-} }
-\end{minted}
-\end{minipage}%
-\begin{minipage}[t]{.25\textwidth}
-\begin{minted}[escapeinside=||, mathescape=true]{js}
-// Normalized query
-query {
-  goodboi {
-    |$\ldots$| on Dog {
-	  name
-	}
-	|$\ldots$| on Pig {
-	  name
-} } }
-\end{minted} 
-\end{minipage}
+
 
 %When it comes to removing redundancies in a query, there is a second subprocess that handles it, which roughly correspond to lines 7-9 in Figure~\ref{fig:normalize}. The process collects fields that share the same response name, merging their subqueries into a single selection. For example, the first query below is redundant since it requests the same \texttt{goodboi} field twice, and the subqueries in both cases also contain repeated \texttt{name} selections. The normalization process then merges the selections with the same response name, leaving only one occurrence of each case.
 
@@ -417,18 +424,18 @@ Of course, defining a normalization procedure in itself does not ensure anything
       \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \seval{\overline{\beta}}{v_{i}})\; 
       \mathit{neighbors(u)} \texttt{]}} \; :: \; \sevalu{\queries}  \\
       \hfill \text{ if } 
-        \mathit{type(\fkey)} \in L_{t} 
+        \mathit{type(\fkey)} \in L
           \text{ and } \{v_{1}, \ldots, v_{k}\} = \{v_{i} \mid (u, \fkey[\alpha], 
         v_{i}) \in E\} \\
         % 
       \resp{\{\seval{\subqueries{\beta}}{v}\})} \; :: \; \sevalu{\queries}  
       \hfill \text{ if } 
-        \mathit{type(\fkey)} \notin L_{t} 
+        \mathit{type(\fkey)} \notin L
         \text{ and } (u, \fkey[\alpha], v) \in E \\
         %
       \resp{\nval} \; :: \; \sevalu{\queries} 
       \qquad \qquad \qquad \qquad \qquad \qquad
-      \text{ if } \mathit{type(\fkey)} \notin L_{t} 
+      \text{ if } \mathit{type(\fkey)} \notin L
         \text{ and } \nexists v \text{ s.t. } (u, \fkey[\alpha], v) \in E \\
     \end{cases}\\
     %inline fragment
@@ -438,7 +445,7 @@ Of course, defining a normalization procedure in itself does not ensure anything
     \sevalu{\queries} & \text{otherwise}
     \end{cases}
     \end{align*}
-    \caption{Simplified semantics for selections in normal form, adapted from~\cite{gqlph}.}
+    \caption{Simplified semantics for selections in normal form, adapted from~\cite{gqlph}. \et{why is it $\in L$ and not $= L$?}}
     % \et{this is exactly as in HP? if so, we should cite here as well (e.g. "(from [X])" or "(adapted from [X])" if there are some light changes)--we might want to put the "adapted from" in other figures as well to prevent plagiarism attacks!}}
     % \td{It is mostly the same, except that their definition is on atomic selections, that we use coercion of values + the fact that they define everything with set and functions (mentioned in \S\ref{subsec:discussion})}
     \label{fig:simpl_semantics}
@@ -502,7 +509,8 @@ This in turn permits defining a simplified evaluation function $\seval{\varphi}{
  % shows the simplified semantics's formal definition. %Aliased cases\et{?} are not included due to space constraints.
 However, \HP do not formally prove that this simplified semantics is equivalent to the original, when considering normalized queries.
 
-In \gcoql, we define the simplified semantics of \HP, and prove that, for queries in normal form, both $\eval{\varphi}{}$ and $\seval{\varphi}{}$ produce the same response. \et{can skip this sentence} The complete definitions can be found in files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. 
+In \gcoql, we define the simplified semantics of \HP, and prove that, for queries in normal form, both $\eval{\varphi}{}$ and $\seval{\varphi}{}$ produce the same response. 
+% \et{can skip this sentence} The complete definitions can be found in files \texttt{QuerySemantics.v} and \texttt{QuerySemanticsLemmas.v}. 
 %
 The proof is once again performed by induction over the size of the selection set.
 %\et{size of the selection sets (unless you've defined somewhere the size of queries)} 

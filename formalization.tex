@@ -32,7 +32,8 @@ requirement syntactically (see the grammar on the left of Figure~\ref{fig:types_
     \centering
     \begin{subfigure}{.5\textwidth}
     \begin{grammar}
-    <TypeDefinition> ::= \textbf{\texttt{scalar}} <name>
+    <TypeDefinition> ::= \mbox{} 
+    \alt \textbf{\texttt{scalar}} <name>
 %    \alt \textbf{\texttt{type}} <name> \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
     \alt \textbf{\texttt{type}} <name> [\textbf{\texttt{implements}} <name>$^{+}$] \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
     \alt \textbf{\texttt{interface}} <name> \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
@@ -68,7 +69,10 @@ requirement syntactically (see the grammar on the left of Figure~\ref{fig:types_
     \end{minted}
 
     \end{subfigure}
-    \caption{Definition of \gql types, the \spec's grammar (left) and \coq formalization (right). Square brackets represent optional values. \fo{In the grammar, I would push the scalar case to a new line, to match the \coq snippet on the right}}
+    \caption{Definition of \gql types: (left) \spec grammar; 
+    (right) \gcoql definition.\newline
+    {\footnotesize Square brackets denote optional attributes.}}
+    % \fo{In the grammar, I would push the scalar case to a new line, to match the \coq snippet on the right} \et{done}
     \label{fig:types_def}
 \end{figure*}
 
@@ -77,7 +81,7 @@ requirement syntactically (see the grammar on the left of Figure~\ref{fig:types_
 
 % As can be seen in the figure, we tried to match the \spec's definition as much as possible. This eyeball correspondence gives us a degree of confidence about the implementation.  % We currently do not include the \textit{Input Object} types, as well as anything related to \textit{introspection}.
 
-On this regard, observe that the provided definitions of schema and types allow building ``invalid'' schemas. For instance, one can build an object that implements scalar types or use a nonexistent type as the query type. To avoid this problem, the \spec provides several validation rules, scattered throughout the document (though most can be found in \S3~\cite{gqlspec} under each type description).
+In this regard, observe that the provided definitions of schema and types allow building ``invalid'' schemas. For instance, one can build an object that implements scalar types or use a nonexistent type as the query type. To avoid this problem, the \spec provides several validation rules, scattered throughout the document (though most can be found in \S3~\cite{gqlspec} under each type description).
  % the \textbf{Type Validation} subsection of each type described in ..  
  We gather all these rules and refer to them as the \textit{well-formedness}
 condition of a \gql schema:\footnote{In \HP, this notion is called {\em consistency}.}
@@ -100,8 +104,8 @@ Definition is_a_wf_schema (s : graphQLSchema) : bool :=
       all is_a_wf_type_def s.(type_definitions).
 \end{minted}
 %
-\et{naming inconsistency between is\_a\_wf\_schema and is\_wf\_typedef: skip the "a" in the case of schema}
-\td{I had actually renamed it is\_a\_wf\_typedef. I prefer with the "a" tbh}
+% \et{naming inconsistency between is\_a\_wf\_schema and is\_wf\_typedef: skip the "a" in the case of schema}
+% \td{I had actually renamed it is\_a\_wf\_typedef. I prefer with the "a" tbh}
 The notion of well-formedness for type definitions requires \eg that
 union members contain existent object types and that object and
 interface types contain at least one field. Due to space limitations,
@@ -306,14 +310,18 @@ Figure~\ref{fig:query_def}. A query consists of an optional name
                      (subqueries : seq Selection).
     \end{minted}
   \end{subfigure}
-  \caption{Definition of \gql queries, the \spec's grammar to the left (\cf\S2.3~\cite{gqlspec}) and the \coq implementation (right).  
-  \newline{\footnotesize The keywords \texttt{f}, \texttt{a} and \texttt{t} correspond to identifiers used for field names, field aliases and type conditions respectively.
-  Meanwhile, $\alpha$ is a list of key-value pairs, representing the arguments of fields.}
+  \caption{Definition of \gql queries:
+  (left) \spec grammar; 
+  (right) \gcoql definition.
+  \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t} correspond to identifiers for field names, field aliases and type conditions, respectively.
+  Symbol $\alpha$ stands for a list of key-value pairs, representing the arguments of fields.}
   } %\td{To be completely accurate, the parenthesis in field selections are not necessary unless there are arguments}\td{This might add some noise?}\et{yeah I think that'd be too much (and not very relevant)}
   \label{fig:query_def}
 \end{figure*}
 
-Intuitively, a valid query and its selection set form a tree, where leaves correspond to fields of scalar types and inner nodes correspond either to fields of some object type or abstract type (interface or union)\fo{abstract type not defined}\td{Ok like this?}, or to inline fragments that condition when their subselections are evaluated. 
+Intuitively, a valid query and its selection set form a tree, where leaves correspond to fields of scalar types and inner nodes correspond either to fields of some object type or abstract type (\ie~interface or union),
+% \fo{abstract type not defined}\td{Ok like this?} 
+or to inline fragments that condition when their subselections are evaluated. 
 
 \iffalse
 %For instance, the query in Figure \ref{fig:qres_ex} can be depicted as the tree in Figure \ref{fig:query_tree}.
@@ -424,6 +432,7 @@ Two field selections are \emph{renaming-consistent} if whenever they have the
 same response name and lie under overlapping types in context
 \fo{@Eric, is there any standard terminology for this
   ``overlapping'', meaning that they share at least one subtype?},
+  \et{sharing a subtype means that their "(subtyping) meet/glb" exists--is that what you're referring to?}
 they have the same (actual) name, the same arguments and any two
 fields in the concatenation of their subselections are also
 renaming-consistent.
@@ -646,16 +655,16 @@ Definition execute_query (s : wfGraphQLSchema)
     \begin{cases}
         \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge} (\mathit{collect}_{\fkey} (\sset))}{v_{i}})\; \mathit{neighbors}_{\fld}(u) \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
         \hfill \text{ if } 
-            \mathit{ftype}_{\mathit{type}(u)}(\fkey) \text{ is } L_{t} \text{ and } \{v_{1}, \ldots, v_{k}\} = 
+            \mathit{ftype}_{\mathit{type}(u)}(\fkey) = L \text{ and } \{v_{1}, \ldots, v_{k}\} = 
         \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in \mathit{edges}(\graph)\} \\
         %
     (\fkey:\{\eval{\subqueries{\beta}}{v}\}) ::  \evalfilteru{\sset}{\fkey}  
         \hfill \text{ if } 
-        \mathit{ftype}_{\mathit{type}(u)}(\fkey)  \text{ is not } L_{t} \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+        \mathit{ftype}_{\mathit{type}(u)}(\fkey)  \neq L \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     %
     \resp{\nval} :: \evalfilteru{\sset}{\fkey} 
     \qquad \qquad \qquad \qquad \qquad
-    \text{ if } \mathit{ftype}_{\mathit{type}(u)}(\fkey)  \text{ is not } L_{t}  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+    \text{ if } \mathit{ftype}_{\mathit{type}(u)}(\fkey)  \neq L  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     \end{cases}\\
     %inline fragment
     & (4) & \evalu{\ifrag{t}{\overline{\beta}} :: \sset} &= \begin{cases}
@@ -670,16 +679,15 @@ Definition execute_query (s : wfGraphQLSchema)
     The $\mathit{property}$ and $\mathit{type}$ functions are accusers to a node's property and type, respectively. 
     Meanwhile, the functions $\mathit{edges}$ and  $\mathit{neighbors}$ correspondently get the set of edges of the graph 
     and the neighboring nodes, whose edge is labeled with the given field.
-    Finally, $\mathit{is\_valid\_response}$ validates the coerced value, $\mathit{ftype}$ retrieves the field's type in the given type in the schema, and $L_{t}$ represents the list type.
+    Finally, $\mathit{is\_valid\_response}$ validates the coerced value, $\mathit{ftype}$ retrieves the field's type in the given type in the schema, and $L$ represents the list type.}}
     %The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
     %Meanwhile, $\mathit{merge}$ joins the subqueries of the input selections. The $\mathit{type}$ function retrieves the type of the given field in the node's type.
 	%The $\mathit{fragment\_type\_applies}$ predicate checks if the fragment's type condition is related to the node's type and whether its contents should be evaluated in the given node.
 	%Finally, $E$ are the graph's edges, while $L_{t}$ is simply the list type.
-	\et{then why the $_t$ subscript?}\td{Simply bc its "List type" -- I took the same notation as in \HP to somehow show the similarity between both definitions.}}
-  %  \fo{This definition is given using syntax you have never introduced (what does :: mean? what does f:v mean? what does ++ mean?, etc, etc). Also, you must explain what all auxiliary functions (filter, property, merge, neighbors, etc, etc) do} 
+	% \et{then why the $_t$ subscript?}\td{Simply bc its "List type" -- I took the same notation as in \HP to somehow show the similarity between both definitions.}\et{remove it, it's confusingly suggesting that the L type is indexed by some t}}
+ %  %  \fo{This definition is given using syntax you have never introduced (what does :: mean? what does f:v mean? what does ++ mean?, etc, etc). Also, you must explain what all auxiliary functions (filter, property, merge, neighbors, etc, etc) do} 
    % \et{explain also what are $u$ $G$ $L_t$ and $E$}
 %    \et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}
-    }
     \label{fig:semantics}
 \end{figure*}
 
@@ -724,7 +732,8 @@ and hence the definitions could be directly extracted as a reference implementat
 % a programmer would use, which we believe is achieved in our work and would otherwise not have been by following \HP's  approach.
 
 \paragraph{Schema validation.} The definition of well-formedness
-of a schema given by \HP does not capture all the validation rules established by the \spec. In particular, it does not properly account for arguments of implemented fields in objects implementing interfaces. A corrected version of \HP has been proposed recently by Hartig and Hidder~\cite{olafschema}, which coincides with both the \spec and \gcoql (and additionally handles validation for directives\et{we never introduce directive so this probably cannot be said here}\et{keep for limitations section?}).
+of a schema given by \HP does not capture all the validation rules established by the \spec. In particular, it does not properly account for arguments of implemented fields in objects implementing interfaces. A corrected version of \HP has been proposed recently by Hartig and Hidder~\cite{olafschema}, which coincides with both the \spec and \gcoql. 
+% (and additionally handles validation for directives\et{we never introduce directive so this probably cannot be said here}\et{keep for limitations section?}).
 %  \et{do they coincide with what you do/the spec say?}
 % \td{Hartig and Hidder add validation for directives (which I don't implement) and they follow a similar set approach.}
 

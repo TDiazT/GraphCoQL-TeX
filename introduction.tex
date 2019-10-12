@@ -1,7 +1,7 @@
 %!TEX root = ./main.tex
 \section{Introduction}
 
-\gql is an increasingly popular language to define interfaces and queries to services data. Originally developed internally by Facebook as an alternative to RESTful Web Services, \gql was made public in 2015, along with a reference implementation\footnote{https://github.com/graphql/graphql-js} and a specification---both of which have naturally evolved since~\cite{gqlspec}.%\et{cite the version you used}.
+\gql is an increasingly popular language to define interfaces and queries to services data. Originally developed internally by Facebook as an alternative to RESTful Web Services, \gql was made public in 2015, along with a reference implementation\footnote{https://github.com/graphql/graphql-js} and a specification---both of which have naturally evolved since~\cite{gqlspec}. %\et{cite the version you used}.
 Since early 2019, as a result of its successful adoption by major players in industry,
 \gql is driven by an independent foundation\footnote{https://foundation.graphql.org/}. The key novelty compared to traditional REST-based services is that tailored queries can be formulated directly by clients, allowing a very precise selection of which data ought to be sent back as response. This supports a much more flexible and efficient interaction model for clients of services, who do not need to gather results of multiple queries on their own, possibly wasting bandwidth with unnecessary data.
 % many REST requests can be replaced by a single \gql query; additionally, and 
@@ -10,7 +10,8 @@ Since early 2019, as a result of its successful adoption by major players in ind
 % follow a ``what you ask is what you get'' spirit. This means that, in contrast with REST-based services, one can be very precise with the data requested and the response will look very similar to the query.
 
 The official \gql specification, called \spec hereafter, 
-covers the definition of interfaces, the query language, and the validation processes, among other aspects. The specification undergoes regular revisions by an open working group, which meets monthly to discuss extensions and improvements, as well as addressing ambiguities. Indeed, the \spec is written in natural language, and does not include a rigorous formalization of \et{vague} its inner mechanics and limitations.
+covers the definition of interfaces, the query language, and the validation processes, among other aspects. The specification undergoes regular revisions by an open working group, which meets monthly to discuss extensions and improvements, as well as addressing ambiguities. Indeed, as often happens, the \spec is an informal specification written in natural language.
+% and does not include a rigorous formalization of \et{vague} its inner mechanics and limitations.
 % related issues and improvements.  
 % These include extending the language to support new features or fix possible ambiguities present in the document. This is because the document is written in natural language, i.e. plain English, 
 % There is also a project to define CATs\footnote{Compatibility Acceptance Tests} for the different languages and frameworks that implement \gql\td{Not sure if this should go or where. It may serve as a link to "why of \gcoql"}.
@@ -21,7 +22,7 @@ Recently, Hartig and Pérez~\cite{gqlph} proposed the first (and so far only) fo
 
 For instance, the complexity results of Hartig and Pérez rely on two techniques: {\em a)} transforming queries to {\em equivalent} queries in some  normal form, {\em b)} interpreting queries in a simplified but {\em equivalent} definition of the semantics. However, Hartig and Pérez do not provide an algorithmic definition of the {\em normalization} of queries, let alone proving it correct and semantics preserving;
 % prove that the query transformation (called ) indeed produces queries in such a normal form, and that their semantics is preserved; 
-nor do they prove that the simplified semantics is equivalent to the original one on normalized queries.
+nor do they prove that the simplified semantics is equivalent to the original one when applied to normalized queries.
 
 % The complexity results are based on two major premises. 
 % The first one is that ``\textit{for every query $\varphi$ that conforms to a schema $\mathcal{S}$, there exists a {\normalfont non-redundant} query $\varphi$' in {\normalfont ground-typed normal form} such that $\varphi \equiv \varphi$'}''. The second one is that for queries that are \textit{non-redundant} and in \textit{ground-typed normal form}, it is possible to define a simplified version of the semantics which is equivalent to the original.
@@ -82,10 +83,15 @@ The contributions of this work are:
 We first briefly introduce \gql (\S\ref{sec:bg}). 
 We end this article by discussing the validation and limitations of \gcoql (\S\ref{sec:valid}), related work (\S\ref{sec:related}) and conclude in \S\ref{sec:conclusion}.
 
-\gcoql and the results presented in this paper have been developed in \coq v.8.9.1 and are provided as anonymous supplementary material. We often refer directly to \coq files in the paper \et{for space, we might in fact *not* do this and just defer to a nice README file with the artifact}. \gcoql extensively uses the libraries
-\mathcomp~\cite{mathcomp}, \ssreflect~\cite{ssreflect} and \equations~\cite{equations}. 
-This work is based on the latest release of the \gql specification, dated June 2018.
+\gcoql and the results presented in this paper have been developed in \coq v.8.9.1 and are provided as anonymous supplementary material. 
+% We often refer directly to \coq files in the paper \et{for space, we might in fact *not* do this and just defer to a nice README file with the artifact}. 
+\gcoql extensively uses the 
+\mathcomp~\cite{mathcomp}, \ssreflect~\cite{ssreflect} and \equations~\cite{equations} libraries. 
+This work is based on the latest release of the \gql specification, dated June 2018~\cite{gqlspec}.
 % \et{I think we can skip this paragraph here, not important enough for being in the intro} Finally, regarding the development itself, we use SSReflect \et{cite} intensively, relying on boolean reflection as much as possible. Also, the use of the  to define non-structural recursive functions is essential for our definitions. Other libraries, such as \textit{Function} and \textit{Program} did not provide sufficient tools to handle rewriting and inductive reasoning about our definitions, which \textit{Equations} incredibly facilitates. \coql{} is not currently extracted to other languages but we believe that it should not be a difficult task, given the design decisions considered.
+
+\et{Put brief data about the code here}
+The normalization case study consists of approximately $350$ lines of definitions and $1200$ lines of proofs.
 
 % \td{include note on code as anonymous supplementary material}
 
