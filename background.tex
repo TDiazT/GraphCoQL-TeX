@@ -7,7 +7,7 @@ It provides a language to describe how the data is structured and how it can be 
 
 In the rest of this section, we will introduce \gql by means of an example. We will recurrently come back to this example throughout the rest of the paper.\td{Maybe not if we don't have space lol}
 
-\subsection*{\gql schema}
+\paragraph{\gql schema.}
 
 Let's picture ourselves having a database with information about dogs and pigs; the \textit{GoodBois} database. We want to define an API so our frontend developers may get the information and display it in our website. Our first step is then to describe how the data is structured and how it may be queried. This is done by means of the schema, which represents the type system of our \gql service.
 
@@ -60,7 +60,7 @@ schema {
 
 This is all it takes to describe our data and how our developers can query it. It describes exactly the data they can access and which are the entry points to it. However, each field has to somehow connected to actual data. When a developer requests the field \texttt{chewiness} we have to actually get that information from somewhere.
 
-\subsection*{Graph data model}
+\paragraph{Graph data model.}
 Since \gql does not impose a particular technology or data model, it is not simple to reason about queries and their semantics. It is the job of the service's implementor to define how  each field of a given type is resolved.
 
 In our scenario, our data will be stored in a graph. Figure \ref{fig:graph_ex} illustrates our service's graph database. There is a root node from which every query must begin. This root node represents the \texttt{Query} type described in the schema. We also see that each node has a type, such as \texttt{Dog} or \texttt{Toy}, and properties such as their names. Each edge is also labeled with a name as defined in the schema. For instance, the edge connecting the dog named ``Casel'' is labeled \texttt{favoriteToy}, as declared in the type \texttt{Dog} in the schema.
@@ -82,7 +82,7 @@ With this in mind, we choose to follow \HP's approach and define the underlying 
 Informally, a \gql graph is a directed property graph, with labeled edges and typed nodes. The graph describes entities with their types and properties, as well as the relationship between them. This means that every node has properties (key-value pairs) and a type. Also, every label in an edge describes the relation between two nodes. Finally, every property or label may also contain a list of arguments (key-value pairs).
 
 
-\subsection*{\gql query and response}
+\paragraph{\gql query and response.}
 
 As previously mentioned, the queries we perform over our system must be over the types and fields defined in the schema. Every query must start by requesting information from the \texttt{Query} type. That means that, in our setting, queries must all start with the \texttt{goodness} or \texttt{search} fields.
 
