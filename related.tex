@@ -1,30 +1,34 @@
 %!TEX root = ./main.tex
 \section{Related Work}\label{sec:related}
 
-\paragraph{GraphQL.} Most of the academic research on \gql focuses on the challenges faced either creating \gql services or migrating REST-based web services to a \gql setting~\cite{improvingoeeu, ehriapi, gqlexperiences}. 
-Others focus on testing techniques for implemented \gql services~\cite{gqldeviation} or tools for automatic migration~\cite{migratingapi}. 
-On the other hand, some empirical studies~\cite{empiricalgql, empiricalapi} try to analyze the structure of schemas in commercial and open-source projects. 
-Although these provide interesting insights on \gql, they do not provide guarantees \wrt the specification's correctness. 
-As far as we are aware, the only works on formalizing \gql are the present work and~\cite{gqlph}.
+% \paragraph{\gql.} 
+To the best of our knowledge, the only formalization efforts around \gql are \HP~\cite{gqlph} and~\cite{olafschema}, which we have already discussed. The rest of the \gql literature focuses on practical issues such as creating \gql services and migrating REST-based web services \gql~\cite{improvingoeeu, ehriapi, gqlexperiences}, automatic migration~\cite{migratingapi}, and testing techniques~\cite{gqldeviation}. A couple of empirical studiesanalyze the structure of \gql schemas in commercial and open-source projects~\cite{empiricalgql, empiricalapi}, shedding interesting insights on \gql in practice.
+% Although these provide , they do not provide guarantees \wrt the specification's correctness. 
+% As far as we are aware, the only works on formalizing \gql are the present work and~\cite{gqlph}.
+% Most of the academic research on \gql 
+% Others focus on testing techniques for implemented \gql services or tools for 
 
-\paragraph{Mechanization of query languages.} Several research has been made over mechanically formalizing data management systems, notably the efforts carried by the DataCert project\footnote{http://datacert.lri.fr}. 
-Research in this area include formalization of the relational data model~\cite{relationalcoq}, formalization of SQL and its semantics~\cite{sqlequiv, hottsql, vesqlengines, vesqlsemantics}, 
-as well as efforts on other query languages and engines~\cite{certifdatalog}. Although these efforts extensively cover these models and languages, we believe they are 
-not directly applicable to the \gql setting\td{One of the reasons is that queries and responses in \gql are both trees (the atomic response IS a tree), while }. 
-\td{Idk what to say tbh. I believe most of this work doesn't directly apply to our context, but it exists and cover several topics.}
-\td{Also, I am not an expert in databases and query languages, so I am not entirely sure how or what to compare}
-\td{I remember having a talk with Jorge where he mentioned that \gql is a lot simpler and that, although he thought they can be related to AQL, 
-they might not, because of this tree form of queries and responses -- which differs completely from the list of tuples in other query languages}
+% \paragraph{Mechanization of query languages.} 
+The formalization of data management systems has received a lot of attention in the traditional 
+relational data model~\cite{relationalcoq}, SQL and its semantics~\cite{sqlequiv, hottsql, vesqlengines, vesqlsemantics}, as well as related query languages and engines~\cite{certifdatalog}. The tree-based nature of \gql queries and response differs significantly from the tuple-based semantics in traditional query languages, requiring different models and techniques.
+% Although these efforts extensively cover these models and languages, we believe they are 
+% not directly applicable to the \gql setting\td{One of the reasons is that queries and responses in \gql are both trees (the atomic response IS a tree), while }. 
+% \td{Idk what to say tbh. I believe most of this work doesn't directly apply to our context, but it exists and cover several topics.}
+% \td{Also, I am not an expert in databases and query languages, so I am not entirely sure how or what to compare}
+% \td{I remember having a talk with Jorge where he mentioned that \gql is a lot simpler and that, although he thought they can be related to AQL, 
+% they might not, because of this tree form of queries and responses -- which differs completely from the list of tuples in other query languages}
+% \paragraph{Mechanization of graph data model.} 
+Doczkal and Pous~\cite{graphtheory} develop a mechanization of graph theory in \coq, including simple graphs, digraphs, and their properties. Their work could possibly be extended to deal with property graphs, and used for \gcoql.
+Bonifati \etal~\cite{graphviewmaint} study graph view maintenance. Their definition of graphs is tailored to handle regular Datalog queries and does not entirely fit the \gql setting; it could however serve as a base to extend \gcoql with mutation.
 
-\paragraph{Mechanization of graph data model.} Regarding the data model, there is a recent formalization of graphs~\cite{graphtheory}, where they define digraphs and simple graphs and their properties.
-This could possibly be extended to include property graphs and used in a \gcoql context.
-There is also work on graph view maintenance~\cite{graphviewmaint}, whose graph's definition is tailored to easily handle Regular Datalog queries and does not entirely fit to the \gql setting.
-It could however serve as a base to extend \gcoql with mutations. 
-\td{They define a function that given a regexp returns a whole graph of the nodes that are connected via the regexp. Nodes are not typed, nor do they have properties I believe (not sure).}
+% There is also work on 
+% \td{They define a function that given a regexp returns a whole graph of the nodes that are connected via the regexp. Nodes are not typed, nor do they have properties I believe (not sure).}
 
-\paragraph{\gql miscellaneous.} Finally, despite being used mostly for web services, there are efforts to extend notions used in \gql to other areas of database specification and querying. 
-The work by~\cite{olafschema} attempts to use the schema definition DSL to define the structure of property graphs,
-which can be linked to similar efforts to define the structure of graph databases~\cite{schemaval}. There is also work on transforming \gql queries into SPARQL~\cite{gqlsparql} or using \gql for deductive database in a Prolog setting~\cite{gqldeductive}. 
-\td{Not entirely sure what the last one is tbh, so probably	kill xd} 
-\td{Mention the JSON formalization done by reutter?~\cite{json}}
+% \paragraph{\gql miscellaneous.} 
+Finally, despite being used mostly for web services, there are efforts to extend notions used in \gql to other areas of database specification and querying. Hartig and Hidders~\cite{olafschema} use the \gql schema definition DSL to define the structure of property graphs, which can be linked to similar efforts to define the structure of graph databases~\cite{schemaval}. Taelman \etal study the transformation of \gql queries to SPARQL~\cite{gqlsparql}.\et{is there any mechanized formalization of sparql?}
+% using \gql for deductive database in a Prolog setting~\cite{gqldeductive}. 
+% \td{Not entirely sure what the last one is tbh, so probably	kill xd}
+
+
+\td{Mention the JSON formalization done by reutter?~\cite{json}}\et{what could we do with it? is there anything interesting to say? (eg. for responses?)}
 
