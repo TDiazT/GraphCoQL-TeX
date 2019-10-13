@@ -6,8 +6,8 @@ We have presented \gcoql, the first mechanized formalization of \gql,
 implemented in the \coq proof assistant. 
 % We formalize a considerable portion\td{Missing things} 
 \gcoql currently covers most of the schema definition DSL, the query definition language, validity checking, and the query semantics over a graph data model. We study the query transformation proposed and exploited by Hartig and P{\'e}rez to establish their complexity results. Specifically, we provide an algorithmic definition of query normalization, proving it correct and semantics preserving. In the process we uncover and address some minor issues in the original definitions.
-%
-This work is as a first step towards a mechanization of all of \gql, leaving several  open venues for future work. The most pressing are supporting mutation, directives and non-null types, and experimenting with extraction in order to (ideally) derive a reference implementation directly from the mechanized specifications. We anticipate that extending \gcoql to support new features should be fairly straightforward. More work needs to be done to prepare the \coq development for such extensions, in particular through better modularity and automation.
+
+This work is a first step towards a mechanization of all of \gql, leaving several  open venues for future work. The most pressing are supporting mutation, directives and non-null types, and experimenting with extraction in order to (ideally) derive a reference implementation directly from the mechanized specifications. We anticipate that extending \gcoql to support new features should be fairly straightforward. More work needs to be done to prepare the \coq development for such extensions, in particular through better modularity and automation.
 % . In particular, this means that existent proofs should 
 % not be easily broken or they should be easily fixable. In order to do so, it is necessary to modularize and improve the current state of tactics used in
 % our proofs.

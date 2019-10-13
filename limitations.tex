@@ -1,35 +1,42 @@
 % !TEX root = ./main.tex
 \section{Limitations}\label{sec:limitations}
 
-We briefly mention the features that are not currently implemented in \gcoql. 
-Each feature will point to the corresponding section or sections in~\cite{gqlspec} where they are defined.
+Currently, \gcoql captures the core of \gql, but not the full specification. While this is already valuable to study key aspects of \gql---as illustrated in \S\ref{sec:norm}---more work is needed to fully cover the specification. 
+For the sake of exhaustiveness, we now list all missing features, referring to the \spec sections~\cite{gqlspec} where they are defined.\\
+Executable definitions\et{meaning?}: mutations (\S2.3), subscriptions (\S2.3), fragments (\S2.8).\\
+Types and type operations: Non-null types (\S2.11-3.4.1-3.12), schema and type extensions (\S3.2.2-3.4.3), arguments default values (\S3.6.1), input object types (\S3.10), directives (\S3.13).\\
+Queries: input object values (\S2.9.8), variables (\S2.10), variable and argument coercion (\S6.1.2-6.4.1), normal and serial execution (\S6.3.1), error handling (\S6.4.4).\\
+Finally, introspection is not supported (\S4). 
 
-To begin with, the missing executable definitions are:
-\begin{itemize}
-	\item Mutations (\cf\S2.3).
-	\item Subscriptions (\cf\S2.3).
-	\item Fragments (\cf\S2.8).\td{This is different from inline fragments !}
-\end{itemize}
+% We briefly mention the features that are not currently implemented in \gcoql. 
+% Each feature will point to the corresponding section or sections 
 
-Regarding the possible operations and definitions on types, the following are not defined.
-\begin{itemize}
-	\item Non-null types (\cf\S2.11, 3.4.1, 3.12). 
-	\item Type System extensions, either schema or type extensions (\cf\S3.2.2, 3.4.3).
-	\item Arguments default values (\cf\S3.6.1).
-	\item Input object types (\cf\S3.10).
-	\item Directives (\cf\S3.13) 
-\end{itemize}
-\td{There are directive definitions (which fall into type definition) and directive usage (which are in selections...)}
+% To begin with, the missing executable definitions are:
+% \begin{itemize}
+% 	\item Mutations (\cf\S2.3).
+% 	\item Subscriptions (\cf\S2.3).
+% 	\item Fragments (\cf\S2.8).\td{This is different from inline fragments !}
+% \end{itemize}
 
-Then, the features related to queries and their execution that are not currently supported.
-\begin{itemize}
-	\item Input object values (\cf\S2.9.8).
-	\item Variables (\cf\S2.10).
-	\item Variables and arguments coercion (\cf\S6.1.2, 6.4.1).
-	\item Normal and serial execution (\cf\S6.3.1)
-	\item Error handling (\cf\S6.4.4). 
-\end{itemize}
+% Regarding the possible operations and definitions on types, the following are not defined.
+% \begin{itemize}
+% 	\item Non-null types (\cf\S2.11, 3.4.1, 3.12). 
+% 	\item Type System extensions, either schema or type extensions (\cf\S3.2.2, 3.4.3).
+% 	\item Arguments default values (\cf\S3.6.1).
+% 	\item Input object types (\cf\S3.10).
+% 	\item Directives (\cf\S3.13) 
+% \end{itemize}
+% \td{There are directive definitions (which fall into type definition) and directive usage (which are in selections...)}
 
-Finally, there is nothing on the \textit{Introspection} (\cf\S4) system. 
+% Then, the features related to queries and their execution that are not currently supported.
+% \begin{itemize}
+% 	\item Input object values (\cf\S2.9.8).
+% 	\item Variables (\cf\S2.10).
+% 	\item Variables and arguments coercion (\cf\S6.1.2, 6.4.1).
+% 	\item Normal and serial execution (\cf\S6.3.1)
+% 	\item Error handling (\cf\S6.4.4). 
+% \end{itemize}
+
+% Finally, there is nothing on the \textit{Introspection} (\cf\S4) system. 
 
 

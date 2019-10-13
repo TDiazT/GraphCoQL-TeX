@@ -742,7 +742,7 @@ of a schema given by \HP does not capture all the validation rules established b
 \paragraph{Data model.} We observe that both \HP
  % (and~\cite{olafschema})
 % (and the recent extension~\cite{olafschema})\td{I wouldn't call it extension, since it only uses the schema DSL for graphs, it can provide a way to extend the formalization of \gql but it's not its goal.} 
-and \gcoql have a slightly limited graph model that does not entirely describe the universe of a \gql service: graphs cannot model {\em nested} lists, when the underlying type is an object or abstract type.\footnote{The situation is worse in \HP, which cannot even model nested list types for scalar types.}
+and \gcoql have a slightly limited graph model that does not entirely describe the universe of a \gql service: graphs cannot model {\em nested} lists, when the underlying type is an object or abstract type.\footnote{The situation is worse in \HP, which cannot model nested list types for scalar types.}
 For instance, these semantics cannot account for a selection over a field whose type is \texttt{[[Animal]]}.
 %
 The underlying question is how to interpret such nested lists in a graph-based data model.
