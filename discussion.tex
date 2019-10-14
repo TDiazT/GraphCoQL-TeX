@@ -17,9 +17,11 @@ Finally, introspection is not supported (\S4).
 \paragraph{Trustworthiness.}
 
 % To address the trustworthiness of \gcoql, 
-We have striven to establish a direct ``eyeball correspondence'' between \gcoql and the \spec whenever possible---though this correspondence has not (yet) been as seriously and systematically established as in the \jscert~\cite{jscert} and \coqr~\cite{coqr} projects, among others. \et{how does this correspondence manifest? do you reference the spec sections explicitly in the Coq development?}\et{argue}
+We have striven to establish a direct ``eyeball correspondence'' between \gcoql and the \spec whenever possible---though this correspondence has not (yet) been as seriously and systematically established as in the \jscert~\cite{jscert} and \coqr~\cite{coqr} projects, among others. 
+In order to do so, the code is implemented such that it resembles the algorithmic definitions as closely as possible and, whenever it corresponds, we explicitly reference the sections in the \spec where the definitions are included. 
+\et{how does this correspondence manifest? do you reference the spec sections explicitly in the Coq development?}\et{argue}\td{I had links and then removed them, but I can add them again}
 
-As mentioned earlier, \gcoql adopts a graph data model in order to give semantics to data access. This approach, which follows \HP, goes beyond what the \spec mandates. Indeed, the \spec differs to {\em resolvers} to give meaning to data accesses, which are essentially arbitrary pieces of code. However, reasoning about \gql requires some sensible data model. In this respect, \gcoql follows \HP almost literally, while the query evaluation algorithm of \gcoql can be traced closely to \spec.\et{anything else to say?}
+As mentioned earlier, \gcoql adopts a graph data model in order to give semantics to data access. This approach, which follows \HP, goes beyond what the \spec mandates. Indeed, the \spec differs\td{defer?} to {\em resolvers} to give meaning to data accesses, which are essentially arbitrary pieces of code. However, reasoning about \gql requires some sensible data model. In this respect, \gcoql follows \HP almost literally, while the query evaluation algorithm of \gcoql can be traced closely to \spec.\et{anything else to say?}\td{Not really}
 
 % While \spec leaves the underlying data model unspecified \et{or under-specified?}, 
 % \et{integrate: the resolvers can actually be mentioned at the intro when you mention whether readers will understand why a data model is necessary -- because 
