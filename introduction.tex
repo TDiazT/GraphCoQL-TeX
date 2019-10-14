@@ -86,7 +86,10 @@ This work is based on the latest release of the \gql specification, dated June 2
 % \et{I think we can skip this paragraph here, not important enough for being in the intro} Finally, regarding the development itself, we use SSReflect \et{cite} intensively, relying on boolean reflection as much as possible. Also, the use of the  to define non-structural recursive functions is essential for our definitions. Other libraries, such as \textit{Function} and \textit{Program} did not provide sufficient tools to handle rewriting and inductive reasoning about our definitions, which \textit{Equations} incredibly facilitates. \coql{} is not currently extracted to other languages but we believe that it should not be a difficult task, given the design decisions considered.
 
 \et{Put brief data about the code here}
-The normalization case study consists of approximately $350$ lines of definitions and $1200$ lines of proofs.
+\td{This includes documentation, imports, etc.}
+The base definitions and proofs consist of approximately $3600$ and $1900$ lines of code, respectively.
+Files containing validation of \gcoql amount to approximately $3000$ lines of code. 
+Finally, the normalization case study consists of approximately $350$ lines of definitions and $700$ lines of proofs.
 
 % \td{include note on code as anonymous supplementary material}
 
