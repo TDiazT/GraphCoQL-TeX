@@ -18,10 +18,11 @@ Finally, introspection is not supported (\S4).
 
 % To address the trustworthiness of \gcoql, 
 We have striven to establish a direct ``eyeball correspondence'' between \gcoql and the \spec whenever possible---though this correspondence has not (yet) been as seriously and systematically established as in the \jscert~\cite{jscert} and \coqr~\cite{coqr} projects, among others. 
-In order to do so, the code is implemented such that it resembles the algorithmic definitions as closely as possible and, whenever it corresponds, we explicitly reference the sections in the \spec where the definitions are included. 
-\et{how does this correspondence manifest? do you reference the spec sections explicitly in the Coq development?}\et{argue}\td{I had links and then removed them, but I can add them again}
+In particular, the \gcoql definitions closely follow the algorithmic definitions of the \spec and, whenever it corresponds, we explicitly reference the specific sections in the \spec where the definitions are included. 
+% \et{how does this correspondence manifest? do you reference the spec sections explicitly in the Coq development?}\et{argue}\td{I had links and then removed them, but I can add them again}\{yes!}
 
-As mentioned earlier, \gcoql adopts a graph data model in order to give semantics to data access. This approach, which follows \HP, goes beyond what the \spec mandates. Indeed, the \spec differs\td{defer?} to {\em resolvers} to give meaning to data accesses, which are essentially arbitrary pieces of code. However, reasoning about \gql requires some sensible data model. In this respect, \gcoql follows \HP almost literally, while the query evaluation algorithm of \gcoql can be traced closely to \spec.\et{anything else to say?}\td{Not really}
+As mentioned earlier, \gcoql adopts a graph data model in order to give semantics to data access. This approach, which follows \HP, goes beyond what the \spec mandates. Indeed, the \spec defers to {\em resolvers} to give meaning to data accesses, which are essentially arbitrary pieces of code. However, reasoning about \gql requires some sensible data model. In this respect, \gcoql follows \HP almost literally, while the query evaluation algorithm of \gcoql can be traced closely to \spec.
+% \et{anything else to say?}\td{Not really}
 
 % While \spec leaves the underlying data model unspecified \et{or under-specified?}, 
 % \et{integrate: the resolvers can actually be mentioned at the intro when you mention whether readers will understand why a data model is necessary -- because 
@@ -35,10 +36,10 @@ As mentioned earlier, \gcoql adopts a graph data model in order to give semantic
 
 \paragraph{Validation.}
 
-To validate that \gcoql adequately captures the semantics of \gql, in additional to establishing an eyeball correspondence with \spec, 
-we implemented several examples, coming from three different sources.\et{you say four sources, but below there is only three}
-\td{Ah, lol. The fourth one was the one we use in the paper (Goodbois) -- although it is in essence the same as the one in \HP}
-\td{I didn't want to reuse the same example they used, bc it felt like just copy paste -- Although now it is not that far off tbh}
+In order to further validate that \gcoql adequately captures the semantics of \gql, we implemented several examples, coming from different sources. In all examples we use a coercion function to transform results into the corresponding JSON format.
+% \et{you say four sources, but below there is only three}
+% \td{Ah, lol. The fourth one was the one we use in the paper (Goodbois) -- although it is in essence the same as the one in \HP}
+% \td{I didn't want to reuse the same example they used, bc it felt like just copy paste -- Although now it is not that far off tbh}
 
 First, we implement all of the examples used in the \spec validation section (\cf\S5~\cite{gqlspec}), for features that \gcoql currently supports.
 These correspond to tests over fields, such as valid definition in given types in context, proper use of arguments and 
@@ -53,16 +54,13 @@ whether they can be used in certain contexts.
 %(they are not testing things from the fragments) so I don't consider them}.
 %\td{The rest of cases are a mix of things -- 11 are related to operations (\eg no two queries with the same name, no named query + another unnamed query, etc)}
 
-\et{relate to the limitations above: of course you can't include examples that require unsupported features. Is it as simple as saying that you have implemented all examples that do not require such features?}
-\td{Yes}
+% \et{relate to the limitations above: of course you can't include examples that require unsupported features. Is it as simple as saying that you have implemented all examples that do not require such features?}
+% \td{Yes}
 %\et{try to put some "positive characterization" of what the implemented examples cover}
 
-Second, we implemented the example used in \HP, from its schema to its graph, query and corresponding response. 
-We define the values in $\mathit{Vals}$ as elements of an inductive type, which wraps already defined types in Coq
-(such as integer, string, etc.), and a coercion function to transform them into the matching JSON format.\td{This is actually done in all examples.}
-\td{There is not much to say about HP's example tbh}
-
-
+Second, we implemented the main example used in \HP, from its schema to its graph, query and corresponding response. We define the values in $\mathit{Vals}$ as elements of an inductive type, which wraps standard Coq types such as integers and strings. Note that this example is quite close to the running example of this paper.
+% \td{This is actually done in all examples.}
+% \td{There is not much to say about HP's example tbh}
 
 
 \iffalse
@@ -94,13 +92,17 @@ We define the values in $\mathit{Vals}$ as elements of an inductive type, which 
 	- Valid input values = 5
 \fi 
 	
-Finally, we also partially\et{is it only the error stuff that's missing?}\td{Same as above, it is missing not implemented features (errors, fragments, etc.)} implemented the Star Wars example defined in the reference implementation of \gql\footnote{https://github.com/graphql/graphql-js/tree/master/src/\_\_tests\_\_}.
-We include the schema definition, except for the \texttt{secretBackstory} field which resolves to an error\td{Bc we are not handling errors}. The data modeled as a graph and 
+Finally, we also implemented the Star Wars example defined in the reference implementation of \gql,\footnote{https://github.com/graphql/graphql-js/tree/master/src/\_\_tests\_\_} up to the currently-supported features in \gcoql.
+For instance, we include the complete schema definition except for the \texttt{secretBackstory} field, which resolves to an error, as these are not yet supported. 
+The data modeled as a graph and 
 evaluation of 9 queries (out of a total of 17), comparing them to the expected outputs. Of the not implemented cases, 3 correspond to errors, 2 to introspection, 1 to fragments, 2 to variables and 
-one where execution is over an object with named properties\td{Idk, something more specific to JS than \gql}.
-\td{There are 7 other about validation, which I didn't notice, but I can add them}
-\td{In that same repo (https://github.com/graphql/graphql-js/tree/master/src) each subfolder (type, execution, etc) contain other \_\_tests\_\_ folders, but
-I didn't delve too much into them -- some are a bit too particular to JS. They can still be adapted, but not now}
+one where execution is over an object with named properties.
+
+% \et{is it only the error stuff that's missing?}\td{Same as above, it is missing not implemented features (errors, fragments, etc.)} 
+% \td{Idk, something more specific to JS than \gql}.
+% \td{There are 7 other about validation, which I didn't notice, but I can add them}
+% \td{In that same repo (https://github.com/graphql/graphql-js/tree/master/src) each subfolder (type, execution, etc) contain other \_\_tests\_\_ folders, but
+% I didn't delve too much into them -- some are a bit too particular to JS. They can still be adapted, but not now}
 		
 
 
