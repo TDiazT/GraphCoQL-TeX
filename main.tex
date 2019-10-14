@@ -159,13 +159,62 @@ We hope that \gcoql can serve as a solid formal baseline for both language desig
 %\input{discussion.tex}
 
 \section{Validation}\label{sec:valid}
-\td{This was supposed to be a mention to the examples implemented in our system - HP, spec's, etc}
+%\td{This was supposed to be a mention to the examples implemented in our system - HP, spec's, etc}
 
-\et{expand a bit on what you have to say about the examples}
+%\et{expand a bit on what you have to say about the examples}
 
-LOC, files, man-month, major effort
+To validate our formalization, we implemented the examples defined in four sources. 
 
-Examples - Jorge's, Spec,
+First, we defined the example used in \HP, from its schema to its graph, query and corresponding response. 
+We define the values in $\mathit{Vals}$ as elements of an inductive type, which wraps already defined types in Coq
+(such as integer, string, etc.), and a coercion function to transform them into the matching JSON format.
+ 
+
+We also implemented a subset of the examples used in the \spec validation section (\cf\S5~\cite{gqlspec}).
+We include 41 of the 92 total examples present in that section. The great majority that are not included correspond to 
+variables validation (31 cases) and fragments (29)\td{Some of these are tests that overlap with the inline fragments -- So we are still kind of testing them}
+\td{The cases that are exclusive to fragments are 8}\td{Also, some cases use fragment only as a way to write the tests, but they are not really necessary
+(they are not testing things from the fragments) so I don't consider them}.
+\td{The rest of cases are a mix of things -- 11 are related to operations (\eg no two queries with the same name, no named query + another unnamed query, etc)}
+
+
+\iffalse
+	-	Only executable definitions when evaluating = -1 (text + query)
+	- Uniqueness of operation = -3
+	- Anonymous operation = -2
+	- Suscription = -5 (single root field)
+	- Fields = 2 + 2 + 2 - 1 (introspection on union)
+	- Field merging = 3 + 1 - 1 (variable) + 2 - 2  (variables) + 2  + 1
+	- Leaf fields = 2 + 3 - 1 (type ext)
+	- Argument names = 2 - 1 (directives) + 1 - 1 (directives) + 2  - 1 (type extension)
+	- Required args = -5 (required arguments - non-null + default values)
+	- Fragment uniqueness = -2 (fragments)
+	- Fragment spread type existence = 1 - 3 (2 fragments y 1 directive) + 1 - 2 (fragments)
+	- Fragments on comp types = 3 - 3 (fragments) + 2 - 2 (fragments)
+	- Fragments must be used = -1
+	- Fragments spread = -4 (fragments) + 2 - 2 (fragments) + 1 - 2 (fragments) + 1 - 2 (fragments) + 2 - 2  + 2 - 2 + 1 - 2 + 1 - 2 
+	- Valid Input values = -5
+	- Input objects = -3
+	- Directives = -3
+	- Variables = - 2 - 8 - 7 - 4 - 7
+	
+	Hechos : 2 + 2 + 2 + 3 + 1 + 2 + 2 + 2 + 3 + 2 + 1 + 2  + 1 + 1 + 3 + 2 + 2 + 1 + 1 + 2 + 2 + 1 + 1 = 41
+	No hechos : -1 - 3 - 2 - 5 - 1 - 1 - 2 - 1 - 1 - 1 - 1 - 5 - 2 - 3 - 2 - 3 - 2  - 1 - 2 - 2 - 2 - 2 - 2 - 2 -2 - 2 - 5 - 3 - 3 - 2 - 8 - 7 - 4 - 7  = 92
+	- Variables = -1 - 2 - 2 - 8 - 7 - 4 - 7 = 31
+	- Fragments = -2 - 2 - 2 - 3 - 2 - 1 - 4 - 2 - 2 - 2 - 2 - 2 - 1 - 2 = 29 
+	- Operations = -1 - 3 - 2 - 5 = 11
+	- Directives = -1 -1 - 1 - 3 = 6
+	- Valid input values = 5
+\fi 
+	
+Finally, we also partially implement the Star Wars example defined in the reference implementation of \gql\footnote{https://github.com/graphql/graphql-js/tree/master/src/\_\_tests\_\_}.
+We include the schema definition, except for the \texttt{secretBackstory} field which resolves to an error\td{Bc we are not handling errors}. The data modeled as a graph and 
+evaluation of 9 queries (out of a total of 17), comparing them to the expected outputs. Of the not implemented cases, 3 correspond to errors, 2 to introspection, 1 to fragments, 2 to variables and 
+one where execution is over an object with named properties\td{Idk, something more specific to JS than \gql}.
+\td{There are 7 other about validation, which I didn't notice, but I can add them}
+\td{In that same repo (https://github.com/graphql/graphql-js/tree/master/src) each subfolder (type, execution, etc) contain other \_\_tests\_\_ folders, but
+I didn't delve too much into them -- some are a bit too particular to JS. They can still be adapted, but not now}
+		
 
 % Most of the development time was spent in the definition and proofs of normalization.
 % We initially worked on the semantics as specified by \cite{gqlph}
