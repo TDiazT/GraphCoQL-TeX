@@ -1,14 +1,5 @@
 % !TEX root = ./main.tex
-\section{Limitations}\label{sec:limitations}
 
-Currently, \gcoql captures the core of \gql, but not the full specification. While this is already valuable to study key aspects of \gql---as illustrated in \S\ref{sec:norm}---more work is needed to fully cover the specification. 
-For the sake of exhaustiveness, we now list all missing features, referring to the \spec sections~\cite{gqlspec} where they are defined.\\
-Executable definitions:
-% \et{meaning?}\td{That is just the name \gql gives to these features}: 
-mutations (\S2.3), subscriptions (\S2.3), fragments (\S2.8).\\
-Types and type operations: Non-null types (\S2.11-3.4.1-3.12), schema and type extensions (\S3.2.2-3.4.3), arguments default values (\S3.6.1), input object types (\S3.10), directives (\S3.13).\\
-Queries: input object values (\S2.9.8), variables (\S2.10), variable and argument coercion (\S6.1.2-6.4.1), normal and serial execution (\S6.3.1), error handling (\S6.4.4).\\
-Finally, introspection is not supported (\S4). 
 
 % We briefly mention the features that are not currently implemented in \gcoql. 
 % Each feature will point to the corresponding section or sections 
