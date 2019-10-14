@@ -222,35 +222,31 @@ For the latter, the process either removes fragments or lifts their subselection
     \centering
     \begin{align*}
     % Empty
-    & (1) & \normalize{\cdot} &= [\cdot] \\
+    & (1) & \tnorm{\cdot} &= [\cdot] \\
     % SingleField
-    & (2) & \normalize{\fld\; ::\; \queries} &= 
-       	\fld \; ::\; \normalize{\filter{\queries}{\fkey}} 
-        & \text{if } \mathit{is\_object\_type}(ts)\\       
-    % Nested field
-    & (3) & \evalu{\nfld{\overline{\beta}} \; ::\; \queries} &=
-    \begin{cases}
-        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\queries))}}{v_{i}})\; \mathit{neighbors(u)} \texttt{]}} \; :: \; \evalfilteru{\queries}{\fkey} \\  
-        \hfill \text{ if } 
-            \mathit{type(\fkey)} \in L_{t} \text{ and } \{v_{1}, \ldots, v_{k}\} = 
-        \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in E\} \\
+    & (2) & \tnorm{\fld :: \sset} &= 
+       	\fld :: \tnorm{\filter{\sset}{\fkey}} \\      
         %
-    (\fkey:\{\eval{\subqueries{\beta}}{v}\})\; :: \; \evalfilteru{\queries}{\fkey}  
-        \hfill \text{ if } 
-        \mathit{type(\fkey)} \notin L_{t} \text{ and } (u, \fkey[\alpha], v) \in E \\
-    %
-    \resp{\nval}\; :: \; \evalfilteru{\queries}{\fkey} 
-    \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad
-    \text{ if } \mathit{type(\fkey)} \notin L_{t}  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in E \\
+    % Nested field
+    & (3) & \tnorm{\nfld{\overline{\beta}} :: \sset} &=
+    \begin{cases}
+        \nfld{\norm{ftype_{ts}(\fkey)}{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\sset))}}} :: \tnorm{\filter{\sset}{\fkey}} \quad\quad\quad \text{ if } 
+	            \mathit{is\_object\_type (ftype_{ts} (\fkey)}\\
+        %
+    \nfld{\mathit{map}\; (\lambda t_{i}.\; \norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (collect_{\fkey} (\sset))}})\; \mathit{get\_possible\_types (ts)}} :: \tnorm{\filter{\sset}{\fkey}} \quad\quad \text{ otherwise } 
     \end{cases}\\
     %inline fragment
-    & (4) & \evalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
-    \evalu{\overline{\beta} \mdoubleplus \queries} & 
-    \text{if }\mathit{fragment\_type\_applies}_{\texttt{u.type}}(\texttt{t})\\
-    \evalu{\queries} & \text{otherwise}
+    & (4) & \tnorm{\ifrag{t}{\overline{\beta}} :: \sset} &= 
+    \begin{cases}
+    \tnorm{\overline{\beta} \mdoubleplus \sset} & 
+    \text{if }\mathit{fragment\_type\_applies_{ts}(\texttt{t})}\\
+    \tnorm{\sset} & \text{otherwise}
     \end{cases}
     \end{align*}
-    \caption{Normalization procedure for \gql selections. \td{Fixing}}
+    \caption{Normalization procedure for \gql selections. \td{Is it better?}\td{The functions that are not named are the same as the ones in the semantics -- should we redefine them?}
+    	\newline{\footnotesize The predicate $\mathit{is\_object\_type}$ checks whether the given type is defined as an object type in the schema. 
+	Meanwhile, the function $\mathit{get\_possible\_types}$ returns all object subtypes of the given type.}
+    }
 \label{fig:normalize}
 \end{figure*}
 
