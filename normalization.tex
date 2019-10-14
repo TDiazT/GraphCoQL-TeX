@@ -153,14 +153,15 @@ The left query is redundant for two reasons: it requests the field \texttt{name}
 Conversely, the right query is non-redundant because it requests information about each type only once; only one fragment will actually be executed at a time, depending on the concrete object value that is used to evaluate the query.
 % It is important to notice that, even though it requests the field \texttt{name} in both, this is considered not redundant because 
 
+\td{Rewrote this definition a little bit}
 \begin{definition}[adapted from~\cite{gqlph}]
-A \gql selection set $\sel$ is \textit{non-redundant} if it satisfies the following conditions:
+A \gql selection set $\sset$ is \textit{non-redundant} if it satisfies the following conditions:
 \begin{itemize}
-    \item There is at most one field selection with a given response name, for a particular depth of the selection set.\td{Depth?}\et{define depth and size for selection sets in section 3}
-
-    \item There is at most one inline fragment with a given type condition, for a particular depth of the selection set.
+    \item There is at most one field selection with a given response name, and
     
-    \item Its subselections are non-redundant.
+    \item at most one inline fragment with a given type condition, and
+    
+    \item subselections are non-redundant.
     % \et{ill-typed: the property isn't defined on an arbitrary subselection}
 \end{itemize}
 \end{definition}
