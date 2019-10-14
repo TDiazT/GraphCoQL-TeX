@@ -677,10 +677,9 @@ Definition execute_query (s : wfGraphQLSchema)
     \end{align*}
     \caption{Semantics of \gql selection sets, adapted from~\cite{gqlph} and the \spec. 
     \newline {\footnotesize 
-    The $\mathit{property}$ and $\mathit{type}$ functions are accessors to a node's property and type, respectively. 
-    Meanwhile, the functions $\mathit{edges}$ and  $\mathit{neighbors}$ correspondently get the set of edges of the graph 
-    and the neighboring nodes, whose edge is labeled with the given field.
-    Finally, $\mathit{is\_valid\_response}$ validates the coerced value, $\mathit{ftype}$ retrieves the field's type in the given type in the schema, and $L$ represents the list type.}}
+    $\mathit{property}$ and $\mathit{type}$ are accessors to a node's property and type. $\mathit{neighbors}$ gets the neighbors of a node whose edge is labeled with the given field.
+    $\mathit{edges}$ gets the set of edges of a graph.  $\mathit{is\_valid\_response}$ validates the coerced value.
+    $\mathit{ftype}$ retrieves the field's type in the schema. $L$ represents the list type.}}
     %The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
     %Meanwhile, $\mathit{merge}$ joins the subqueries of the input selections. The $\mathit{type}$ function retrieves the type of the given field in the node's type.
 	%The $\mathit{fragment\_type\_applies}$ predicate checks if the fragment's type condition is related to the node's type and whether its contents should be evaluated in the given node.

@@ -230,8 +230,8 @@ For the latter, the process either removes fragments or lifts their subselection
     % Nested field
     & (3) & \tnorm{\nfld{\overline{\beta}} :: \sset} &=
     \begin{cases}
-        \nfld{\norm{ftype_{ts}(\fkey)}{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\sset))}}} :: \tnorm{\filter{\sset}{\fkey}} \quad\quad\quad \text{ if } 
-	            \mathit{is\_object\_type (ftype_{ts} (\fkey)}\\
+        \nfld{\norm{ftype_{ts}(\fkey)}{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\sset))}}} :: \tnorm{\filter{\sset}{\fkey}} \quad\hfill\text{ if } 
+	            \mathit{is\_object\_type (ftype_{ts} (\fkey))}\\
         %
     \nfld{\mathit{map}\; (\lambda t_{i}.\; \norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (collect_{\fkey} (\sset))}})\; \mathit{get\_possible\_types (ts)}} :: \tnorm{\filter{\sset}{\fkey}} \quad\quad \text{ otherwise } 
     \end{cases}\\
@@ -243,9 +243,10 @@ For the latter, the process either removes fragments or lifts their subselection
     \tnorm{\sset} & \text{otherwise}
     \end{cases}
     \end{align*}
-    \caption{Normalization procedure for \gql selections. \td{Is it better?}\td{The functions that are not named are the same as the ones in the semantics -- should we redefine them?}
-    	\newline{\footnotesize The predicate $\mathit{is\_object\_type}$ checks whether the given type is defined as an object type in the schema. 
-	Meanwhile, the function $\mathit{get\_possible\_types}$ returns all object subtypes of the given type.}
+    \caption{Normalization procedure for \gql selections. 
+    % \td{Is it better?}\td{The functions that are not named are the same as the ones in the semantics -- should we redefine them?}
+    	\newline{\footnotesize 
+      $\mathit{is\_object\_type}$ checks whether the given type is an object type in the schema. $\mathit{get\_possible\_types}$ get all object subtypes of the given type.}
     }
 \label{fig:normalize}
 \end{figure*}
@@ -401,7 +402,7 @@ Of course, defining a normalization procedure in itself does not ensure anything
 % proving the correctness of our normalization procedure. 
 
 \begin{figure*}[t]
-    \centering
+    \centering \small
     \begin{align*}
     % Empty\sset
     & (1) & \seval{\cdot}{u} &= [\cdot] \\
@@ -439,7 +440,6 @@ Of course, defining a normalization procedure in itself does not ensure anything
     \end{cases}
     \end{align*}
     \caption{Simplified semantics for selections in normal form, adapted from~\cite{gqlph}.} 
-    \td{Fixed}
     %\td{Fixing}} %\et{why is it $\in L$ and not $= L$?}}
     % \et{this is exactly as in HP? if so, we should cite here as well (e.g. "(from [X])" or "(adapted from [X])" if there are some light changes)--we might want to put the "adapted from" in other figures as well to prevent plagiarism attacks!}}
     % \td{It is mostly the same, except that their definition is on atomic selections, that we use coercion of values + the fact that they define everything with set and functions (mentioned in \S\ref{subsec:discussion})}
