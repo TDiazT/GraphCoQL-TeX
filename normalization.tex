@@ -454,6 +454,7 @@ Both cases are proven by well-founded induction over the size of the selection s
 % selection set}
 % \td{The size  of the selection set is not simply the size of the list, it is the size of the tree (length of list + depth)}
 
+\td{Swap order of this lemmas? I thought it'd be simpler to read the top level statement and then see the lemmas}
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Theorem normalized_query_is_in_nf 
   (s : wfGraphQLSchema) (|$\query$| : query) :
@@ -475,6 +476,7 @@ Likewise, the proof follows by well-founded induction over the size of the selec
 
 %Next, we prove normalization preserves the semantics of queries. To begin with, we prove the case where the type in context is the same as the type of the node where queries are being normalized. Lifting this to the top level, it corresponds to normalizing over the Query type and evaluating on the root node (whose type is the same, due to graph conformance). We then extend this notion to normalization over any type in context, \texttt{ty}\et{here you're using "ty" - ts or ty is good for me but be consistent throughout}, but with the restriction that the node's type must be subtype of \texttt{ty}. Once again, this is valid at top level over the Query type and the root node. Conformance of the graph also ensures that normalization and evaluation over neighboring nodes is preserved\et{why? I don't get it}. The proof also follows by well-founded induction over the queries size and auxiliary lemmas about graph conformance.
 
+\td{Same here (order)}
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Lemma normalize_selections_preserves_semantics
   (s : wfGraphQLSchema) (g : conformedGraph s) 

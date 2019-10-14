@@ -180,7 +180,10 @@ A \emph{\gql graph} over \Vals{} is defined by:
 \end{definition}
 
 In \gcoql, this is captured by the following structures, where in
-particular \texttt{label} represents the set of labels over an edge or keys in a node's property. 
+particular \texttt{label} represents the set of labels over an edge or keys in a node's property.
+Edges are modeled as a list and include a posterior separate validation on uniqueness of its members.
+We choose this approach as it is more convenient for the current state of development, but it should be otherwise fairly easy to revisit if needed.
+\td{Added this}
 %\td{Probably the name is not the best}\fo{Fully agree. I suggest changing \texttt{fld} to \texttt{label}, \texttt{Field} to \texttt{Label} and \texttt{label} to \texttt{name} (or \texttt{lname} if there is a clash) }. 
 %
 \begin{minted}[bgcolor=coqbg]{coq}
@@ -194,10 +197,10 @@ Record graphQLGraph :=
   GraphQLGraph { root : node; 
                  edges : seq (node * label * node) }.
 \end{minted}
-%\td{Should rename E to edges, so it is clearer?}\fo{Yes. Also push it
- % to a newline, to avoid the column overflow.}
-%
-\fo{Tomás, why did you represent graphs as a seq---rather than as a set--of edges?} The root node of a \gql graph represents the starting point from where queries are evaluated.
+
+
+
+The root node of a \gql graph represents the starting point from where queries are evaluated.
 
 Intuitively, the data modeled by a \gql graph is expected to respect
 (the type system described by) a schema. However, the definition of
@@ -254,7 +257,7 @@ Record conformedGraph (s : wfGraphQLSchema) :=
 \subsection{Queries}\label{subsec:query}
 To define queries we faithfully follow the \spec, as shown in
 Figure~\ref{fig:query_def}. A query consists of an optional name
-\fo{We should mention this also in \S 2} and a list of selections. A selection can be a single field, a field followed by a set of subselections or an inline fragment comprising a type condition and a set of subselections. Fields can be accompanied by a list of arguments and can also be renamed.
+\fo{We should mention this also in \S 2}\td{Not really necessary, or is it?} and a list of selections. A selection can be a single field, a field followed by a set of subselections or an inline fragment comprising a type condition and a set of subselections. Fields can be accompanied by a list of arguments and can also be renamed.
 
 \begin{figure*}[h]
   \centering
