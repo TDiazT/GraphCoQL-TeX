@@ -14,21 +14,21 @@ Finally, introspection is not supported (\S4).
 
 
 
-\paragraph{Graph data model.}
-\mbox{}\et{I think it's better to discuss the impact of that choice here than in the first page of the paper}
+\paragraph{Trustworthiness.}
 
-To address the trustworthiness of the \gcoql formalization, we have tried to establish a direct ``eyeball correspondence'' between \gcoql and the \spec whenever possible---though this correspondence has not (yet) been as seriously and systematically established as in the \jscert~\cite{jscert} and \coqr~\cite{coqr} projects, among others. 
+% To address the trustworthiness of \gcoql, 
+We have striven to establish a direct ``eyeball correspondence'' between \gcoql and the \spec whenever possible---though this correspondence has not (yet) been as seriously and systematically established as in the \jscert~\cite{jscert} and \coqr~\cite{coqr} projects, among others. \et{how does this correspondence manifest? do you reference the spec sections explicitly in the Coq development?}\et{argue}
 
+As mentioned earlier, \gcoql adopts a graph data model in order to give semantics to data access. This approach, which follows \HP, goes beyond what the \spec mandates. Indeed, the \spec differs to {\em resolvers} to give meaning to data accesses, which are essentially arbitrary pieces of code. However, reasoning about \gql requires some sensible data model. In this respect, \gcoql follows \HP almost literally, while the query evaluation algorithm of \gcoql can be traced closely to \spec.\et{anything else to say?}
 
+% While \spec leaves the underlying data model unspecified \et{or under-specified?}, 
+% \et{integrate: the resolvers can actually be mentioned at the intro when you mention whether readers will understand why a data model is necessary -- because 
+% \gql simply assumes the existence of resolver functions.}
+% \HP adopts at its core a graph-based data model; 
 
-Following \HP, \gcoql adopts a graph data model.
-While \spec leaves the underlying data model unspecified \et{or under-specified?}, 
-\et{integrate: the resolvers can actually be mentioned at the intro when you mention whether readers will understand why a data model is necessary -- because 
-\gql simply assumes the existence of resolver functions.}
-\HP adopts at its core a graph-based data model; \gcoql follows \HP in this regard, while the query evaluation algorithm of \gcoql can be traced closely to \spec.
-\et{\gql is data model agnostic. \HP specializes to a graph-based data model. So do we. Readers will wonder: is this necessary? why? aren't we moving away from the actual \gql by taking this path? -- this needs some careful justification}
+% \gcoql follows \HP in this regard, while the query evaluation algorithm of \gcoql can be traced closely to \spec.
 
-
+% \et{\gql is data model agnostic. \HP specializes to a graph-based data model. So do we. Readers will wonder: is this necessary? why? aren't we moving away from the actual \gql by taking this path? -- this needs some careful justification}
 
 
 \paragraph{Validation.}
