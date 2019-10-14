@@ -2,7 +2,7 @@
 \section{Related Work}\label{sec:related}
 
 % \paragraph{\gql.} 
-To the best of our knowledge, the only formalization efforts around \gql are \HP~\cite{gqlph} and~\cite{olafschema}, which we have already discussed. The rest of the \gql literature focuses on practical issues such as creating \gql services and migrating REST-based web services \gql~\cite{improvingoeeu, ehriapi, gqlexperiences}, automatic migration~\cite{migratingapi}, and testing techniques~\cite{gqldeviation}. A couple of empirical studiesanalyze the structure of \gql schemas in commercial and open-source projects~\cite{empiricalgql, empiricalapi}, shedding interesting insights on \gql in practice.
+To the best of our knowledge, the only formalization efforts around \gql are \HP~\cite{gqlph} and~\cite{olafschema}, which we have already discussed. The rest of the \gql literature focuses on practical issues such as creating \gql services and migrating REST-based web services \gql~\cite{improvingoeeu, ehriapi, gqlexperiences}, automatic migration~\cite{migratingapi}, and testing techniques~\cite{gqldeviation}. A couple of empirical studies analyze the structure of \gql schemas in commercial and open-source projects~\cite{empiricalgql, empiricalapi}, shedding interesting insights on \gql in practice.
 % Although these provide , they do not provide guarantees \wrt the specification's correctness. 
 % As far as we are aware, the only works on formalizing \gql are the present work and~\cite{gqlph}.
 % Most of the academic research on \gql 
@@ -25,10 +25,12 @@ Bonifati \etal~\cite{graphviewmaint} study graph view maintenance. Their definit
 % \td{They define a function that given a regexp returns a whole graph of the nodes that are connected via the regexp. Nodes are not typed, nor do they have properties I believe (not sure).}
 
 % \paragraph{\gql miscellaneous.} 
-Finally, despite being used mostly for web services, there are efforts to extend notions used in \gql to other areas of database specification and querying. Hartig and Hidders~\cite{olafschema} use the \gql schema definition DSL to define the structure of property graphs, which can be linked to similar efforts to define the structure of graph databases~\cite{schemaval}. Taelman \etal study the transformation of \gql queries to SPARQL~\cite{gqlsparql}.\et{is there any mechanized formalization of sparql?}
+Finally, despite being used mostly for web services, there are efforts to extend notions used in \gql to other areas of database specification and querying. Hartig and Hidders~\cite{olafschema} use the \gql schema definition DSL to define the structure of property graphs, which can be linked to similar efforts to define the structure of graph databases~\cite{schemaval}. Taelman \etal study the transformation of \gql queries to SPARQL~\cite{gqlsparql}.\et{is there any mechanized formalization of sparql?}\td{Haven't found one yet!}
 % using \gql for deductive database in a Prolog setting~\cite{gqldeductive}. 
 % \td{Not entirely sure what the last one is tbh, so probably	kill xd}
 
 
 \td{Mention the JSON formalization done by reutter?~\cite{json}}\et{what could we do with it? is there anything interesting to say? (eg. for responses?)}
+\td{Not sure. I looked at it when I was confused with HP's responses and thought I could base it off of it, but their formalization is a bit different than what I was expecting.
+They mention that theirs is the first formalization, but idk}
 
