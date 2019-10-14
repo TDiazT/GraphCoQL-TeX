@@ -31,6 +31,27 @@ requirement syntactically (see the grammar on the left of Figure~\ref{fig:types_
 \begin{figure*}[h]
     \centering
     \begin{subfigure}{.5\textwidth}
+    \begin{displaymath}
+    \small
+	\begin{array}{rl}
+	\mathit{TypeDefinition} & ::= \\
+	 | & \texttt{scalar } \name  \\
+	 | & \texttt{type } \name\; [\texttt{implements } \name^{+}] \texttt{ \{} \overline{Field} \texttt{\}}\\
+	 | & \texttt{interface } \name \texttt{ \{} \overline{Field} \texttt{\}}\\
+	 | & \texttt{union } \name \texttt{ = } \name\; (\texttt{|} \name)^{*}\\
+	 | & \texttt{enum } \name \texttt{ \{} \name^{+} \texttt{\}} \\
+	& \\
+	\mathit{Field} & ::= \name \texttt{ (} \mathit{\overline{Arg}} \texttt{) : } \mathit{Type}\\
+	& \\
+    \mathit{Arg} & ::= \name \texttt{ : } \mathit{Type}\\
+	& \\
+    \mathit{Type} & ::=\\ 
+     | & \name \\
+ 	 | &  \texttt{[}  \mathit{Type} \texttt{]}
+	\end{array}
+	\end{displaymath}
+	
+	\iffalse 
     \begin{grammar}
     <TypeDefinition> ::= \mbox{} 
     \alt \textbf{\texttt{scalar}} <name>
@@ -47,7 +68,9 @@ requirement syntactically (see the grammar on the left of Figure~\ref{fig:types_
     <type> ::= <name>
     \alt \textbf{\texttt{[}}  <type> \textbf{\texttt{]}}
     \end{grammar}
-    \fo{We may also want to use a less pompous grammar here}
+    \fi 
+    
+    %\fo{We may also want to use a less pompous grammar here}
     \end{subfigure}%
     \begin{subfigure}{.5\textwidth}
     \begin{minted}[bgcolor=coqbg]{coq}
@@ -142,20 +165,6 @@ Record wfGraphQLSchema := WFGraphQLSchema {
 
 Having reviewed our formalization of schemas, we now discuss our formalization of the data model. 
 
-
-\iffalse
-\begin{minted}{coq}
-Let Animal := Interface "Animal" {[::
-                (Schema.Field "name" [::] "String");
-                (Schema.Field "friends" [::] ["Animal"])
-            ]}.
-Let Dog := Object "Dog" implements [:: "Animal"] {[::
-            (Schema.Field "name" [::] "String");
-            (Schema.Field "friends" [::] ["Animal"]);
-            (Schema.Field "favouriteToy" [::] "Toy")
-        ]}.
-\end{minted}
-\fi
 
 
 \subsection{Data Model}\label{subsec:graph}
@@ -264,7 +273,7 @@ Figure~\ref{fig:query_def}. A query consists of an optional name
   \begin{subfigure}{.5\textwidth}
   \begin{displaymath}
 	\begin{array}{rcl}
-	\query & ::= & \textbf{\texttt{query }} [\mathit{name}] \texttt{ \{}  \sset \texttt{\}} \\
+	\query & ::= & \texttt{query } [\name] \texttt{ \{}  \sset \texttt{\}} \\
 	&& \\
 	\sel & ::= & \fld \\
 	& | & \afld \\		
