@@ -403,45 +403,44 @@ Of course, defining a normalization procedure in itself does not ensure anything
 \begin{figure*}[t]
     \centering
     \begin{align*}
-    % Empty
+    % Empty\sset
     & (1) & \seval{\cdot}{u} &= [\cdot] \\
     % SingleField
-    & (2) & \sevalu{\fld\; ::\; \queries} &= 
+    & (2) & \sevalu{\fld :: \sset} &= 
     \begin{cases}
-      \resp{\texttt{coerce(\val)}} \; ::\; \sevalu{\queries}  
-      & \text{if }\mathit{u.property}(\fld) = \val \\
+      \resp{\texttt{coerce(\val)}} :: \sevalu{\sset}  
+        & \text{ if } \mathit{property_{u}(\fld)} = \val \text{ and } \mathit{is\_valid\_response (coerce (\val))} \\
       %
-      \resp{\nval} \; :: \; \sevalu{\queries} 
-      & \text{otherwise}
+      \resp{\nval} :: \sevalu{\sset} 
+      & \text{ otherwise}
     \end{cases}\\
     & (3) & % Nested field
-    \sevalu{\nfld{\overline{\beta}} \; ::\; \queries} &=
+    \sevalu{\nfld{\overline{\beta}} :: \sset} &=
     \begin{cases}
       \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \seval{\overline{\beta}}{v_{i}})\; 
-      \mathit{neighbors(u)} \texttt{]}} \; :: \; \sevalu{\queries}  \\
-      \hfill \text{ if } 
-        \mathit{type(\fkey)} \in L
-          \text{ and } \{v_{1}, \ldots, v_{k}\} = \{v_{i} \mid (u, \fkey[\alpha], 
-        v_{i}) \in E\} \\
+      \mathit{neighbors_{\fld}(u)} \texttt{]}} :: \sevalu{\sset}  \\
+     \hfill \text{ if } 
+            \mathit{ftype_{type(u)}(\fkey)} = L \text{ and } \{v_{1}, \ldots, v_{k}\} = 
+        \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in \mathit{edges}(\graph)\} \\
         % 
-      \resp{\{\seval{\subqueries{\beta}}{v}\})} \; :: \; \sevalu{\queries}  
+      \resp{\{\seval{\subqueries{\beta}}{v}\})} :: \sevalu{\sset}  
       \hfill \text{ if } 
-        \mathit{type(\fkey)} \notin L
-        \text{ and } (u, \fkey[\alpha], v) \in E \\
+        \mathit{ftype_{type(u)}(\fkey)}  \neq L \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
         %
-      \resp{\nval} \; :: \; \sevalu{\queries} 
-      \qquad \qquad \qquad \qquad \qquad \qquad
-      \text{ if } \mathit{type(\fkey)} \notin L
-        \text{ and } \nexists v \text{ s.t. } (u, \fkey[\alpha], v) \in E \\
+      \resp{\nval} :: \sevalu{\sset} 
+     \qquad \qquad \qquad \qquad \qquad
+    \text{ if } \mathit{ftype_{type(u)}(\fkey)}  \neq L  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     \end{cases}\\
     %inline fragment
-    & (4) & \sevalu{\ifrag{t}{\overline{\beta}}\; ::\; \queries} &= \begin{cases}
-    \sevalu{\overline{\beta} \mdoubleplus \queries} & 
-    \text{if }\mathit{fragment\_type\_applies}_{\texttt{t}}(u.type)\\
-    \sevalu{\queries} & \text{otherwise}
+    & (4) & \sevalu{\ifrag{t}{\overline{\beta}}:: \sset} &= \begin{cases}
+    \sevalu{\overline{\beta} \mdoubleplus \sset} & 
+  	\text{ if }\mathit{fragment\_type\_applies_{type(u)}(\texttt{t})}\\
+    \sevalu{\sset} & \text{ otherwise}
     \end{cases}
     \end{align*}
-    \caption{Simplified semantics for selections in normal form, adapted from~\cite{gqlph}. \td{Fixing}} %\et{why is it $\in L$ and not $= L$?}}
+    \caption{Simplified semantics for selections in normal form, adapted from~\cite{gqlph}.} 
+    \td{Fixed}
+    %\td{Fixing}} %\et{why is it $\in L$ and not $= L$?}}
     % \et{this is exactly as in HP? if so, we should cite here as well (e.g. "(from [X])" or "(adapted from [X])" if there are some light changes)--we might want to put the "adapted from" in other figures as well to prevent plagiarism attacks!}}
     % \td{It is mostly the same, except that their definition is on atomic selections, that we use coercion of values + the fact that they define everything with set and functions (mentioned in \S\ref{subsec:discussion})}
     \label{fig:simpl_semantics}

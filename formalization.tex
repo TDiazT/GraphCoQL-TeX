@@ -655,27 +655,27 @@ Definition execute_query (s : wfGraphQLSchema)
     & (3) & \evalu{\nfld{\overline{\beta}} :: \sset} &=
     \begin{cases}
         \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge} (\mathit{collect}_{\fkey} (\sset))}{v_{i}})\; \mathit{neighbors}_{\fld}(u) \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
-        \hfill \text{ if } 
-            \mathit{ftype}_{\mathit{type}(u)}(\fkey) = L \text{ and } \{v_{1}, \ldots, v_{k}\} = 
+         \hfill \text{ if } 
+            \mathit{ftype_{type(u)}(\fkey)} = L \text{ and } \{v_{1}, \ldots, v_{k}\} = 
         \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in \mathit{edges}(\graph)\} \\
         %
-    (\fkey:\{\eval{\subqueries{\beta}}{v}\}) ::  \evalfilteru{\sset}{\fkey}  
-        \hfill \text{ if } 
-        \mathit{ftype}_{\mathit{type}(u)}(\fkey)  \neq L \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+    \fkey:\{\eval{\subqueries{\beta}}{v}\} ::  \evalfilteru{\sset}{\fkey}  
+         \hfill \text{ if } 
+        \mathit{ftype_{type(u)}(\fkey)}  \neq L \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     %
     \resp{\nval} :: \evalfilteru{\sset}{\fkey} 
     \qquad \qquad \qquad \qquad \qquad
-    \text{ if } \mathit{ftype}_{\mathit{type}(u)}(\fkey)  \neq L  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+  \text{ if } \mathit{ftype_{type(u)}(\fkey)}  \neq L  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     \end{cases}\\
     %inline fragment
     & (4) & \evalu{\ifrag{t}{\overline{\beta}} :: \sset} &= \begin{cases}
     \evalu{\overline{\beta} \mdoubleplus \sset} 
-    & \text{ if }\mathit{fragment\_type\_applies}_{\mathit{type}(u)}(t)\\
+     	\text{ if }\mathit{fragment\_type\_applies_{type(u)}(\texttt{t})}\\
     \evalu{\sset} 
     & \text{ otherwise}
     \end{cases}
     \end{align*}
-    \caption{Semantics of \gql selection sets. 
+    \caption{Semantics of \gql selection sets, adapted from~\cite{gqlph} and the \spec. 
     \newline {\footnotesize 
     The $\mathit{property}$ and $\mathit{type}$ functions are accessors to a node's property and type, respectively. 
     Meanwhile, the functions $\mathit{edges}$ and  $\mathit{neighbors}$ correspondently get the set of edges of the graph 
