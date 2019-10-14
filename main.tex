@@ -163,19 +163,28 @@ We hope that \gcoql can serve as a solid formal baseline for both language desig
 
 %\et{expand a bit on what you have to say about the examples}
 
-To validate our formalization, we implemented the examples defined in four sources. 
+To validate that \gcoql adequately captures the semantics of \gql, in additional to establishing an eyeball correspondence with \spec, 
+we implemented several examples, coming from four different sources.\et{you say four sources, but below there is only three}
 
-First, we defined the example used in \HP, from its schema to its graph, query and corresponding response. 
-We define the values in $\mathit{Vals}$ as elements of an inductive type, which wraps already defined types in Coq
-(such as integer, string, etc.), and a coercion function to transform them into the matching JSON format.
- 
-
-We also implemented a subset of the examples used in the \spec validation section (\cf\S5~\cite{gqlspec}).
-We include 41 of the 92 total examples present in that section. The great majority that are not included correspond to 
+First, We implemented a subset of the examples used in the \spec validation section (\cf\S5~\cite{gqlspec}).
+We include 41 of the 92 total examples present in that section.\et{this is not a very good number. Can you get it up by the deadline? or give better evidence that the subset includes the most important ones?}
+The large majority of the examples that we have not implemented correspond to 
 variables validation (31 cases) and fragments (29)\td{Some of these are tests that overlap with the inline fragments -- So we are still kind of testing them}
 \td{The cases that are exclusive to fragments are 8}\td{Also, some cases use fragment only as a way to write the tests, but they are not really necessary
 (they are not testing things from the fragments) so I don't consider them}.
 \td{The rest of cases are a mix of things -- 11 are related to operations (\eg no two queries with the same name, no named query + another unnamed query, etc)}
+
+\et{relate to the limitations below: of course you can't include examples that require unsupported features. Is it as simple as saying that you have implemented all examples that do not require such features?}
+
+\et{move limitations section to above, and allude to limitations when discussing what has (not) been included in the tests.}
+
+\et{try to put some "positive characterization" of what the implemented examples cover}
+
+Second, we implemented the example used in \HP, from its schema to its graph, query and corresponding response. 
+We define the values in $\mathit{Vals}$ as elements of an inductive type, which wraps already defined types in Coq
+(such as integer, string, etc.), and a coercion function to transform them into the matching JSON format.
+
+
 
 
 \iffalse
@@ -207,7 +216,7 @@ variables validation (31 cases) and fragments (29)\td{Some of these are tests th
 	- Valid input values = 5
 \fi 
 	
-Finally, we also partially implement the Star Wars example defined in the reference implementation of \gql\footnote{https://github.com/graphql/graphql-js/tree/master/src/\_\_tests\_\_}.
+Finally, we also partially\et{is it only the error stuff that's missing?} implemented the Star Wars example defined in the reference implementation of \gql\footnote{https://github.com/graphql/graphql-js/tree/master/src/\_\_tests\_\_}.
 We include the schema definition, except for the \texttt{secretBackstory} field which resolves to an error\td{Bc we are not handling errors}. The data modeled as a graph and 
 evaluation of 9 queries (out of a total of 17), comparing them to the expected outputs. Of the not implemented cases, 3 correspond to errors, 2 to introspection, 1 to fragments, 2 to variables and 
 one where execution is over an object with named properties\td{Idk, something more specific to JS than \gql}.
