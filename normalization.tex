@@ -51,7 +51,7 @@ The left query is not grounded because the field \texttt{name} is selected on th
 
 % \td{Changing this definition}
 \begin{definition}[\cite{gqlph}]
-A \gql selection set $\sset$ is in \textit{ground-typed normal form} if it satisfies the following grammar, where \texttt{t} is an object type: %where \texttt{ty} is the type in scope.
+A \gql selection set $\sset$ is in \textit{ground-typed normal form} if it satisfies the following grammar, where \texttt{t}is an object type: %where \texttt{ty} is the type in scope.
 \begin{displaymath}\small
 	\begin{array}{rcl}
 	\sset & ::= & \chi \ldots \chi \\
@@ -455,18 +455,18 @@ Both cases are proven by well-founded induction over the size of the selection s
 
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Theorem normalized_query_is_in_nf 
-  (s : wfGraphQLSchema) (q : @query Vals) :
-    is_in_normal_form s (normalize s q).
+  (s : wfGraphQLSchema) (|$\query$| : query) :
+    is_in_normal_form s (normalize s |$\query$|).
     
 Lemma normalized_selections_are_grounded_fields 
-  (s : wfGraphQLSchema) (ts : Name) (ss : seq Selection) :
-    all (fun sel => 
-      sel.(is_field) && is_in_ground_typed_nf s sel)
-        (normalize_selections s ts ss).
+  (s : wfGraphQLSchema) (ts : Name) (|$\sel$|s : seq Selection) :
+    all (fun |$\sel$| => 
+      |$\sel$|.(is_field) && is_in_ground_typed_nf s |$\sel$|)
+        (normalize_selections s ts |$\sel$|s).
  
 Lemma normalized_selections_are_non_redundant 
-  (s : wfGraphQLSchema) (ts : Name) (ss : seq Selection) :
-    are_non_redundant (normalize_selections s ts ss).
+  (s : wfGraphQLSchema) (ts : Name) (|$\sel$|s : seq Selection) :
+    are_non_redundant (normalize_selections s ts |$\sel$|s).
 \end{minted}
 
 Next, we prove that normalization preserves the semantics of queries. We follow a similar approach as above and prove a generalized statement about the execution of selection sets. Whereas the evaluation of a query is performed over the root node of the graph, the statement about preservation of semantics for selections is over any node in the graph. 
@@ -477,11 +477,11 @@ Likewise, the proof follows by well-founded induction over the size of the selec
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Lemma normalize_selections_preserves_semantics
   (s : wfGraphQLSchema) (g : conformedGraph s) 
-  (coerce : wfCoercion) (|$\sel$| : seq Selection) (u : node) :
+  (coerce : wfCoercion) (|$\sel$|s : seq Selection) (u : node) :
     u |\textbackslash|in g.(nodes) ->
-    s, g |$\vdash \llbracket$| normalize_selections s u.(ntype) |$\sel$| |$\rrbracket$|
+    s, g |$\vdash \llbracket$| normalize_selections s u.(ntype) |$\sel$|s |$\rrbracket$|
         in u with coerce =
-    s, g |$\vdash$| |$\llbracket$| |$\sel$| |$\rrbracket$| in u with coerce. 
+    s, g |$\vdash$| |$\llbracket$| |$\sel$|s |$\rrbracket$| in u with coerce. 
     
 Theorem normalize_preserves_query_semantics 
   (s : wfGraphQLSchema) (g : conformedGraph s)
@@ -521,10 +521,10 @@ Theorem exec_query_eq_simpl_exec
     
 Lemma exec_sel_eq_simpl_exec
   (s : wfGraphQLSchema) (g : conformedGraph s) 
-  (coerce : wfCoercion) (|$\sel$| : seq Selection) (u : node) :
-    are_in_normal_form s |$\sel$| -> 
-    s, g |$\vdash$| |$\llbracket$| |$\sel$| |$\rrbracket$| in u with coerce =
-    s, g |$\vdash$| |$\llparenthesis$| |$\sel$| |$\rrparenthesis$| in u with coerce.
+  (coerce : wfCoercion) (|$\sel$|s : seq Selection) (u : node) :
+    are_in_normal_form s |$\sel$|s -> 
+    s, g |$\vdash$| |$\llbracket$| |$\sel$|s |$\rrbracket$| in u with coerce =
+    s, g |$\vdash$| |$\llparenthesis$| |$\sel$|s |$\rrparenthesis$| in u with coerce.
  
 \end{minted}
 %\et{fix parentheses above}
@@ -560,7 +560,7 @@ which produces two repeated values. This occurs because \HP's definition of non-
 % considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which 
 % occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
 
-Secondly, we realized that using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries cannot be normalized. For instance:
+Secondly, we realized that using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries cannot be normalized\td{I just realized that the version of the paper we are citing does not include the equivalence rules}. For instance:
 \begin{minted}[escapeinside=||, mathescape=true]{js}
           query {
               name
