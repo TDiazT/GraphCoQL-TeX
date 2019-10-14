@@ -50,7 +50,7 @@ The left query is not grounded because the field \texttt{name} is selected on th
 %\et{verbose/repetitive} The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype. 
 
 % \td{Changing this definition}
-\begin{definition}
+\begin{definition}[\cite{gqlph}]
 A \gql selection set $\sset$ is in \textit{ground-typed normal form} if it satisfies the following grammar, where \texttt{t} is an object type: %where \texttt{ty} is the type in scope.
 \begin{displaymath}\small
 	\begin{array}{rcl}
