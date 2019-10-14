@@ -289,6 +289,7 @@ Figure~\ref{fig:query_def}. A query consists of an optional name
   \begin{subfigure}{.5\textwidth}
 
     \begin{minted}[bgcolor=coqbg]{coq}
+    
     Record query := 
          Query { qname : option string; 
                  selection_set : seq Selection }.
@@ -296,18 +297,18 @@ Figure~\ref{fig:query_def}. A query consists of an optional name
     Inductive Selection : Type :=
     | SingleField (name : Name)
                   (arguments : seq (Name * Vals))
-    | AliasedField (alias : Name)
-                   (name : Name)
-                   (arguments : seq (Name * Vals))
+    | SingleAliasedField (alias : Name)
+                         (name : Name)
+                         (arguments : seq (Name * Vals))
     | NestedField (name : Name)
                   (arguments : seq (Name * Vals))
-                  (subqueries : seq Selection)
+                  (subselections : seq Selection)
     | NestedAliasedField (alias : Name)
                          (name : Name)
                          (arguments : seq (Name * Vals))
-                         (subqueries : seq Selection)
+                         (subselections : seq Selection)
     | InlineFragment (type_condition : Name)
-                     (subqueries : seq Selection).
+                     (subselections : seq Selection).
     \end{minted}
   \end{subfigure}
   \caption{Definition of \gql queries:
@@ -316,6 +317,7 @@ Figure~\ref{fig:query_def}. A query consists of an optional name
   \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t} correspond to identifiers for field names, field aliases and type conditions, respectively.
   Symbol $\args$ stands for a list of key-value pairs, representing the arguments of fields.}
   \td{Brackets in optional query name may conflict with the others? It is a diff font, but idk if maybe using something else=}
+  \td{Is it me or the query record looks flattened?}
   } %\td{To be completely accurate, the parenthesis in field selections are not necessary unless there are arguments}\td{This might add some noise?}\et{yeah I think that'd be too much (and not very relevant)}
   \label{fig:query_def}
 \end{figure*}
