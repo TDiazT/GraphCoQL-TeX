@@ -1,5 +1,88 @@
 % !TEX root = ./main.tex
 \section{Discussion}\label{sec:discussion}
+
+\paragraph{Limitations.}
+
+Currently, \gcoql captures the core of \gql, but not the full specification. While this is already valuable to study key aspects of \gql---as illustrated in \S\ref{sec:norm}---more work is needed to fully cover the specification. 
+For the sake of exhaustiveness, we now list all missing features, referring to the \spec sections~\cite{gqlspec} where they are defined.\\
+Executable definitions:
+% \et{meaning?}\td{That is just the name \gql gives to these features}: 
+mutations (\S2.3), subscriptions (\S2.3), fragments (\S2.8).\\
+Types and type operations: Non-null types (\S2.11-3.4.1-3.12), schema and type extensions (\S3.2.2-3.4.3), arguments default values (\S3.6.1), input object types (\S3.10), directives (\S3.13).\\
+Queries: input object values (\S2.9.8), variables (\S2.10), variable and argument coercion (\S6.1.2-6.4.1), normal and serial execution (\S6.3.1), error handling (\S6.4.4).\\
+Finally, introspection is not supported (\S4). 
+
+
+
+\paragraph{Validation.}
+
+To validate that \gcoql adequately captures the semantics of \gql, in additional to establishing an eyeball correspondence with \spec, 
+we implemented several examples, coming from four different sources.\et{you say four sources, but below there is only three}
+
+First, We implemented a subset of the examples used in the \spec validation section (\cf\S5~\cite{gqlspec}).
+We include 41 of the 92 total examples present in that section.\et{this is not a very good number. Can you get it up by the deadline? or give better evidence that the subset includes the most important ones?}
+The large majority of the examples that we have not implemented correspond to 
+variables validation (31 cases) and fragments (29)\td{Some of these are tests that overlap with the inline fragments -- So we are still kind of testing them}
+\td{The cases that are exclusive to fragments are 8}\td{Also, some cases use fragment only as a way to write the tests, but they are not really necessary
+(they are not testing things from the fragments) so I don't consider them}.
+\td{The rest of cases are a mix of things -- 11 are related to operations (\eg no two queries with the same name, no named query + another unnamed query, etc)}
+
+\et{relate to the limitations below: of course you can't include examples that require unsupported features. Is it as simple as saying that you have implemented all examples that do not require such features?}
+
+\et{move limitations section to above, and allude to limitations when discussing what has (not) been included in the tests.}
+
+\et{try to put some "positive characterization" of what the implemented examples cover}
+
+Second, we implemented the example used in \HP, from its schema to its graph, query and corresponding response. 
+We define the values in $\mathit{Vals}$ as elements of an inductive type, which wraps already defined types in Coq
+(such as integer, string, etc.), and a coercion function to transform them into the matching JSON format.
+
+
+
+
+\iffalse
+	-	Only executable definitions when evaluating = -1 (text + query)
+	- Uniqueness of operation = -3
+	- Anonymous operation = -2
+	- Suscription = -5 (single root field)
+	- Fields = 2 + 2 + 2 - 1 (introspection on union)
+	- Field merging = 3 + 1 - 1 (variable) + 2 - 2  (variables) + 2  + 1
+	- Leaf fields = 2 + 3 - 1 (type ext)
+	- Argument names = 2 - 1 (directives) + 1 - 1 (directives) + 2  - 1 (type extension)
+	- Required args = -5 (required arguments - non-null + default values)
+	- Fragment uniqueness = -2 (fragments)
+	- Fragment spread type existence = 1 - 3 (2 fragments y 1 directive) + 1 - 2 (fragments)
+	- Fragments on comp types = 3 - 3 (fragments) + 2 - 2 (fragments)
+	- Fragments must be used = -1
+	- Fragments spread = -4 (fragments) + 2 - 2 (fragments) + 1 - 2 (fragments) + 1 - 2 (fragments) + 2 - 2  + 2 - 2 + 1 - 2 + 1 - 2 
+	- Valid Input values = -5
+	- Input objects = -3
+	- Directives = -3
+	- Variables = - 2 - 8 - 7 - 4 - 7
+	
+	Hechos : 2 + 2 + 2 + 3 + 1 + 2 + 2 + 2 + 3 + 2 + 1 + 2  + 1 + 1 + 3 + 2 + 2 + 1 + 1 + 2 + 2 + 1 + 1 = 41
+	No hechos : -1 - 3 - 2 - 5 - 1 - 1 - 2 - 1 - 1 - 1 - 1 - 5 - 2 - 3 - 2 - 3 - 2  - 1 - 2 - 2 - 2 - 2 - 2 - 2 -2 - 2 - 5 - 3 - 3 - 2 - 8 - 7 - 4 - 7  = 92
+	- Variables = -1 - 2 - 2 - 8 - 7 - 4 - 7 = 31
+	- Fragments = -2 - 2 - 2 - 3 - 2 - 1 - 4 - 2 - 2 - 2 - 2 - 2 - 1 - 2 = 29 
+	- Operations = -1 - 3 - 2 - 5 = 11
+	- Directives = -1 -1 - 1 - 3 = 6
+	- Valid input values = 5
+\fi 
+	
+Finally, we also partially\et{is it only the error stuff that's missing?} implemented the Star Wars example defined in the reference implementation of \gql\footnote{https://github.com/graphql/graphql-js/tree/master/src/\_\_tests\_\_}.
+We include the schema definition, except for the \texttt{secretBackstory} field which resolves to an error\td{Bc we are not handling errors}. The data modeled as a graph and 
+evaluation of 9 queries (out of a total of 17), comparing them to the expected outputs. Of the not implemented cases, 3 correspond to errors, 2 to introspection, 1 to fragments, 2 to variables and 
+one where execution is over an object with named properties\td{Idk, something more specific to JS than \gql}.
+\td{There are 7 other about validation, which I didn't notice, but I can add them}
+\td{In that same repo (https://github.com/graphql/graphql-js/tree/master/src) each subfolder (type, execution, etc) contain other \_\_tests\_\_ folders, but
+I didn't delve too much into them -- some are a bit too particular to JS. They can still be adapted, but not now}
+		
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\endinput
+%%% OLD DISCUSSION SECTION
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Intro to section
 
 \et{I suggest to split this section in two parts: one that is related to the core (schema, data model, queries, semantics), and on that is related to normalization/simplified semantics. And to move the first to just after section 3 (either as a 3.5 or as a separate section 4 if it's length justifies it)}
