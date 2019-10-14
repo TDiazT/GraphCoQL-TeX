@@ -20,15 +20,18 @@ Figure \ref{fig:schema_ex} depicts our type system. We define an interface for a
     \begin{minted}[fontsize=\scriptsize]{js}
 interface Animal {		
   name: String
+  age: Int
   friends: [Animal]
 }
 type Dog implements Animal {
   name: String
+  age: Int
   friends: [Animal]
   favoriteToy: Toy
 }
 type Pig implements Animal {
   name: String
+  age: Int
   friends: [Animal]
   oink: Float
 }
