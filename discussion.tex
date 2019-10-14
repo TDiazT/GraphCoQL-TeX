@@ -36,7 +36,10 @@ As mentioned earlier, \gcoql adopts a graph data model in order to give semantic
 
 \paragraph{Validation.}
 
-In order to further validate that \gcoql adequately captures the semantics of \gql, we implemented several examples, coming from different sources. In all examples we use a coercion function to transform results into the corresponding JSON format.
+In order to further validate that \gcoql adequately captures the semantics of \gql, we implemented several examples, coming from different sources. 
+\td{Moved this here} In all examples we define the values used in arguments and properties of nodes as elements of an inductive type, which wraps standard Coq types such as integers and strings, 
+and a coercion function to transform these values into the corresponding JSON format.
+
 % \et{you say four sources, but below there is only three}
 % \td{Ah, lol. The fourth one was the one we use in the paper (Goodbois) -- although it is in essence the same as the one in \HP}
 % \td{I didn't want to reuse the same example they used, bc it felt like just copy paste -- Although now it is not that far off tbh}
@@ -58,7 +61,7 @@ whether they can be used in certain contexts.
 % \td{Yes}
 %\et{try to put some "positive characterization" of what the implemented examples cover}
 
-Second, we implemented the main example used in \HP, from its schema to its graph, query and corresponding response. We define the values in $\mathit{Vals}$ as elements of an inductive type, which wraps standard Coq types such as integers and strings. Note that this example is quite close to the running example of this paper.
+Second, we implemented the main example used in \HP, from its schema to its graph, query and corresponding response. Note that this example is quite close to the running example of this paper.
 % \td{This is actually done in all examples.}
 % \td{There is not much to say about HP's example tbh}
 
@@ -96,7 +99,7 @@ Finally, we also implemented the Star Wars example defined in the reference impl
 For instance, we include the complete schema definition except for the \texttt{secretBackstory} field, which resolves to an error, as these are not yet supported. 
 The data modeled as a graph and 
 evaluation of 9 queries (out of a total of 17), comparing them to the expected outputs. Of the not implemented cases, 3 correspond to errors, 2 to introspection, 1 to fragments, 2 to variables and 
-one where execution is over an object with named properties.
+one where execution is over an object with named properties.\td{I am not sure about the granularity of this (although otherwise it might seem a bit empty)}
 
 % \et{is it only the error stuff that's missing?}\td{Same as above, it is missing not implemented features (errors, fragments, etc.)} 
 % \td{Idk, something more specific to JS than \gql}.
