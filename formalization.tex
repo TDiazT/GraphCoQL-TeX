@@ -379,8 +379,8 @@ query {
 %\et{for space reason, we may want to take some liberties wrt the formatting of queries and responses (see some examples on this page)}
 
 
-\noindent In one case, the field is requesting information about a
-\texttt{Dog} type, while in the other case  it is requesting information about the \texttt{Pig} type. (These are the respective types in context for the first and second occurrence of the field.)\td{?} The distinction is important because some field selections might be valid in some contexts but not in others. This is the case, for instance, for field \texttt{favoriteToy}: It is valid in the context of a \texttt{Dog} type but it is invalid in the context of a \texttt{Pig} type, as \texttt{Pig} type does not contain any such field. %Similarly, the above query would also be invalid if \texttt{Pig} type contained a so-called field, but of type different from \texttt{Toy} ---the type of the same field in type \texttt{Dog}.
+\noindent In the first occurrence, the field is requesting information about the
+\texttt{Dog} type, while in the second it is requesting information about the \texttt{Pig} type. The distinction is important because some field selections might be valid in some contexts but not in others. This is the case, for instance, for field \texttt{favoriteToy}: It is valid in the context of a \texttt{Dog} type but it is invalid in the context of a \texttt{Pig} type, as \texttt{Pig} type does not contain any such field. %Similarly, the above query would also be invalid if \texttt{Pig} type contained a so-called field, but of type different from \texttt{Toy} ---the type of the same field in type \texttt{Dog}.
 
 %Just as in the case of well-formedness of schemas or conformance of graphs, queries must go through a validation process. We define the property of \textit{conformance} of queries, based on validation rules scattered throughout the \textit{Validation} section of the \spec\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}.
 
@@ -727,9 +727,10 @@ Definition execute_query (s : wfGraphQLSchema)
   \text{ if } \mathit{ftype_{type(u)}(\fkey)}  \neq L  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     \end{cases}\\
     %inline fragment
-    & (4) & \evalu{\ifrag{t}{\overline{\beta}} :: \sset} &= \begin{cases}
+    & (4) & \evalu{\ifrag{t}{\overline{\beta}} :: \sset} &= 
+    \begin{cases}
     \evalu{\overline{\beta} \mdoubleplus \sset} 
-     	\text{ if }\mathit{fragment\_type\_applies_{type(u)}(\texttt{t})}\\
+     & \text{ if }\mathit{fragment\_type\_applies_{type(u)}(\texttt{t})}\\
     \evalu{\sset} 
     & \text{ otherwise}
     \end{cases}
