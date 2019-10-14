@@ -29,10 +29,17 @@ nor do they prove that the simplified semantics is equivalent to the original on
 
 % For the former, they propose a set of equivalence rules to transform queries but they do not actually prove that their application yield a query in this particular form or that they preserve the query semantics. The latter is also exploited, without providing any correctness proof. Since both are fundamental for their complexity results, we believe they must be rigorously addressed.
 
-\paragraph{\gcoql.} This work presents the first mechanized formalization of \gql, carried out in the \coq proof assistant~\cite{Coq}, called \gcoql (|græf$\cdot$co$\cdot$k{\pmschwa}l|). In addition to precisely capturing the semantics of \gql, \gcoql makes it possible to completely specify and prove the correctness of query transformations, as well as other extensions and optimizations made to the language and its algorithms. We illustrate this by 
-proving the correctness and semantic preservation of \HP's normalization---in the process we provide an algorithmic definition of normalization, and address some imprecisions and minor issues that \coq forced us to uncover.
+% \paragraph{\gcoql.} 
+This work presents {\bf the first mechanized formalization of \gql}, carried out in the \coq proof assistant~\cite{Coq}, called \gcoql (|græf$\cdot$co$\cdot$k{\pmschwa}l|). 
+\gcoql currently includes the definition of the Schema DSL, query definition, schema and query validation, and the semantics of queries, defined over a graph data model as in \HP (\S\ref{sec:form}).
 
+As well as precisely capturing the semantics of \gql, \gcoql makes it possible to specify and prove the correctness of query transformations, as well as other extensions and optimizations made to the language and its algorithms. We illustrate this by studying \HP's notion of query normalization (\S\ref{sec:norm}). Specifically, we define an algorithmic presentation of normalization, which we then prove correct and semantics preserving. We also formalize and prove the equivalence between the original query evaluation semantics and the simplified semantics used by \HP for normalized queries. In the process, we address some imprecisions and minor issues that \coq led us to uncover.
+
+%
+We discuss the limitations and validation of \gcoql, including its trustworthiness, in \S\ref{sec:discussion}.
+%
 We hope that \gcoql can serve as a starting point for a formal specification of \gql from which reference implementations can be extracted. Although we have not yet experimented with extraction, \gcoql facilitates this vision by relying on boolean reflection as much as possible.
+
 % ; this should eventually make it possible to extract reference implementations of the different components developed in \gcoql, such as the query evaluator or the normalization function. 
  % and extracting it to be its official reference implementation.
 
@@ -45,16 +52,12 @@ We hope that \gcoql can serve as a starting point for a formal specification of 
  % \gcoql (pronounced ``græf$\cdot$co$\cdot$k{\pmschwa}l'').
  % We believe that \gcoql can serve as a starting point towards fully formalizing \gql and extracting it to be its official reference implementation.  
 
-To address the trustworthiness of the \gcoql formalization, we have tried to establish a direct ``eyeball correspondence'' between \gcoql and the \spec whenever possible---though this correspondence has not (yet) been as seriously and systematically established as in the \jscert~\cite{jscert} and \coqr~\cite{coqr} projects, among others.
+
   % current status of \gcoql is less firmly 
   % following the examples of JSCert~\cite{jscert} and CoqR~\cite{coqr}.
  % This provides a component of trustworthiness given by an , 
  % We also test our implementation with examples from the \spec but a more thorough comparison should be made against \textit{\gqlJs} and a bigger test suite.
-While \spec leaves the underlying data model unspecified \et{or under-specified?}, 
-\et{integrate: the resolvers can actually be mentioned at the intro when you mention whether readers will understand why a data model is necessary -- because 
-\gql simply assumes the existence of resolver functions.}
-\HP adopts at its core a graph-based data model; \gcoql follows \HP in this regard, while the query evaluation algorithm of \gcoql can be traced closely to \spec.
-\et{\gql is data model agnostic. \HP specializes to a graph-based data model. So do we. Readers will wonder: is this necessary? why? aren't we moving away from the actual \gql by taking this path? -- this needs some careful justification}
+
 
 % \et{there is some contradiction between the eyeball correspondence and the "mixed approach"} 
 % Like \HP, \gcoql  \et{what is the model in \spec?}
@@ -70,18 +73,10 @@ While \spec leaves the underlying data model unspecified \et{or under-specified?
 
 %We were first motivated to use it to define the data model and try to narrow our scope to finite types, as was used by (Veronique, Ev, Emilio, Dumbrava). In the end, we did not use any of it but the computational aspect of SSReflect was kept, as it facilitated developing the proofs. This same element is what makes us believe that extraction should not be hard.
 
-\paragraph{Contributions.}
-The contributions of this work are:
-\begin{itemize}
-    \item The first mechanized formalization of \gql (\S\ref{sec:form}), including the definition of the Schema DSL, query definition, schema and query validation, and the semantics of queries over a graph data model.
-    \item An algorithmic presentation of \HP's notion of query normalization, which we prove correct and semantics preserving, after fixing some imprecisions and minor issues (\S\ref{sec:norm}). We also formalize and prove the equivalence between the original query evaluation semantics and the simplified semantics used by \HP for normalized queries.
-     % function with proofs of its correctness and preservation of semantics. This is a result used by \HP to prove complexity boundaries about \gql queries.
-    % \item Proof of equivalence between the semantics and a simplified version. This is also an important result for posterior analysis made in \HP.
-    \item \et{mention \S\ref{sec:discussion}}
-\end{itemize}
 
-We first briefly introduce \gql (\S\ref{sec:bg}). 
-We end this article by discussing the validation and limitations of \gcoql (\S\ref{sec:valid}), related work (\S\ref{sec:related}) and conclude in \S\ref{sec:conclusion}.
+
+We briefly introduce \gql in \S\ref{sec:bg}. 
+We discuss related work in \S\ref{sec:related} and conclude in \S\ref{sec:conclusion}.
 
 \gcoql and the results presented in this paper have been developed in \coq v.8.9.1 and are provided as anonymous supplementary material. 
 % We often refer directly to \coq files in the paper \et{for space, we might in fact *not* do this and just defer to a nice README file with the artifact}. 
