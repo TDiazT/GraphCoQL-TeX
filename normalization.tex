@@ -231,10 +231,12 @@ For the latter, the process either removes fragments or lifts their subselection
     % Nested field
     & (3) & \tnorm{\nfld{\overline{\beta}} :: \sset} &=
     \begin{cases}
-        \nfld{\norm{ftype_{ts}(\fkey)}{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\sset))}}} :: \tnorm{\filter{\sset}{\fkey}} \quad\hfill\text{ if } 
+        \nfld{\norm{ftype_{ts}(\fkey)}{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\sset))}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
 	            \mathit{is\_object\_type (ftype_{ts} (\fkey))}\\
         %
-    \nfld{\mathit{map}\; (\lambda t_{i}.\; \norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (collect_{\fkey} (\sset))}})\; \mathit{get\_possible\_types (ts)}} :: \tnorm{\filter{\sset}{\fkey}} \quad\quad \text{ otherwise } 
+    \nfld{\mathit{map}\; (\lambda t_{i}.\; \ifrag{$t_{i}$}{\norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (collect_{\fkey} (\sset))}}})\; \mathit{get\_possible\_types (ts)}} 
+    		:: \tnorm{\filter{\sset}{\fkey}} \\
+		\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\; \text{ otherwise } 
     \end{cases}\\
     %inline fragment
     & (4) & \tnorm{\ifrag{t}{\overline{\beta}} :: \sset} &= 
@@ -245,7 +247,7 @@ For the latter, the process either removes fragments or lifts their subselection
     \end{cases}
     \end{align*}
     \caption{Normalization procedure for \gql selections. 
-    % \td{Is it better?}\td{The functions that are not named are the same as the ones in the semantics -- should we redefine them?}
+	\td{Forgot to add the inline fragments in 2nd case of eq. 3 -- I reformat it but not sure if it is aligned o not}
     	\newline{\footnotesize 
       $\mathit{is\_object\_type}$ checks whether the given type is an object type in the schema. $\mathit{get\_possible\_types}$ get all object subtypes of the given type.}
     }

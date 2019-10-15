@@ -36,8 +36,8 @@ requirement syntactically (see the grammar on the left of Figure~\ref{fig:types_
 	\begin{array}{rl}
 	\mathit{TypeDefinition} & ::= \\
 	 | & \texttt{scalar } \name  \\
-	 | & \texttt{type } \name\; [\texttt{implements } \name^{+}] \texttt{ \{} \overline{Field} \texttt{\}}\\
-	 | & \texttt{interface } \name \texttt{ \{} \overline{Field} \texttt{\}}\\
+	 | & \texttt{type } \name\; (\texttt{implements } \name^{+})^{?} \texttt{ \{} \mathit{Field}^{+} \texttt{\}}\\
+	 | & \texttt{interface } \name \texttt{ \{} \mathit{Field}^{+} \texttt{\}}\\
 	 | & \texttt{union } \name \texttt{ = } \name\; (\texttt{|} \name)^{*}\\
 	 | & \texttt{enum } \name \texttt{ \{} \name^{+} \texttt{\}} \\
 	& \\
@@ -51,24 +51,6 @@ requirement syntactically (see the grammar on the left of Figure~\ref{fig:types_
 	\end{array}
 	\end{displaymath}
 	
-	\iffalse 
-    \begin{grammar}
-    <TypeDefinition> ::= \mbox{} 
-    \alt \textbf{\texttt{scalar}} <name>
-%    \alt \textbf{\texttt{type}} <name> \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
-    \alt \textbf{\texttt{type}} <name> [\textbf{\texttt{implements}} <name>$^{+}$] \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
-    \alt \textbf{\texttt{interface}} <name> \textbf{\texttt{\{}} <Field>$^{+}$ \textbf{\texttt{\}}}
-    \alt \textbf{\texttt{union}} <name> \textbf{\texttt{=}} <name> (\textbf{\texttt{|}} <name>)*
-    \alt \textbf{\texttt{enum}} <name>  \textbf{\texttt{\{}}  <name>$^{+}$ \textbf{\texttt{\}}}
-
-    <Field> ::= <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{) :}} <type>
-
-    <Arg> ::= <name> \textbf{\texttt{:}} <type>
-
-    <type> ::= <name>
-    \alt \textbf{\texttt{[}}  <type> \textbf{\texttt{]}}
-    \end{grammar}
-    \fi 
     
     %\fo{We may also want to use a less pompous grammar here}
     \end{subfigure}%
@@ -94,7 +76,10 @@ requirement syntactically (see the grammar on the left of Figure~\ref{fig:types_
     \end{subfigure}
     \caption{Definition of \gql types: (left) \spec grammar; 
     (right) \gcoql definition.\newline
-    {\footnotesize Square brackets denote optional attributes.}}
+    {\footnotesize The $(\cdot)^{?}$ notation denotes optional attributes.}
+    \td{Changed the optional bracket here also -- to $( )^{?}$}
+    \td{Also changed $\overline{Field}$ bc the grammar specifies at least one}
+    }
     % \fo{In the grammar, I would push the scalar case to a new line, to match the \coq snippet on the right} \et{done}
     \label{fig:types_def}
 \end{figure*}
@@ -274,7 +259,7 @@ A selection $\sel$ can be a single field $\fld$ with arguments, an aliased field
   \begin{subfigure}{.5\textwidth}
   \begin{displaymath}
 	\begin{array}{rcl}
-	\query & ::= & \texttt{query } [\name] \texttt{ \{}  \sset \texttt{\}} \\
+	\query & ::= & \texttt{query } (\name)^{?} \texttt{ \{}  \sset \texttt{\}} \\
 	&& \\
 	\sel & ::= & \fld \\
 	& | & \afld \\		
@@ -329,9 +314,9 @@ A selection $\sel$ can be a single field $\fld$ with arguments, an aliased field
   (right) \gcoql definition.
   \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t} correspond to identifiers for field names, field aliases and type conditions, respectively.
   Symbol $\args$ stands for a list of key-value pairs, representing the arguments of fields.}
-  \td{Brackets in optional query name may conflict with the others? It is a diff font, but idk if maybe using something else=}
-  \et{yeah that's a bit unfortunate. A solution is to use $( ... )^?$ to denote optional elements (without parenthesis when it's a single element)}
-  \td{Is it me or the query record looks flattened?} \et{???}
+  %\td{Brackets in optional query name may conflict with the others? It is a diff font, but idk if maybe using something else=}
+  %\et{yeah that's a bit unfortunate. A solution is to use $( ... )^?$ to denote optional elements (without parenthesis when it's a single element)}
+  %\td{Is it me or the query record looks flattened?} \et{???}
   } %\td{To be completely accurate, the parenthesis in field selections are not necessary unless there are arguments}\td{This might add some noise?}\et{yeah I think that'd be too much (and not very relevant)}
   \label{fig:query_def}
 \end{figure*}
@@ -459,7 +444,7 @@ query {
 Intuitively, the previous query is invalid because its evaluation can produce results with the same key 
 (key \texttt{name}) but associated to values of different type (string and integer values).
 
-\td{We are not exactly capturing that the fields can be inside fragments, is it ok?}\et{I don't get it}
+%\td{We are not exactly capturing that the fields can be inside fragments, is it ok?}\et{I don't get it}
 The definition of field \emph{type-compatibility} is recursive. Two nested
 field selections are type-compatible if whenever
 they have the same response name, any two fields in the concatenation of their
@@ -683,6 +668,7 @@ Single fields correspond to accessing a node's property that matches the field n
 As specified in \spec (\cf\S6.4.3~\cite{gqlspec}), scalar values must be coerced and verified to match the scalar type expected by the schema, otherwise the value is considered null.
 We model this with the function  $\mathit{coerce} : \mathit{Vals} \to \mathit{ResponseValue}$
 \et{this is weird, I would have expected coerce to return an option, since you said earlier that possible null values are modeled with options}
+\td{Aja! Yep, it actually is (ResponseValue (option Vals))}
 \td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.
 On the other hand, nested fields (equation 3) represent a traversal to neighboring nodes. The semantics searches for nodes that are connected by an edge whose label matches the field name
 and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
