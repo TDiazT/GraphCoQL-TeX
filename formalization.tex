@@ -188,11 +188,8 @@ A \emph{\gql graph} over \Vals{} is defined by:
 \end{itemize}
 \end{definition}
 
-In \gcoql, this is captured by the following structures, where in
-particular \texttt{label} represents the set of labels over an edge or keys in a node's property.
-Edges are modeled as a list and include a posterior separate validation on uniqueness of its members.
-We choose this approach as it is more convenient for the current state of development, but it should be otherwise fairly easy to revisit if needed.
-\td{Added this}
+In \gcoql, this is captured by the following structures. 
+% A \texttt{label} represents the set of labels over an edge or keys in a node's property. 
 %\td{Probably the name is not the best}\fo{Fully agree. I suggest changing \texttt{fld} to \texttt{label}, \texttt{Field} to \texttt{Label} and \texttt{label} to \texttt{name} (or \texttt{lname} if there is a clash) }. 
 %
 \begin{minted}[bgcolor=coqbg]{coq}
@@ -206,14 +203,15 @@ Record graphQLGraph :=
   GraphQLGraph { root : node; 
                  edges : seq (node * label * node) }.
 \end{minted}
+The root node of a \gql graph represents the starting point from where queries are evaluated. Note that edges are modeled as a list, and not as a set; unicity of its members is handled by a separate validation. 
+ % and include a posterior separate validation on uniqueness of its members.
+This found this approach more convenient in the current development, but this design decision would be fairly easy to revisit if needed.
+% \td{Added this}
 
-
-
-The root node of a \gql graph represents the starting point from where queries are evaluated.
 
 Intuitively, the data modeled by a \gql graph is expected to respect
 (the type system described by) a schema. However, the definition of
-graphs is fully independent of schemas. To relate the data to the type system, we define the notion of \textit{conformance} of a graph \wrt a schema, partially based on~\cite{gqlph}.
+graphs above is fully independent of schemas. To relate the data to the type system, we define the notion of \textit{conformance} of a graph \wrt a schema, partially based on~\cite{gqlph}.
 %
 \begin{definition}
 A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if:
@@ -265,8 +263,11 @@ Record conformedGraph (s : wfGraphQLSchema) :=
 
 \subsection{Queries}\label{subsec:query}
 To define queries we faithfully follow the \spec, as shown in
-Figure~\ref{fig:query_def}. A query consists of an optional name
-\fo{We should mention this also in \S 2}\td{Not really necessary, or is it?} and a list of selections. A selection can be a single field, a field followed by a set of subselections or an inline fragment comprising a type condition and a set of subselections. Fields can be accompanied by a list of arguments and can also be renamed.
+Figure~\ref{fig:query_def}. A query consists of a list of selections, and can optionally be named.
+% consists of an optional name
+% \fo{We should mention this also in \S 2}\td{Not really necessary, or is it?} and a list of selections. 
+A selection $\sel$ can be a single field $\fld$ with arguments, an aliased field $\afld$, or a possibly-aliased field followed by a set of subselections $\sset$, or an inline fragment $\ifrag{t}{\sset}$ comprising a type condition \texttt{t} and a set of subselections $\sset$. 
+% Fields can be accompanied by a list of arguments and can also be renamed.
 
 \begin{figure*}[h]
   \centering
@@ -329,7 +330,8 @@ Figure~\ref{fig:query_def}. A query consists of an optional name
   \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t} correspond to identifiers for field names, field aliases and type conditions, respectively.
   Symbol $\args$ stands for a list of key-value pairs, representing the arguments of fields.}
   \td{Brackets in optional query name may conflict with the others? It is a diff font, but idk if maybe using something else=}
-  \td{Is it me or the query record looks flattened?}
+  \et{yeah that's a bit unfortunate. A solution is to use $( ... )^?$ to denote optional elements (without parenthesis when it's a single element)}
+  \td{Is it me or the query record looks flattened?} \et{???}
   } %\td{To be completely accurate, the parenthesis in field selections are not necessary unless there are arguments}\td{This might add some noise?}\et{yeah I think that'd be too much (and not very relevant)}
   \label{fig:query_def}
 \end{figure*}
@@ -457,25 +459,22 @@ query {
 Intuitively, the previous query is invalid because its evaluation can produce results with the same key 
 (key \texttt{name}) but associated to values of different type (string and integer values).
 
-\td{We are not exactly capturing that the fields can be inside fragments, is it ok?}
+\td{We are not exactly capturing that the fields can be inside fragments, is it ok?}\et{I don't get it}
 The definition of field \emph{type-compatibility} is recursive. Two nested
 field selections are type-compatible if whenever
 they have the same response name, any two fields in the concatenation of their
 subselections are also type-compatible. Two single field selections
-are always type-compatible, unless that they have the same response
+are always type-compatible, unless they have the same response
 name and different (scalar or enum) type.
 
 Finally, the renaming-consistency condition ensures that fields with
 the same response name refer to the same piece of information. For
 instance:
-\td{This leaves a lot of empty space :/}
+% \td{This leaves a lot of empty space :/}
 \begin{minted}[escapeinside=||,mathescape=true]{js}
-query {
-  goodboi {
-    age   
-    |$\ldots$| on Pig {
-       age:oink
-} } 
+query { goodboi {
+          age   
+          |$\ldots$| on Pig { age:oink } }
 \end{minted}
 
 Intuitively, this query is considered invalid because the fields with response name \texttt{age} both refer to distinct pieces of information;
@@ -504,7 +503,7 @@ A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection s
 
 %\et{this is the beginning of the problem I'm having with your statements about queries. There is the notion of *a query*, noted $\varphi$, yet from now on your statements are about *queries*. The definition below mixes "the content" (consistency, compatible response, etc.) with "the sequence" (all, list comprehension, etc). Worse, later on in the development, you use $\varphi$ as the variable name of type "seq Queries" (while fig6 uses a bar over). See also my later comments about your "plural formulations"}
 
-In \gcoql, this is captured with the following predicates.
+\noindent In \gcoql, this is captured with the following predicates.
 
 %The implementation can be seen in the code below, however due to space limitations we only informally describe the %three mentioned rules. The complete definitions can be found in the file \texttt{QueryConformance.v}.
 
@@ -521,6 +520,21 @@ Definition selections_conform (s : wfGraphQLSchema)
             [seq (ts, @$\sel$@) | @$\sel$@ <- @$\sel$@s].
 
 \end{minted}
+
+% This concludes the definition of \gql queries, the validation process and the notion of size of selections. 
+From now on, it is assumed that queries conform to a given schema. Finally, most of the recursive definitions over selection sets are well-founded using a notion of size.
+\begin{definition}[adapted from \cite{gqlph}]
+% \td{It is in essence the same, except that they define selections along with queries}
+The \emph{size} of a selection $\sel$ and selection set $\sset$, noted $\ssize{\cdot}$, is recursively defined as:
+\begin{small}
+\begin{align*}
+    \ssize{\fld}  = \ssize{\afld} &=  1\\
+    \ssize{\nfld{\sset}} = \ssize{\anfld{\sset}} = \ssize{\ifrag{t}{\sset}} &= 1 + \ssize{\sset}\\
+    \ssize{\sset} &= \sum_{\sel_{i} \in\; \sset}{\ssize{\sel_{i}}}
+    \end{align*}
+\end{small}
+\end{definition} 
+
 %\td{Cannot define $\sset$ in Coq (lexer error), so I had to go with $\sel$ instead of the selection set and simply \texttt{sel} for an atomic selection}
  %\et{you can use "$\sel$s"}
 %\fo{This introduces the conformance of a query \wrt a schema, but the schema is never mentioned in the definition. It needs to be fixed!!!}
@@ -578,20 +592,12 @@ Definition selections_conform (s : wfGraphQLSchema)
 
 % The main issue is that the \spec allows for what we call \textit{invalid fragments}, originally described in an issue in the \spec's repository\footnote{https://github.com/graphql/graphql-spec/issues/367}. In a nutshell, the \spec allows using fragments with type conditions that can span to multiple unrelated types. These end up not being evaluated due to posterior checks\footnote{https://graphql.github.io/graphql-spec/June2018/\#DoesFragmentTypeApply()}.
 
-Finally, most of the recursive definitions over selection sets are well-founded recursion over a notion of size.
-\begin{definition}[adapted from \cite{gqlph}]\td{It is in essence the same, except that they define selections along with queries}
-The \emph{size} of a selection $\sel$ and selection set $\sset$ is defined by the following mutual recursion:
 
-\begin{align*}
-    % Empty
-    \ssize{\fld} & = \ssize{\afld} =  1\\
-    \ssize{\nfld{\overline{\beta}}} &= \ssize{\anfld{\overline{\beta}}} = \ssize{\ifrag{t}{\overline{\beta}}} = 1 + \ssize{\overline{\beta}}\\
-    \ssize{\sset} &= \sum_{\sel_{i} \in\; \sset}{\ssize{\sel_{i}}}
-    \end{align*}
-\end{definition} 
-\td{This looks a bit weird... Should it be a "definition" or just inline it as \HP does?}
+% \td{This looks a bit weird... Should it be a "definition" or just inline it as \HP does?}
 
-This concludes the definition of \gql queries, the validation process and the notion of size of selections. For the rest of the paper, it is assumed that queries conform to a given schema. 
+
+
+
 
 \subsection{Semantics}\label{subsec:semantics}
 Now we have all the prerequisites to define the semantics of \gql queries and their selection sets. We begin by briefly examining the responses generated by executing queries and then we give an informal description of the semantics, finishing with the formal definition. %We finish by discussing some implementation choices and comparison with the \spec and \HP.
@@ -660,6 +666,7 @@ Definition GraphQLResponse (Vals: eqType) :=
 
 % As we described in \S\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec, in the sense that it can be detached from a particular data model. 
 \td{Maybe merge this informal description with the description of the figure?}
+\et{yes}
 Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. In this sense:
 \begin{itemize}
     \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node.
@@ -671,10 +678,12 @@ Informally, the evaluation of a query's selection set represents a navigation ov
 Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $\sset$ over $\graph$ from node $u \in \mathit{nodes}(\graph)$\footnote{Where $\mathit{nodes}$ is a function that retrieves all nodes from a graph.}, denoted $\llbracket \sset \rrbracket^{u}_{\graph}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
 \end{definition}
 
-The definition starts with the base case of empty selection set, which results in an empty response. 
-Single fields (equation 2) correspond to accessing a node's property that matches the field name. 
-As specified in the \spec (\cf\S6.4.3~\cite{gqlspec}), scalar values must be coerced and verified that the resulting value matches the scalar type expected by the schema, otherwise the value is considered null.
-We model this with the function  $\mathit{coerce} : \mathit{Vals} \to \mathit{ResponseValue}$\td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.
+The definition starts with the base case of empty selection set, which results in an empty response (1). 
+Single fields correspond to accessing a node's property that matches the field name (2). 
+As specified in \spec (\cf\S6.4.3~\cite{gqlspec}), scalar values must be coerced and verified to match the scalar type expected by the schema, otherwise the value is considered null.
+We model this with the function  $\mathit{coerce} : \mathit{Vals} \to \mathit{ResponseValue}$
+\et{this is weird, I would have expected coerce to return an option, since you said earlier that possible null values are modeled with options}
+\td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.
 On the other hand, nested fields (equation 3) represent a traversal to neighboring nodes. The semantics searches for nodes that are connected by an edge whose label matches the field name
 and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
 In both field cases, the evaluation process has to ensure that selections with the same response name are only evaluated once. 
@@ -714,7 +723,7 @@ Definition execute_query (s : wfGraphQLSchema)
     & (1) & \eval{\cdot}{u} &= [\cdot] \\
     % SingleField
     & (2) & \evalu{\fld :: \sset} &= \begin{cases}
-        \resp{\texttt{coerce(\val)}} :: \evalfilteru{\sset}{\fkey}  
+        \resp{\mathit{coerce(\val)}} :: \evalfilteru{\sset}{\fkey}  
         & \text{if } \mathit{property}_{u}(\fld) = \val \text{ and } \mathit{is\_valid\_response}(\mathit{coerce}(\val)) \\
         \resp{\nval} :: \evalfilteru{\sset}{\fkey} 
         & \text{otherwise}

@@ -153,7 +153,7 @@ The left query is redundant for two reasons: it requests the field \texttt{name}
 Conversely, the right query is non-redundant because it requests information about each type only once; only one fragment will actually be executed at a time, depending on the concrete object value that is used to evaluate the query.
 % It is important to notice that, even though it requests the field \texttt{name} in both, this is considered not redundant because 
 
-\td{Rewrote this definition a little bit}
+% \td{Rewrote this definition a little bit}
 \begin{definition}[adapted from~\cite{gqlph}]
 A \gql selection set $\sset$ is \textit{non-redundant} if it satisfies the following conditions:
 \begin{itemize}
@@ -454,7 +454,8 @@ Both cases are proven by well-founded induction over the size of the selection s
 % selection set}
 % \td{The size  of the selection set is not simply the size of the list, it is the size of the tree (length of list + depth)}
 
-\td{Swap order of this lemmas? I thought it'd be simpler to read the top level statement and then see the lemmas}
+% \td{Swap order of this lemmas? I thought it'd be simpler to read the top level statement and then see the lemmas}
+%\et{ok}
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Theorem normalized_query_is_in_nf 
   (s : wfGraphQLSchema) (|$\query$| : query) :
@@ -476,7 +477,7 @@ Likewise, the proof follows by well-founded induction over the size of the selec
 
 %Next, we prove normalization preserves the semantics of queries. To begin with, we prove the case where the type in context is the same as the type of the node where queries are being normalized. Lifting this to the top level, it corresponds to normalizing over the Query type and evaluating on the root node (whose type is the same, due to graph conformance). We then extend this notion to normalization over any type in context, \texttt{ty}\et{here you're using "ty" - ts or ty is good for me but be consistent throughout}, but with the restriction that the node's type must be subtype of \texttt{ty}. Once again, this is valid at top level over the Query type and the root node. Conformance of the graph also ensures that normalization and evaluation over neighboring nodes is preserved\et{why? I don't get it}. The proof also follows by well-founded induction over the queries size and auxiliary lemmas about graph conformance.
 
-\td{Same here (order)}
+% \td{Same here (order)}
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Lemma normalize_selections_preserves_semantics
   (s : wfGraphQLSchema) (g : conformedGraph s) 
@@ -550,10 +551,8 @@ First, some queries are considered non-redundant by \HP although they actually p
 A simple example is the following query:
 
 \begin{minted}{js}
-        query {
-            name
-            name:name
-        }
+        query { name
+                name:name }
 \end{minted}
 which produces two repeated values. This occurs because \HP's definition of non-redundancy does not consider the case when an unaliased field and an aliased field share the same response name. This cornercase is properly handled in \gcoql, by grouping fields by their response names. We discovered this case when proving the equivalence of the simplified semantics.
 % \et{do you remember when/how you discovered that? by proving which lemma/theorem?}
@@ -563,18 +562,16 @@ which produces two repeated values. This occurs because \HP's definition of non-
 % considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which 
 % occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
 
-Secondly, we realized that using \HP's equivalence rules (\cf \S3~\cite{gqlph}), some queries cannot be normalized\td{I just realized that the version of the paper we are citing does not include the equivalence rules}. For instance:
+Secondly, we realized that using \HP's equivalence rules, some queries cannot be normalized.
+ % (\cf \S3~\cite{gqlph}), 
+ % \td{I just realized that the version of the paper we are citing does not include the equivalence rules}. 
+For instance:
 \begin{minted}[escapeinside=||, mathescape=true]{js}
-          query {
-              name
-              |$\ldots$| on Query {
-                  name
-              }
-          }
+          query { name
+                  |$\ldots$| on Query { name } }
 \end{minted}
 %\et{like above explain why this problem happens in HP}
-The problem is that there are no rules that explicitly consider and use the type in scope to transform the selections. In the previous case, by considering the \texttt{Query} type, either 
-the fragment's contents could be lifted or the field could be wrapped in a fragment, and then the existent rules would apply. 
+In \HP there are no rules that explicitly consider and use the type in scope to transform selections. In this example, by considering the \texttt{Query} type, either the fragment's contents could be lifted or the field could be wrapped in a fragment, and then the existing rules would apply. 
 
 
 %
