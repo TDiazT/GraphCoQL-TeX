@@ -20,7 +20,7 @@ Considering the actual vibrancy of the \gql community, sustained by several impl
 Recently, Hartig and Pérez~\cite{gqlph} proposed the first (and so far only) formalization of \gql, called \HP hereafter. 
 \HP is a formalization ``on paper'' that was used to prove complexity boundaries for \gql queries. Having a mechanized formalization would present many additional benefits, such as potentially providing a faithful reference implementation, and serving as a solid basis to prove formal results about the \gql semantics. 
 
-For instance, the complexity results of Hartig and Pérez rely on two techniques: {\em a)} transforming queries to {\em equivalent} queries in some  normal form, {\em b)} interpreting queries in a simplified but {\em equivalent} definition of the semantics. However, Hartig and Pérez do not provide an algorithmic definition of the {\em normalization} of queries, let alone proving it correct and semantics preserving;
+For instance, the complexity results of Hartig and Pérez rely on two techniques: {\em a)} transforming queries to equivalent queries in some  normal form, {\em b)} interpreting queries in a simplified but equivalent definition of the semantics. However, Hartig and Pérez do not provide an algorithmic definition of query normalization, let alone proving it correct and semantics preserving;
 % prove that the query transformation (called ) indeed produces queries in such a normal form, and that their semantics is preserved; 
 nor do they prove that the simplified semantics is equivalent to the original one when applied to normalized queries.
 
@@ -85,13 +85,13 @@ We discuss related work in \S\ref{sec:related} and conclude in \S\ref{sec:conclu
 This work is based on the latest release of the \gql specification, dated June 2018~\cite{gqlspec}.
 % \et{I think we can skip this paragraph here, not important enough for being in the intro} Finally, regarding the development itself, we use SSReflect \et{cite} intensively, relying on boolean reflection as much as possible. Also, the use of the  to define non-structural recursive functions is essential for our definitions. Other libraries, such as \textit{Function} and \textit{Program} did not provide sufficient tools to handle rewriting and inductive reasoning about our definitions, which \textit{Equations} incredibly facilitates. \coql{} is not currently extracted to other languages but we believe that it should not be a difficult task, given the design decisions considered.
 
-\et{might skip for space (is it really interesting anyway?} 
-\td{Nah, I personally don't care at all how big/small the project is}
-\et{Put brief data about the code here}
-\td{This includes documentation, imports, etc.}
-The base definitions and proofs consist of approximately $3600$ and $1900$ lines of code, respectively.
-Files containing validation of \gcoql amount to approximately $3000$ lines of code. 
-Finally, the normalization case study consists of approximately $350$ lines of definitions and $700$ lines of proofs.
+% \et{might skip for space (is it really interesting anyway?} 
+% \td{Nah, I personally don't care at all how big/small the project is}
+% \et{Put brief data about the code here}
+% \td{This includes documentation, imports, etc.}
+% The base definitions and proofs consist of approximately $3600$ and $1900$ lines of code, respectively.
+% Files containing validation of \gcoql amount to approximately $3000$ lines of code. 
+% Finally, the normalization case study consists of approximately $350$ lines of definitions and $700$ lines of proofs.
 
 % \td{include note on code as anonymous supplementary material}
 
