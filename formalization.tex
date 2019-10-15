@@ -650,19 +650,20 @@ Definition GraphQLResponse (Vals: eqType) :=
 
 
 % As we described in \S\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec, in the sense that it can be detached from a particular data model. 
-\td{Maybe merge this informal description with the description of the figure?}
-\et{yes}
-Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. In this sense:
-\begin{itemize}
-    \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node.
-    \item An inline fragment conditions whether using a node to access its properties or to traverse to other nodes.
-    \item Subselections are evaluations over neighboring nodes.
-\end{itemize}
+%\td{Maybe merge this informal description with the description of the figure?}
+%\et{yes}
+Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. %In this sense:
+%\begin{itemize}
+ %   \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node.
+  %  \item An inline fragment conditions whether using a node to access its properties or to traverse to other nodes.
+   % \item Subselections are evaluations over neighboring nodes.
+%\end{itemize}
 
 \begin{definition}
 Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $\sset$ over $\graph$ from node $u \in \mathit{nodes}(\graph)$\footnote{Where $\mathit{nodes}$ is a function that retrieves all nodes from a graph.}, denoted $\llbracket \sset \rrbracket^{u}_{\graph}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
 \end{definition}
 
+%Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. 
 The definition starts with the base case of empty selection set, which results in an empty response (1). 
 Single fields correspond to accessing a node's property that matches the field name (2). 
 As specified in \spec (\cf\S6.4.3~\cite{gqlspec}), scalar values must be coerced and verified to match the scalar type expected by the schema, otherwise the value is considered null.
@@ -761,7 +762,7 @@ Definition execute_query (s : wfGraphQLSchema)
 
 %The main challenge in this case is to define what this nested list types represent in a graph. If we take a simple case of a field with type \texttt{[Human]}, we can model it as neighbors of a node. However, if we increase the nesting such as \texttt{[[Human]]}, it becomes harder to model. What does this represent in the graph? Should we introduce blank nodes in between the source node and the \texttt{Human} nodes? Are these inner edges labeled? Should there be a blank node per each level of nesting or a single one with edges to itself? All these questions do not have a straightforward answer. Our semantics, as the one definded in PH, simply ignores any nesting bigger than one.\td{This is where it can be modelled using Functors. The \spec checks if it received a collection and applies map to eventually get to the concrete values. Not sure how to put this out there.}
 
-This concludes the formalization of \gql schemas, graph data model, and queries and their semantics.  These definitions provide the base upon which further development and analysis can be developed in \gcoql.
+This concludes the formalization of \gql schemas, graph data model, and queries and their semantics.  These definitions provide the base upon which further development and analysis can be performed in \gcoql.
 
 %\td{I feel there is not much to say about the semantics... The "juicy" bits are in the discussion section - limitations given by the graph model, functor approach to the spec's semantics, etc.}
 
