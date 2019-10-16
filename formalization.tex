@@ -315,7 +315,7 @@ A selection $\sel$ can be a single field $\fld$ with arguments, an aliased field
   \end{subfigure}
   \caption{Definition of \gql queries:
   (left) \spec grammar; 
-  (right) \gcoql definition.\et{why Vals instead of Val?}
+  (right) \gcoql definition.\et{why Vals instead of Val?}\td{This was to keep close similarity to \HP (way at the beginning) -- do you think Val is better?}
   \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t} correspond to identifiers for field names, field aliases and type conditions, respectively.
   Symbol $\alpha$ stands for a key-value pair.}}
   % , representing the arguments of fields. \et{rather alpha is a key-value pair, and overbar is the list notation}}
@@ -447,7 +447,7 @@ query {
 \end{minipage}
 
 Intuitively, the previous query is invalid because its evaluation can produce results with the same key 
-(key \texttt{name}) but associated to values of different type (string and integer values).
+(key \texttt{name}) but associated to values of different type (\eg string and integer values).
 
 %\td{We are not exactly capturing that the fields can be inside fragments, is it ok?}\et{I don't get it}
 The definition of field \emph{type-compatibility} is recursive. Two nested
@@ -494,7 +494,8 @@ A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection s
 %\et{this is the beginning of the problem I'm having with your statements about queries. There is the notion of *a query*, noted $\varphi$, yet from now on your statements are about *queries*. The definition below mixes "the content" (consistency, compatible response, etc.) with "the sequence" (all, list comprehension, etc). Worse, later on in the development, you use $\varphi$ as the variable name of type "seq Queries" (while fig6 uses a bar over). See also my later comments about your "plural formulations"}
 
 \noindent In \gcoql, this is captured with the following predicates.
-
+\td{Updated}
+\td{Need to adjust names}
 %The implementation can be seen in the code below, however due to space limitations we only informally describe the %three mentioned rules. The complete definitions can be found in the file \texttt{QueryConformance.v}.
 
 \begin{minted}[bgcolor=coqbg, escapeinside=@@, mathescape=true]{coq}
@@ -504,16 +505,15 @@ Definition query_conforms
     
 Definition selections_conform (s : wfGraphQLSchema)
     (ts : Name) (@$\sel$@s : seq Selection) : bool :=
-        all (is_consistent ts) @$\sel$@s &&
-        is_field_merging_possible ts @$\sel$@s &&
-        have_compatible_response_shapes
-            [seq (ts, @$\sel$@) | @$\sel$@ <- @$\sel$@s].
-
+    let sel_with_type := [seq (ts, @$\sel$@) | @$\sel$@ <- @$\sel$@s] in 
+      all (is_consistent ts) @$\sel$@s &&
+      have_compatible_response_shapes sel_with_type &&
+      is_field_merging_possible sel_with_type].
 \end{minted}
 
 % This concludes the definition of \gql queries, the validation process and the notion of size of selections. 
 From now on, it is assumed that queries conform to a given schema. Finally, most of the recursive definitions over selection sets are well-founded using a notion of size.
-\begin{definition}[adapted from \cite{gqlph}]
+\begin{definition}[\cite{gqlph}]
 % \td{It is in essence the same, except that they define selections along with queries}
 The \emph{size} of a selection $\sel$ and selection set $\sset$, noted $\ssize{\cdot}$, is recursively defined as:
 \begin{small}
@@ -596,6 +596,7 @@ A first observation we need to make is that query semantics is not compositional
 
 We model responses with a tree structure, similar to JSON, as shown in Figure~\ref{fig:response_def}. A response can be a value, an object mapping keys to other responses or an array of response values. Null values in the leaves of the response tree are represented with option types.%\et{fix once fig 6 defs is clarified}
 \et{this is not an appropriate description of the Coq definition: explain the parametrization that's going on. Then, if one accepts your parametrization by the eqType, why not baking the option in the Leaf constructor directly? (ie. Leaf : option A $\rightarrow$ RV)}
+
 
 \begin{figure*}[h]
 \centering
