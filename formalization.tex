@@ -596,9 +596,10 @@ Now we have all the prerequisites to define the semantics of \gql queries and th
 
 A first observation we need to make is that query semantics is not compositional, in the sense that the result of a sequence of selections is not obtained by concatenating the results of the individual selections. Therefore, our semantic function will take a (whole) sequence of selections and return a (whole) sequence of responses.  
 
-We model responses with a tree structure, similar to JSON, as shown in Figure~\ref{fig:response_def}. A response can be a value, an object mapping keys to other responses or an array of response values. Null values in the leaves of the response tree are represented with option types.%\et{fix once fig 6 defs is clarified}
-\et{this is not an appropriate description of the Coq definition: explain the parametrization that's going on. Then, if one accepts your parametrization by the eqType, why not baking the option in the Leaf constructor directly? (ie. Leaf : option A $\rightarrow$ RV)}
-\td{Is it ok with the changes?}
+We model responses with a tree structure, similar to JSON, as shown in Figure~\ref{fig:response_def}. A response can be either a value (optional, to account for null), an object mapping keys to other responses, or an array of response values. 
+% Null values in the leaves of the response tree are represented with option types.%\et{fix once fig 6 defs is clarified}
+% \et{this is not an appropriate description of the Coq definition: explain the parametrization that's going on. Then, if one accepts your parametrization by the eqType, why not baking the option in the Leaf constructor directly? (ie. Leaf : option A $\rightarrow$ RV)}
+% \td{Is it ok with the changes?}
 
 \begin{figure*}[h]
 \centering
@@ -678,22 +679,18 @@ Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema
 The definition starts with the base case of empty selection set, which results in an empty response (1). 
 Single fields correspond to accessing a node's property that matches the field name (2). 
 As specified in \spec (\cf\S6.4.3~\cite{gqlspec}), scalar values must be coerced and verified to match the scalar type expected by the schema, otherwise the value is considered null.
-We model this with the function  $\mathit{coerce} : \mathit{Val} \to \mathit{ResponseVal}$
-\td{Does this make more sense with the changes?}
+We model this with a function  $\mathit{coerce} : \mathit{Val} \to \mathit{ResponseVal}$.
+% \td{Does this make more sense with the changes?}
 %\et{this is weird, I would have expected coerce to return an option, since you said earlier that possible null values are modeled with options}
 %\td{Aja! Yep, it actually is (ResponseValue (option Vals))}
 %\et{so fix the signature!}
 %
 %\et{Also, you have both "Vals" and "Value" as names/postfixes for something that should be essentially the same.}
 %
-\td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.
-On the other hand, nested fields (equation 3) represent a traversal to neighboring nodes. The semantics searches for nodes that are connected by an edge whose label matches the field name
-and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
-In both field cases, the evaluation process has to ensure that selections with the same response name are only evaluated once. 
-This is performed by calling the $\mathit{collect}$, $\mathit{merge}$ and $\mathit{filter}$ functions, which respectively gather fields sharing the same response name, merge their subselections 
-and remove their repeated occurrences. 
-Finally, inline fragments simply condition whether their subselections should be evaluated in the current node. 
-The decision is based on the $\mathit{fragment\_type\_applies}$ predicate that verifies whether the type condition is the same or a super type of the node's type\footnote{Aliased fields are not included since they are evaluated the same way as unaliased fields, but differ in that the key-value pair produced is renamed accordingly.}.
+\td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.\et{where is that used/relevant? I see that wfCOercion only shows up, without explanation, in Section 4. It should be introduced in section 3, maybe later below (it's not necessary for the figure it seems)}\et{when showing execute-query! btw your signature here does not match the one you use in section 4, which has a wfCoercion as argument! (beware with those details)}
+Nested fields (3) represent a traversal to neighboring nodes: the semantics searches for nodes that are connected by an edge whose label matches the field name and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
+In both field cases (2-3), evaluation has to ensure that selections with the same response name are only evaluated once. 
+This is performed by calling the $\mathit{collect}$, $\mathit{merge}$ and $\mathit{filter}$ functions, which respectively gather fields sharing the same response name, merge their subselections, and remove their repeated occurrences. Finally, inline fragments (4) simply condition whether their subselections should be evaluated in the current node. The decision is based on the $\mathit{fragment\_type\_applies}$ predicate that verifies whether the type condition is the same or a supertype of the node's type.\footnote{Aliased fields are not included here; they are evaluated the same way as unaliased fields, but differ in that the key-value pair produced is renamed accordingly.}
 
 %The definition of the evaluation function for selections, displayed in Figure~\ref{fig:semantics}, only refers to the base case of an empty list, field selections without renaming and inline fragments. The complete definition can be found in the file \texttt{QuerySemantics.v}.
 
