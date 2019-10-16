@@ -497,8 +497,8 @@ A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection s
 %\et{this is the beginning of the problem I'm having with your statements about queries. There is the notion of *a query*, noted $\varphi$, yet from now on your statements are about *queries*. The definition below mixes "the content" (consistency, compatible response, etc.) with "the sequence" (all, list comprehension, etc). Worse, later on in the development, you use $\varphi$ as the variable name of type "seq Queries" (while fig6 uses a bar over). See also my later comments about your "plural formulations"}
 
 \noindent In \gcoql, this is captured with the following predicates.
-\td{Updated}
-\td{Need to adjust names}
+%\td{Updated}
+%\td{Need to adjust names}
 %The implementation can be seen in the code below, however due to space limitations we only informally describe the %three mentioned rules. The complete definitions can be found in the file \texttt{QueryConformance.v}.
 
 \begin{minted}[bgcolor=coqbg, escapeinside=@@, mathescape=true]{coq}
@@ -508,10 +508,10 @@ Definition query_conforms
     
 Definition selections_conform (s : wfGraphQLSchema)
     (ts : Name) (@$\sel$@s : seq Selection) : bool :=
-    let sel_with_type := [seq (ts, @$\sel$@) | @$\sel$@ <- @$\sel$@s] in 
+    let @$\sel$@s_with_scope := [seq (ts, @$\sel$@) | @$\sel$@ <- @$\sel$@s] in 
       all (is_consistent ts) @$\sel$@s &&
-      have_compatible_response_shapes sel_with_type &&
-      is_field_merging_possible sel_with_type].
+      @$\sel$@s_with_scope.(are_type_compatible) &&
+      @$\sel$@s_with_scope.(are_renaming_consistent).
 \end{minted}
 
 % This concludes the definition of \gql queries, the validation process and the notion of size of selections. 
