@@ -622,18 +622,20 @@ We model responses with a tree structure, similar to JSON, as shown in Figure~\r
   \end{subfigure}%
   \begin{subfigure}{.5\textwidth}
 \begin{minted}[bgcolor=coqbg]{coq}
-Inductive ResponseValue (A : Type) : Type :=
-| Leaf : A -> ResponseValue
-| Object : seq (Name * ResponseValue) -> ResponseValue
-| Array : seq ResponseValue -> ResponseValue.
-
-Definition GraphQLResponse (Vals: eqType) :=
-    seq (Name * (@ResponseValue (option Vals))).
+Variable (Val : eqType).
+  
+Inductive ResponseVal : Type :=
+| Leaf : option Val -> ResponseVal
+| Object : seq (Name * ResponseVal) -> ResponseVal
+| Array : seq ResponseVal -> ResponseVal.
+  
+Definition GraphQLResponse := seq (Name * ResponseVal).
 \end{minted}
    
   \end{subfigure}
-  \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).\et{the @ sign here shouldn't be necessary since A is an explicit parameter (I suspect in your Coq dev it's implicit)}\et{wait, that definition of ResponseValue cannot possibly be correct: if A is an explicit parameter, you can't use those constructor signatures, so you should declare with curly brackets.}
-  \et{Explain in the text what's going on with the parametrization over eqType.}
+  \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).
+  %\et{the @ sign here shouldn't be necessary since A is an explicit parameter (I suspect in your Coq dev it's implicit)}\et{wait, that definition of ResponseValue cannot possibly be correct: if A is an explicit parameter, you can't use those constructor signatures, so you should declare with curly brackets.}
+  %\et{Explain in the text what's going on with the parametrization over eqType.}
    \newline{\footnotesize The keywords \texttt{v} and \fkey represent leaf values and keys in a key-value pair, respectively.}
   }
   \label{fig:response_def}
