@@ -76,13 +76,13 @@ requirement syntactically (see the grammar on the left of Figure~\ref{fig:types_
     \end{subfigure}
     \caption{Definition of \gql types: (left) \spec grammar; 
     (right) \gcoql definition.\newline
-    {\footnotesize The $(\cdot)^{?}$ notation denotes optional attributes.}
+    {\footnotesize The $(\cdot)^{?}$ notation denotes optional attributes, and the overline $\overline{\cdot}$ denotes a sequence of elements.} 
     % \td{Changed the optional bracket here also -- to $( )^{?}$}
     % \td{Also changed $\overline{Field}$ bc the grammar specifies at least one}
-    \et{overbar or * -- you are using both. any difference?}
-    \td{No, just that I am not sure what to use}
-    \et{can a union have only one name? (ie. should it be + instead of *?)}
-    \td{Yep, it can have a single name (the thing is that each name is separated by a |)}
+    % \et{overbar or * -- you are using both. any difference?}
+    % \td{No, just that I am not sure what to use}
+    % \et{can a union have only one name? (ie. should it be + instead of *?)}
+    % \td{Yep, it can have a single name (the thing is that each name is separated by a |)}
     }
     % \fo{In the grammar, I would push the scalar case to a new line, to match the \coq snippet on the right} \et{done}
     \label{fig:types_def}
@@ -315,13 +315,14 @@ A selection $\sel$ can be a single field $\fld$ with arguments, an aliased field
   \end{subfigure}
   \caption{Definition of \gql queries:
   (left) \spec grammar; 
-  (right) \gcoql definition.
+  (right) \gcoql definition.\et{why Vals instead of Val?}
   \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t} correspond to identifiers for field names, field aliases and type conditions, respectively.
-  Symbol $\args$ stands for a list of key-value pairs, representing the arguments of fields. \et{rather alpha is a key-value pair, and overbar is the list notation}}
+  Symbol $\alpha$ stands for a key-value pair.}}
+  % , representing the arguments of fields. \et{rather alpha is a key-value pair, and overbar is the list notation}}
   %\td{Brackets in optional query name may conflict with the others? It is a diff font, but idk if maybe using something else=}
   %\et{yeah that's a bit unfortunate. A solution is to use $( ... )^?$ to denote optional elements (without parenthesis when it's a single element)}
   %\td{Is it me or the query record looks flattened?} \et{???}
-  } %\td{To be completely accurate, the parenthesis in field selections are not necessary unless there are arguments}\td{This might add some noise?}\et{yeah I think that'd be too much (and not very relevant)}
+  %\td{To be completely accurate, the parenthesis in field selections are not necessary unless there are arguments}\td{This might add some noise?}\et{yeah I think that'd be too much (and not very relevant)}
   \label{fig:query_def}
 \end{figure*}
 
@@ -483,7 +484,7 @@ renaming-consistent.
 
 The last two rules are defined as a single validation rule in the \spec (\cf\S5.3.2~\cite{gqlspec}). 
 We choose to split them because we noticed that they indeed can be defined separately, simplifying their implementation as well as facilitating 
-reasoning about them\footnote{Our algorithm implements an optimized version of the rule. A team at XING\footnote{https://www.xing.com/} recently published another algorithm described in~\cite{xingalg}.}.
+reasoning about them\footnote{Our algorithm implements an optimized version of the rule. A team at XING recently published another optimized algorithm~\cite{xingalg}.}.
 
 
 \begin{definition}
@@ -594,7 +595,7 @@ Now we have all the prerequisites to define the semantics of \gql queries and th
 A first observation we need to make is that query semantics is not compositional, in the sense that the result of a sequence of selections is not obtained by concatenating the results of the individual selections. Therefore, our semantic function will take a (whole) sequence of selections and return a (whole) sequence of responses.  
 
 We model responses with a tree structure, similar to JSON, as shown in Figure~\ref{fig:response_def}. A response can be a value, an object mapping keys to other responses or an array of response values. Null values in the leaves of the response tree are represented with option types.%\et{fix once fig 6 defs is clarified}
-
+\et{this is not an appropriate description of the Coq definition: explain the parametrization that's going on. Then, if one accepts your parametrization by the eqType, why not baking the option in the Leaf constructor directly? (ie. Leaf : option A $\rightarrow$ RV)}
 
 \begin{figure*}[h]
 \centering
@@ -630,7 +631,8 @@ Definition GraphQLResponse (Vals: eqType) :=
 \end{minted}
    
   \end{subfigure}
-  \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).
+  \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).\et{the @ sign here shouldn't be necessary since A is an explicit parameter (I suspect in your Coq dev it's implicit)}\et{wait, that definition of ResponseValue cannot possibly be correct: if A is an explicit parameter, you can't use those constructor signatures, so you should declare with curly brackets.}
+  \et{Explain in the text what's going on with the parametrization over eqType.}
    \newline{\footnotesize The keywords \texttt{v} and \fkey represent leaf values and keys in a key-value pair, respectively.}
   }
   \label{fig:response_def}
@@ -674,6 +676,10 @@ As specified in \spec (\cf\S6.4.3~\cite{gqlspec}), scalar values must be coerced
 We model this with the function  $\mathit{coerce} : \mathit{Vals} \to \mathit{ResponseValue}$
 \et{this is weird, I would have expected coerce to return an option, since you said earlier that possible null values are modeled with options}
 \td{Aja! Yep, it actually is (ResponseValue (option Vals))}
+\et{so fix the signature!}
+%
+\et{Also, you have both "Vals" and "Value" as names/postfixes for something that should be essentially the same.}
+%
 \td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.
 On the other hand, nested fields (equation 3) represent a traversal to neighboring nodes. The semantics searches for nodes that are connected by an edge whose label matches the field name
 and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
