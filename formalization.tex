@@ -315,7 +315,7 @@ A selection $\sel$ can be a single field $\fld$ with arguments, an aliased field
   \end{subfigure}
   \caption{Definition of \gql queries:
   (left) \spec grammar; 
-  (right) \gcoql definition.\et{why Vals instead of Val?}\td{This was to keep close similarity to \HP (way at the beginning) -- do you think Val is better?}
+  (right) \gcoql definition. %\et{why Vals instead of Val?}\td{This was to keep close similarity to \HP (way at the beginning) -- do you think Val is better?}
   \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t} correspond to identifiers for field names, field aliases and type conditions, respectively.
   Symbol $\alpha$ stands for a key-value pair.}}
   % , representing the arguments of fields. \et{rather alpha is a key-value pair, and overbar is the list notation}}
@@ -348,8 +348,8 @@ process to ensure that they adhere to a given schema. We introduce the
 notion of query \textit{conformance}, based on a set of validation
 rules scattered throughout the \spec (\cf\S5~\cite{gqlspec}). The
 validity of queries depends on the validity of their selection sets,
-which in turn requires the notion of \textit{type in context} at a
-given selection location\footnote{The \spec refers to it as the \emph{type in scope} or \emph{parent type}. Some algorithmic descriptions make use of the types in context but are not explicit in their signatures.}. % Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied.
+which in turn requires the notion of \textit{type in scope} at a
+given selection location\footnote{The \spec refers to it as the \emph{type in scope} or \emph{parent type}. Some algorithmic descriptions make use of the types in scope but are not explicit in their signatures.}. % Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied.
 To illustrate this, consider the following query with two occurrences of field \texttt{name}.
 
 %\begin{minipage}[t]{.25\textwidth}
@@ -385,17 +385,17 @@ query {
 
 %Just as in the case of well-formedness of schemas or conformance of graphs, queries must go through a validation process. We define the property of \textit{conformance} of queries, based on validation rules scattered throughout the \textit{Validation} section of the \spec\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}.
 
-% Before describing the validation process, it is very important to address the notion of \textit{type in context} where queries are defined and used. The type in context is the type over which a user might be requesting information on its fields. To illustrate this, consider the following query. The first selection, namely \texttt{goodboi}, is requesting information about the query type, meaning that it is used in the context of the \texttt{Query} type. Moving onto the  \texttt{name} subselection, it is not direct which is. In one case, the type in context is \texttt{Dog}, while in the other the field is used in the context of the \texttt{Pig} type.
+% Before describing the validation process, it is very important to address the notion of \textit{type in scope} where queries are defined and used. The type in scope is the type over which a user might be requesting information on its fields. To illustrate this, consider the following query. The first selection, namely \texttt{goodboi}, is requesting information about the query type, meaning that it is used in the context of the \texttt{Query} type. Moving onto the  \texttt{name} subselection, it is not direct which is. In one case, the type in scope is \texttt{Dog}, while in the other the field is used in the context of the \texttt{Pig} type.
 
-% The importance of this type in context is that fields or inline fragments might be valid in certain cases but not in others. Similarly, a field may have a particular return type in one case and a different one in another type, like in the following example. Both types have an \texttt{age} field, but in one case it returns an integer value while in the other a floating point value. If that field is encountered in a query, it is necessary to know to which type it is being requested.
+% The importance of this type in scope is that fields or inline fragments might be valid in certain cases but not in others. Similarly, a field may have a particular return type in one case and a different one in another type, like in the following example. Both types have an \texttt{age} field, but in one case it returns an integer value while in the other a floating point value. If that field is encountered in a query, it is necessary to know to which type it is being requested.
 
-Now that we have clarified the notion of type in context, we are in
+Now that we have clarified the notion of type in scope, we are in
 condition of defining the notion of query conformance, which in turn
 depends on the notion of selection set conformance.
 
 %\td{A query conforms when its selections conform to the Query type}
 \begin{definition}
-A \gql selection set $\sset$ \textit{conforms} to a schema $\schema$ over a type in context $\mathit{ts}$ if:
+A \gql selection set $\sset$ \textit{conforms} to a schema $\schema$ over a type in scope $\mathit{ts}$ if:
 \begin{itemize}
 \item every selection in $\sset$ is  well-formed, and
 
@@ -409,12 +409,12 @@ A \gql selection set $\sset$ \textit{conforms} to a schema $\schema$ over a type
 \end{definition}
 
 The first rule ensures that every selection is well-formed on its own, with
-respect to the type in context. Its requirements vary according to the
+respect to the type in scope. Its requirements vary according to the
 kind of selection. For instance, if the selection is a field, the rule
-checks that the field is part of the type in context and that its
+checks that the field is part of the type in scope and that its
 arguments are correctly provided; if the selection is an inline
 fragment, then the type condition must at least share one subtype with
-the type in context.
+the type in scope.
 
 
 In the second rule, the type-compatibility requirement forbids the
@@ -530,7 +530,7 @@ The \emph{size} of a selection $\sel$ and selection set $\sset$, noted $\ssize{\
 %\fo{This introduces the conformance of a query \wrt a schema, but the schema is never mentioned in the definition. It needs to be fixed!!!}
 
 
-%has to be valid with respect to the type in context \fo{when can it not be valid?}\td{If both the type condition and the type in context do not share at least one subtype (subtype is reflexive). Not sure if this is relevant here though}.%The \spec defines this rule in several different sections.
+%has to be valid with respect to the type in scope \fo{when can it not be valid?}\td{If both the type condition and the type in scope do not share at least one subtype (subtype is reflexive). Not sure if this is relevant here though}.%The \spec defines this rule in several different sections.
 
 % The second rule validates when fields can be correctly merged during evaluation, which is an essential aspect of the semantics, since it ensures that repeated fields are only evaluated once. To illustrate this, consider the following query, where a user requests information on the fields \texttt{name} and \texttt{oink} of pigs. The user decides to rename the field \texttt{oink} to \texttt{name}, however this is invalid, since both fields cannot be merged and evaluated once; both fields refer to distinct pieces of information in the system.
 
