@@ -2,7 +2,7 @@
 \section{\gcoql}\label{sec:form}
 
 In this section we describe our formalization of \gql in \coq. We start by defining a schema and its properties, then the graph data model and finally we review queries and their semantics. The definitions are as close as possible with respect to the \spec. This eyeball correspondence between the definitions in prose and the code gives a first level of trust that our formalization is correct.%, following the examples of X, Y and Z.
-Whenever there is a mismatch we point it out and explain the reasoning behind each decision.
+Whenever there is a mismatch we point it out and explain the reasoning behind each decision. 
 
 
 \subsection{Schema}\label{subsec:schema}
@@ -133,16 +133,17 @@ we omit the full definition and refer the interested reader to our
 For convenience, we encapsulate schemas with their well-formedness
 proof in a single structure. This structure also contains the
 predicate \mintinline{coq}{is_a_valid_value}, which determines whether
-a value used in a query indeed matches the scalar type expected by the
+a value used in a query or a node's property indeed matches the scalar type expected by the
 schema. For example, if a field argument has type \texttt{Float}, the
-\spec requires that the actual argument used in a query represent a double-precision fractional value\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include this base restrictions but leave it open to implementation.}.
+\spec requires that the actual argument value represents a double-precision fractional number\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include this base restrictions but leave it open to implementation.}. To model values across our development, we parameterize each module with a type \texttt{Value} (of type \texttt{eqType}, \ie \mintinline{coq}{Variable (Value : eqType)}).
+An element in \texttt{Value} is either a scalar or a list of other values.
 %
-\td{Should include Variable (Val : eqType) here as well?}
+
 \begin{minted}[bgcolor=coqbg]{coq}
 Record wfGraphQLSchema := WFGraphQLSchema {
     schema : graphQLSchema;
     _ : schema.(is_a_wf_schema);
-    is_a_valid_value : type -> Val -> bool; }.
+    is_a_valid_value : type -> Value -> bool; }.
 \end{minted}
 
 %\fo{Mention what \texttt{Vals} represents (used here for the first
@@ -165,11 +166,11 @@ and  edges contain single labels that describe the relations between
 adjacent nodes. Also, every property and label may contain a list of
 arguments (key-value pairs). %Refer to Figure~\ref{fig:graph_ex} for an example.
 
-To represent the values associated to properties and arguments, we consider the type \Vals. 
+%To represent the values associated to properties and arguments, we consider the type \Vals. 
 % A value in \Vals may be a single scalar value or a list of values\td{This choice is based on the limitations of the model}.\fo{I think we should address this in the Discussion section, where we discuss the limitations of our formalization. We could even remove the last sentence from the paragraph.}
 
 \begin{definition}
-A \emph{\gql graph} over \Vals is defined by:
+A \emph{\gql graph} is defined by:
 \begin{itemize}
     \item a root node, and
     \item a collection of edges of the form ($u$, $\fld$, $v$), where $u, v$ are nodes and
@@ -182,13 +183,13 @@ In \gcoql, this is captured by the following structures.
 % A \texttt{label} represents the set of labels over an edge or keys in a node's property. 
 %\td{Probably the name is not the best}\fo{Fully agree. I suggest changing \texttt{fld} to \texttt{label}, \texttt{Field} to \texttt{Label} and \texttt{label} to \texttt{name} (or \texttt{lname} if there is a clash) }. 
 %
-\td{Should include Variable (Val : eqType) here as well?}
+
 \begin{minted}[bgcolor=coqbg]{coq}
 Record label := 
-  Label { lname : string; args : seq (string * Val) }.
+  Label { lname : string; args : seq (string * Value) }.
 
 Record node := 
-  Node { ntype : Name; nprops : seq (label * Val) }.
+  Node { ntype : Name; nprops : seq (label * Value) }.
 
 Record graphQLGraph := 
   GraphQLGraph { root : node; 
@@ -300,16 +301,16 @@ A selection $\sel$ can be a single field $\fld$ with arguments, an aliased field
                    
     Inductive Selection : Type :=
     | SingleField (name : Name)
-                  (arguments : seq (Name * Val))
+                  (arguments : seq (Name * Value))
     | SingleAliasedField (alias : Name)
                          (name : Name)
-                         (arguments : seq (Name * Val))
+                         (arguments : seq (Name * Value))
     | NestedField (name : Name)
-                  (arguments : seq (Name * Val))
+                  (arguments : seq (Name * Value))
                   (subselections : seq Selection)
     | NestedAliasedField (alias : Name)
                          (name : Name)
-                         (arguments : seq (Name * Val))
+                         (arguments : seq (Name * Value))
                          (subselections : seq Selection)
     | InlineFragment (type_condition : Name)
                      (subselections : seq Selection).
@@ -625,14 +626,12 @@ We model responses with a tree structure, similar to JSON, as shown in Figure~\r
   \end{subfigure}%
   \begin{subfigure}{.5\textwidth}
 \begin{minted}[bgcolor=coqbg]{coq}
-Variable (Val : eqType).
+Inductive ResponseValue : Type :=
+| Leaf : option Value -> ResponseValue
+| Object : seq (Name * ResponseValue) -> ResponseValue
+| Array : seq ResponseValue -> ResponseValue.
   
-Inductive ResponseVal : Type :=
-| Leaf : option Val -> ResponseVal
-| Object : seq (Name * ResponseVal) -> ResponseVal
-| Array : seq ResponseVal -> ResponseVal.
-  
-Definition GraphQLResponse := seq (Name * ResponseVal).
+Definition GraphQLResponse := seq (Name * ResponseValue).
 \end{minted}
    
   \end{subfigure}
@@ -679,7 +678,7 @@ Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema
 The definition starts with the base case of empty selection set, which results in an empty response (1). 
 Single fields correspond to accessing a node's property that matches the field name (2). 
 As specified in \spec (\cf\S6.4.3~\cite{gqlspec}), scalar values must be coerced and verified to match the scalar type expected by the schema, otherwise the value is considered null.
-We model this with a function  $\mathit{coerce} : \mathit{Val} \to \mathit{ResponseVal}$.
+We model this with a function  $\mathit{coerce} : \mathit{Value} \to \mathit{ResponseValue}$.
 % \td{Does this make more sense with the changes?}
 %\et{this is weird, I would have expected coerce to return an option, since you said earlier that possible null values are modeled with options}
 %\td{Aja! Yep, it actually is (ResponseValue (option Vals))}
@@ -688,6 +687,7 @@ We model this with a function  $\mathit{coerce} : \mathit{Val} \to \mathit{Respo
 %\et{Also, you have both "Vals" and "Value" as names/postfixes for something that should be essentially the same.}
 %
 \td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.\et{where is that used/relevant? I see that wfCOercion only shows up, without explanation, in Section 4. It should be introduced in section 3, maybe later below (it's not necessary for the figure it seems)}\et{when showing execute-query! btw your signature here does not match the one you use in section 4, which has a wfCoercion as argument! (beware with those details)}
+\td{Yeah, you are right -- I'll change it}
 Nested fields (3) represent a traversal to neighboring nodes: the semantics searches for nodes that are connected by an edge whose label matches the field name and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
 In both field cases (2-3), evaluation has to ensure that selections with the same response name are only evaluated once. 
 This is performed by calling the $\mathit{collect}$, $\mathit{merge}$ and $\mathit{filter}$ functions, which respectively gather fields sharing the same response name, merge their subselections, and remove their repeated occurrences. Finally, inline fragments (4) simply condition whether their subselections should be evaluated in the current node. The decision is based on the $\mathit{fragment\_type\_applies}$ predicate that verifies whether the type condition is the same or a supertype of the node's type.\footnote{Aliased fields are not included here; they are evaluated the same way as unaliased fields, but differ in that the key-value pair produced is renamed accordingly.}
