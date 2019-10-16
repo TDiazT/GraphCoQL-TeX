@@ -137,6 +137,7 @@ a value used in a query indeed matches the scalar type expected by the
 schema. For example, if a field argument has type \texttt{Float}, the
 \spec requires that the actual argument used in a query represent a double-precision fractional value\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include this base restrictions but leave it open to implementation.}.
 %
+\td{Should include Variable (Val : eqType) here as well?}
 \begin{minted}[bgcolor=coqbg]{coq}
 Record wfGraphQLSchema := WFGraphQLSchema {
     schema : graphQLSchema;
@@ -181,6 +182,7 @@ In \gcoql, this is captured by the following structures.
 % A \texttt{label} represents the set of labels over an edge or keys in a node's property. 
 %\td{Probably the name is not the best}\fo{Fully agree. I suggest changing \texttt{fld} to \texttt{label}, \texttt{Field} to \texttt{Label} and \texttt{label} to \texttt{name} (or \texttt{lname} if there is a clash) }. 
 %
+\td{Should include Variable (Val : eqType) here as well?}
 \begin{minted}[bgcolor=coqbg]{coq}
 Record label := 
   Label { lname : string; args : seq (string * Val) }.
@@ -703,7 +705,7 @@ The semantics of queries is then formalized as follows:
 \begin{minted}[bgcolor=coqbg, escapeinside=||, mathescape=true]{coq}
 Definition execute_query (s : wfGraphQLSchema)
     (g : conformedGraph s) (|$\varphi$| : query) :=
-    execute_selection_set s g.(root) |$\varphi$|.(selection_set).
+    execute_selection_set s g g.(root) |$\varphi$|.(selection_set).
 \end{minted}
 
 %The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.

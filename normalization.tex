@@ -463,11 +463,10 @@ Theorem normalized_query_is_in_nf
   (s : wfGraphQLSchema) (|$\query$| : query) :
     is_in_normal_form s (normalize s |$\query$|).
     
-Lemma normalized_selections_are_grounded_fields 
+Lemma normalized_selections_are_in_gt_nf
   (s : wfGraphQLSchema) (ts : Name) (|$\sel$|s : seq Selection) :
-    all (fun |$\sel$| => 
-      |$\sel$|.(is_field) && is_in_ground_typed_nf s |$\sel$|)
-        (normalize_selections s ts |$\sel$|s).
+    all (is_in_ground_typed_nf s) 
+      (normalize_selections s ts |$\sel$|s).
  
 Lemma normalized_selections_are_non_redundant 
   (s : wfGraphQLSchema) (ts : Name) (|$\sel$|s : seq Selection) :
