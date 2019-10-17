@@ -292,6 +292,8 @@ Figure~\ref{fig:query_def}. A query consists of a list of selections, and can op
 % consists of an optional name
 % \fo{We should mention this also in \S 2}\td{Not really necessary, or is it?} and a list of selections. 
 A selection $\sel$ can be a single field $\fld$ with arguments, an aliased field $\afld$, or a possibly-aliased field followed by a set of subselections $\sset$, or an inline fragment $\ifrag{t}{\sset}$ comprising a type condition \texttt{t} and a set of subselections $\sset$. 
+Whenever a field selection contains an empty list of arguments, we simply omit the \texttt{[$\args$]} and, instead, only use the field's name.
+
 % Fields can be accompanied by a list of arguments and can also be renamed.
 
 \begin{figure*}[h]
