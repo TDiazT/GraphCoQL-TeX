@@ -180,14 +180,24 @@ A \emph{\gql graph} is defined by:
 \end{itemize}
 \end{definition}
 
-In \gcoql, this is captured by the following structures. 
+To model the values in a graph, as well as across the rest of our development, we define an inductive type \texttt{Value}, representing 
+either scalar or lists of values. The corresponding modules are then parameterized by the
+\texttt{Scalar} type.
+\begin{minted}[bgcolor=coqbg]{coq}
+Variable (Scalar : eqType).
+Inductive Value : Type :=
+| SValue : Scalar -> Value 
+| LValue : seq Value -> Value.
+\end{minted}
+
+The definition of a graph in \gcoql is then captured by the following structures.
 % A \texttt{label} represents the set of labels over an edge or keys in a node's property. 
 %\td{Probably the name is not the best}\fo{Fully agree. I suggest changing \texttt{fld} to \texttt{label}, \texttt{Field} to \texttt{Label} and \texttt{label} to \texttt{name} (or \texttt{lname} if there is a clash) }. 
 %
-
+\td{The code actually looks like that, with the @ in every Value occurrence. Should we leave it or remove it for presentation?}
 \begin{minted}[bgcolor=coqbg]{coq}
 Record label := 
-  Label { lname : string; args : seq (string * Value) }.
+  Label { lname : string; args : seq (string * @Value Scalar) }.
 
 Record node := 
   Node { ntype : Name; nprops : seq (label * Value) }.
@@ -198,14 +208,14 @@ Record graphQLGraph :=
 \end{minted}
 The root node of a \gql graph represents the starting point from where queries are evaluated. Note that edges are modeled as a list, and not as a set; unicity of its members is handled by a separate validation. 
  % and include a posterior separate validation on uniqueness of its members.
-This found this approach more convenient in the current development, but this design decision would be fairly easy to revisit if needed.
+We found this approach to be more convenient in the current development, but this design decision would be fairly easy to revisit if needed.
 % \td{Added this}
 
 
 Intuitively, the data modeled by a \gql graph is expected to respect
 (the type system described by) a schema. However, the definition of
 graphs above is fully independent of schemas. To relate the data to the type system, we define the notion of \textit{conformance} of a graph \wrt a schema, partially based on~\cite{gqlph}.
-\td{Over here we should start including the notion of Value type + valid scalar}
+%\td{Over here we should start including the notion of Value type + valid scalar}
 %
 \begin{definition}
 A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if:
@@ -222,21 +232,36 @@ A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if:
 %
 
 
-The conformance of nodes includes rules such as checking that a node
-type is declared as an object type in the schema and that its
-properties are defined as fields in the corresponding type. Among
-others, the conformance of edges ensures that edge labels are declared
-as a field in the source node's type and the target node has a type
-compatible with the field's return type. Full definitions of both
-these notions can be found in the \coq development. %are found in file \texttt{GraphConformance.v}.
+The conformance of nodes validates that a node's type is declared as an object type
+in the schema and that its properties are correct. In turn, a property is correct if 
+its key and arguments are defined in a field in the corresponding type, and any value, either in an argument or
+the property's value, is \emph{valid} \wrt the expected types described in the schema. 
+For instance, if a field has type \texttt{Float}, 
+then a node's property matching the field must have a value that represents a double-precision fractional value\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include these base restrictions but leave it open to implementation.}.
+To model value validation throughout our development, we parameterize the corresponding modules with a predicate $ is\_valid\_scalar\_value : graphQLSchema \to Name \to Scalar \to Bool$.
+\td{I am trying to push this definition here and then not having to redefine it or explain it again}
+
+Meanwhile, the conformance of edges validates that: (1) an edge's label corresponds to a field in the
+source node's type, (2) the target node's type corresponds to the field's type (either the same type, an implementation
+or part of a union), (3) if the type is not a list type then there should only be one outgoing edge, from the source node, with the given label,
+and (4), the arguments are defined in the corresponding field in the schema and their values are valid \wrt their expected types.
+
+%includes rules such as checking that a node
+%type is declared as an object type in the schema and that its
+%properties are defined as fields in the corresponding type. Among
+%others, the conformance of edges ensures that edge labels are declared
+%as a field in the source node's type and the target node has a type
+%compatible with the field's return type. Full definitions of both
+%these notions can be found in the \coq development. %are found in file \texttt{GraphConformance.v}.
 
 With this in mind, the notion of conformance of a graph \wrt a schema is formalized as follows:
 %
 \begin{minted}[bgcolor=coqbg]{coq}
+Variable (is_a_valid_scalar_value : 
+  graphQLSchema -> Name -> Scalar -> bool).
+  
 Definition is_a_conforming_graph 
       (s : wfGraphQLSchema) 
-      (is_a_valid_scalar_value : graphQLSchema -> Name -> 
-        Scalar -> bool)
       (g : graphQLGraph) : bool :=
   root_type_conforms s g.(root) &&
   edges_conform s g &&
@@ -246,11 +271,11 @@ Definition is_a_conforming_graph
 % As a side note, this notion was only loosely defined in \HP, but it is properly addressed in a recent work of one of its authors ~\cite{olafschema}.
 
 Similarly to \gql schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph, containing a graph and a proof of its conformance to a particular schema.
-
+\td{Since I mention above that it uses this predicate and show it as a variable, maybe we can skip it?}
 \begin{minted}[bgcolor=coqbg]{coq}
 Record conformedGraph (s : wfGraphQLSchema) 
-  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
-    Scalar -> bool) :=
+(*  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
+    Scalar -> bool) := *)
   ConformedGraph { graph : graphQLGraph;
                        _ : is_a_conforming_graph s graph }.
 \end{minted}
