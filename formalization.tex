@@ -131,19 +131,20 @@ we omit the full definition and refer the interested reader to our
 % There are two main reasons why we push this rule to a separate predicate instead of embedding it in the structure itself. The first one is that, even though the \spec embeds it in the grammar, it still includes it in a validation rule later on. To match their definition and preserve the eyeball correspondence, we also include it. The second reason is that we use SSReflect and it is simpler to use \mintinline{coq}{seq} directly and all its theory, instead of defining coercions and repeating definitions for a new structure.
 
 For convenience, we encapsulate schemas with their well-formedness
-proof in a single structure. This structure also contains the
-predicate \mintinline{coq}{is_a_valid_value}, which determines whether
-a value used in a query or a node's property indeed matches the scalar type expected by the
-schema. For example, if a field argument has type \texttt{Float}, the
-\spec requires that the actual argument value represents a double-precision fractional number\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include this base restrictions but leave it open to implementation.}. To model values across our development, we parameterize each module with a type \texttt{Value} (of type \texttt{eqType}, \ie \mintinline{coq}{Variable (Value : eqType)}).
-An element in \texttt{Value} is either a scalar or a list of other values.
+proof in a single structure. 
+
+%This structure also contains the
+%predicate \mintinline{coq}{is_a_valid_value}, which determines whether
+%a value used in a query or a node's property indeed matches the scalar type expected by the
+% schema. For example, if a field argument has type \texttt{Float}, the
+% \spec requires that the actual argument value represents a double-precision fractional number\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include this base restrictions but leave it open to implementation.}. To model values across our development, we parameterize each module with a type \texttt{Value} (of type \texttt{eqType}, \ie \mintinline{coq}{Variable (Value : eqType)}).
+% An element in \texttt{Value} is either a scalar or a list of other values.
 %
 
 \begin{minted}[bgcolor=coqbg]{coq}
 Record wfGraphQLSchema := WFGraphQLSchema {
     schema : graphQLSchema;
-    _ : schema.(is_a_wf_schema);
-    is_a_valid_value : type -> Value -> bool; }.
+    _ : schema.(is_a_wf_schema); }.
 \end{minted}
 
 %\fo{Mention what \texttt{Vals} represents (used here for the first
@@ -204,6 +205,7 @@ This found this approach more convenient in the current development, but this de
 Intuitively, the data modeled by a \gql graph is expected to respect
 (the type system described by) a schema. However, the definition of
 graphs above is fully independent of schemas. To relate the data to the type system, we define the notion of \textit{conformance} of a graph \wrt a schema, partially based on~\cite{gqlph}.
+\td{Over here we should start including the notion of Value type + valid scalar}
 %
 \begin{definition}
 A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if:
@@ -232,7 +234,10 @@ With this in mind, the notion of conformance of a graph \wrt a schema is formali
 %
 \begin{minted}[bgcolor=coqbg]{coq}
 Definition is_a_conforming_graph 
-      (s : wfGraphQLSchema) (g : graphQLGraph) : bool :=
+      (s : wfGraphQLSchema) 
+      (is_a_valid_scalar_value : graphQLSchema -> Name -> 
+        Scalar -> bool)
+      (g : graphQLGraph) : bool :=
   root_type_conforms s g.(root) &&
   edges_conform s g &&
   nodes_conform s g.(nodes).
@@ -243,7 +248,9 @@ Definition is_a_conforming_graph
 Similarly to \gql schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph, containing a graph and a proof of its conformance to a particular schema.
 
 \begin{minted}[bgcolor=coqbg]{coq}
-Record conformedGraph (s : wfGraphQLSchema) :=
+Record conformedGraph (s : wfGraphQLSchema) 
+  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
+    Scalar -> bool) :=
   ConformedGraph { graph : graphQLGraph;
                        _ : is_a_conforming_graph s graph }.
 \end{minted}
@@ -503,11 +510,15 @@ A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection s
 
 \begin{minted}[bgcolor=coqbg, escapeinside=@@, mathescape=true]{coq}
 Definition query_conforms 
-    (s : wfGraphQLSchema) (@$\query$@ : query) : bool :=
+  (s : wfGraphQLSchema) (@$\query$@ : query)
+  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
+    Scalar -> bool) : bool :=
     selections_conform s s.(query_type) @$\query$@.(selection_set).
     
 Definition selections_conform (s : wfGraphQLSchema)
-    (ts : Name) (@$\sel$@s : seq Selection) : bool :=
+  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
+        Scalar -> bool)
+  (ts : Name) (@$\sel$@s : seq Selection) : bool :=
     let @$\sel$@s_with_scope := [seq (ts, @$\sel$@) | @$\sel$@ <- @$\sel$@s] in 
       all (is_consistent ts) @$\sel$@s &&
       @$\sel$@s_with_scope.(are_type_compatible) &&
@@ -701,7 +712,10 @@ Let $\graph$ be a graph and $\query$ a query containing a selection set $\sset$,
 The semantics of queries is then formalized as follows:
 \begin{minted}[bgcolor=coqbg, escapeinside=||, mathescape=true]{coq}
 Definition execute_query (s : wfGraphQLSchema)
-    (g : conformedGraph s) (|$\varphi$| : query) :=
+  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
+        Scalar -> bool)
+  (g : conformedGraph s is_a_valid_scalar_value) 
+  (|$\varphi$| : query) :=
     execute_selection_set s g g.(root) |$\varphi$|.(selection_set).
 \end{minted}
 
@@ -722,12 +736,8 @@ Definition execute_query (s : wfGraphQLSchema)
     % Empty
     & (1) & \eval{\cdot}{u} &= [\cdot] \\
     % SingleField
-    & (2) & \evalu{\fld :: \sset} &= \begin{cases}
-        \resp{\mathit{coerce(\val)}} :: \evalfilteru{\sset}{\fkey}  
-        & \text{if } \mathit{property}_{u}(\fld) = \val \text{ and } \mathit{is\_valid\_response_{type(u)}(coerce (\val))} \\
-        \resp{\nval} :: \evalfilteru{\sset}{\fkey} 
-        & \text{otherwise}
-    \end{cases}\\
+    & (2) & \evalu{\fld :: \sset} &= 
+        \resp{(\mathit{complete\_value(ftype_{type(u)}(f), property_{u}(\fld))})} :: \evalfilteru{\sset}{\fkey}  \\
     % Nested field
     & (3) & \evalu{\nfld{\overline{\beta}} :: \sset} &=
     \begin{cases}
