@@ -724,19 +724,19 @@ Definition execute_query (s : wfGraphQLSchema)
     % SingleField
     & (2) & \evalu{\fld :: \sset} &= \begin{cases}
         \resp{\mathit{coerce(\val)}} :: \evalfilteru{\sset}{\fkey}  
-        & \text{if } \mathit{property}_{u}(\fld) = \val \text{ and } \mathit{is\_valid\_response}(\mathit{coerce}(\val)) \\
+        & \text{if } \mathit{property}_{u}(\fld) = \val \text{ and } \mathit{is\_valid\_response_{type(u)}(coerce (\val))} \\
         \resp{\nval} :: \evalfilteru{\sset}{\fkey} 
         & \text{otherwise}
     \end{cases}\\
     % Nested field
     & (3) & \evalu{\nfld{\overline{\beta}} :: \sset} &=
     \begin{cases}
-        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge} (\mathit{collect}_{\fkey} (\sset))}{v_{i}})\; \mathit{neighbors}_{\fld}(u) \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
+        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_{type(u), \fkey} (\sset))}}{v_{i}})\; \mathit{neighbors}_{\fld}(u) \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
          \hfill \text{ if } 
             \mathit{ftype_{type(u)}(\fkey)} = L \text{ and } \{v_{1}, \ldots, v_{k}\} = 
         \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in \mathit{edges}(\graph)\} \\
         %
-    \fkey:\{\eval{\subqueries{\beta}}{v}\} ::  \evalfilteru{\sset}{\fkey}  
+    \fkey:\{\eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_{type(u), \fkey} (\sset))}}{v}\} ::  \evalfilteru{\sset}{\fkey}  
          \hfill \text{ if } 
         \mathit{ftype_{type(u)}(\fkey)}  \neq L \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     %
@@ -754,6 +754,8 @@ Definition execute_query (s : wfGraphQLSchema)
     \end{cases}
     \end{align*}
     \caption{Semantics of \gql selection sets, adapted from~\cite{gqlph} and the \spec. 
+    \td{$\mathit{fragment\_type\_applies}$ is actually called $\mathit{does\_fragment\_type\_applies}$ in the spec (as I had it before). 
+	This one is simpler to read and makes more sense, but I wondered if it shouldn't be the other name}
     \newline {\footnotesize 
     $\mathit{property}$ and $\mathit{type}$ are accessors to a node's property and type. $\mathit{neighbors}$ gets the neighbors of a node whose edge is labeled with the given field.
     $\mathit{edges}$ gets the set of edges of a graph.  $\mathit{is\_valid\_response}$ validates the coerced value.

@@ -231,10 +231,10 @@ For the latter, the process either removes fragments or lifts their subselection
     % Nested field
     & (3) & \tnorm{\nfld{\overline{\beta}} :: \sset} &=
     \begin{cases}
-        \nfld{\norm{ftype_{ts}(\fkey)}{\overline{\beta} \mdoubleplus \mathit{merge (collect_\fkey (\sset))}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
+        \nfld{\norm{ftype_{ts}(\fkey)}{\overline{\beta} \mdoubleplus \mathit{merge (collect_{ts, \fkey} (\sset))}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
 	            \mathit{is\_object\_type (ftype_{ts} (\fkey))}\\
         %
-    \nfld{\mathit{map}\; (\lambda t_{i}.\; \ifrag{$t_{i}$}{\norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (collect_{\fkey} (\sset))}}})\; \mathit{get\_possible\_types (ts)}} 
+    \nfld{\mathit{map}\; (\lambda t_{i}.\; \ifrag{$t_{i}$}{\norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (collect_{ts, \fkey} (\sset))}}})\; \mathit{get\_possible\_types (ts)}} 
     		:: \tnorm{\filter{\sset}{\fkey}} \\
 		\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\; \text{ otherwise } 
     \end{cases}\\
@@ -254,41 +254,6 @@ For the latter, the process either removes fragments or lifts their subselection
 \label{fig:normalize}
 \end{figure*}
 
-\iffalse
-\begin{figure*}[t]
-\centering
-\begin{tabular}{c}
-\begin{lstlisting}[
-mathescape=true,
-style=code]
-(*@\textbf{BEGIN}@*) normalize
- (*@\textbf{INPUT}@*) schema, type_in_context, queries
- CASE queries WITH
-  | nil => nil
-  | CONS (response_name [args] { subqueries }) queries => 
-    LET return_type := LOOKUP (schema, type_in_scope, response_name) IN
-    LET collected := COLLECT (schema, response_name, type_in_scope, queries) IN
-    LET merged := CONCAT (subqueries,  MERGE collected) IN
-    LET filtered := FILTER (response_name, queries) IN
-    
-    IF IS_OBJECT_TYPE (schema, return_type) THEN 
-     CONS
-      response_name [args] { normalize (schema, return_type, merged)} 
-      normalize (schema, type_in_scope, filtered)
-    ELSE 
-     LET subtypes := SUBTYPES (schema, type_in_scope) IN
-     CONS
-      response_name [args] { MAP ($\lambda$ subtype => INLINE (subtype, normalize (schema, subtype, merged))) subtypes } 
-      normalize (schema, type_in_scope, filtered)
-     
-  | ...
-(*@\textbf{END}@*) normalize
-\end{lstlisting}
-\end{tabular}
-\caption{Pseudocode for the normalization procedure, showcasing field selections with subqueries.\td{Should we add brief defs. of COLLECT, MERGE, etc.?}}
-\label{fig:normalize}
-\end{figure*}
-\fi
 
 
 %The complete normalization process is actually composed of two separate functions; \texttt{normalize}, which performs all the actual work but under the assumption that the type in context is an object type, and \texttt{normalize\_queries}, which makes no assumption but only pipes the work\et{?}\td{Don't know what else to add. One function does all the work, the other one just pipes the work the other, based on the type in context} \et{my question is because the expression "pipe the work" is not clear/correct} to the former. The main process can be informally described as consisting of two subprocesses that deal with the two aforementioned properties.\et{which? (merging, mentioned below, was not mentioned above)}
@@ -413,7 +378,7 @@ Of course, defining a normalization procedure in itself does not ensure anything
     & (2) & \sevalu{\fld :: \sset} &= 
     \begin{cases}
       \resp{\texttt{coerce(\val)}} :: \sevalu{\sset}  
-        & \text{ if } \mathit{property_{u}(\fld)} = \val \text{ and } \mathit{is\_valid\_response (coerce (\val))} \\
+        & \text{ if } \mathit{property_{u}(\fld)} = \val \text{ and } \mathit{is\_valid\_response_{type(u)}(coerce (\val))} \\
       %
       \resp{\nval} :: \sevalu{\sset} 
       & \text{ otherwise}
