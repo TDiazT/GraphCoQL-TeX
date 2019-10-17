@@ -218,7 +218,7 @@ graphs above is fully independent of schemas. To relate the data to the type sys
 %\td{Over here we should start including the notion of Value type + valid scalar}
 %
 \begin{definition}
-A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if:
+A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if: \td{Should this definition include the predicate? \eg, with a value validation predicate bleble}
 \begin{itemize}
     \item the types of $\mathcal{G}$ root node and $\mathcal{S}$ query
       root coincide,
@@ -727,7 +727,7 @@ This is performed by calling the $\mathit{collect}$, $\mathit{merge}$ and $\math
 %The definition of the evaluation function for selections, displayed in Figure~\ref{fig:semantics}, only refers to the base case of an empty list, field selections without renaming and inline fragments. The complete definition can be found in the file \texttt{QuerySemantics.v}.
 
 \begin{definition}
-Let $\graph$ be a graph and $\query$ a query containing a selection set $\sset$, both conforming to a schema $\schema$. The semantics of $\query$ over $\graph$ is defined as the result of evaluating $\sset$ from the root node of $\graph$.
+Let $\graph$ be a graph and $\query$ a query containing a selection set $\sset$, both conforming to a schema $\schema$. The semantics of $\query$ over $\graph$\td{, with a coercing function XX and value validation YY}  is defined as the result of evaluating $\sset$ from the root node of $\graph$.
 \end{definition}
 
 The semantics of queries is then formalized as follows:
