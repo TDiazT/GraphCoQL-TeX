@@ -240,6 +240,7 @@ For instance, if a field has type \texttt{Float},
 then a node's property matching the field must have a value that represents a double-precision fractional value\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include these base restrictions but leave it open to implementation.}.
 To model value validation throughout our development, we parameterize the corresponding modules with a predicate $ is\_valid\_scalar\_value : graphQLSchema \to Name \to Scalar \to Bool$.
 \td{I am trying to push this definition here and then not having to redefine it or explain it again}
+\td{Probably not the best name for the predicate tbh}
 
 Meanwhile, the conformance of edges validates that: (1) an edge's label corresponds to a field in the
 source node's type, (2) the target node's type corresponds to the field's type (either the same type, an implementation
@@ -449,7 +450,8 @@ kind of selection. For instance, if the selection is a field, the rule
 checks that the field is part of the type in scope and that its
 arguments are correctly provided; if the selection is an inline
 fragment, then the type condition must at least share one subtype with
-the type in scope.
+the type in scope. This rule also includes validating the values used
+in arguments, similarly to the case of graphs.
 
 
 In the second rule, the type-compatibility requirement forbids the
@@ -532,17 +534,17 @@ A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection s
 %\td{Updated}
 %\td{Need to adjust names}
 %The implementation can be seen in the code below, however due to space limitations we only informally describe the %three mentioned rules. The complete definitions can be found in the file \texttt{QueryConformance.v}.
-
+\td{Similar case}
 \begin{minted}[bgcolor=coqbg, escapeinside=@@, mathescape=true]{coq}
 Definition query_conforms 
   (s : wfGraphQLSchema) (@$\query$@ : query)
-  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
-    Scalar -> bool) : bool :=
+(*  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
+    Scalar -> bool) *) : bool :=
     selections_conform s s.(query_type) @$\query$@.(selection_set).
     
 Definition selections_conform (s : wfGraphQLSchema)
-  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
-        Scalar -> bool)
+(*  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
+        Scalar -> bool) *)
   (ts : Name) (@$\sel$@s : seq Selection) : bool :=
     let @$\sel$@s_with_scope := [seq (ts, @$\sel$@) | @$\sel$@ <- @$\sel$@s] in 
       all (is_consistent ts) @$\sel$@s &&
@@ -700,6 +702,10 @@ Definition GraphQLResponse := seq (Name * ResponseValue).
 %\td{Maybe merge this informal description with the description of the figure?}
 %\et{yes}
 Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. %In this sense:
+Because \gql is not tied to any technology, the resolution of selections in a query might produce invalid results or in a different format than expected (\eg integer values as strings). 
+In order to resolve these potential issues, the \spec considers invalid results as null values and 
+requires that valid ones are \emph{coerced} into proper values, which must also respect the expected types (otherwise are also considered null).
+
 %\begin{itemize}
  %   \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node.
   %  \item An inline fragment conditions whether using a node to access its properties or to traverse to other nodes.
@@ -707,26 +713,16 @@ Informally, the evaluation of a query's selection set represents a navigation ov
 %\end{itemize}
 
 \begin{definition}
-Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $\sset$ over $\graph$ from node $u \in \mathit{nodes}(\graph)$\footnote{Where $\mathit{nodes}$ is a function that retrieves all nodes from a graph.}, denoted $\llbracket \sset \rrbracket^{u}_{\graph}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
+Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $\sset$ over $\graph$ from node $u \in \mathit{nodes}(\graph)$\footnote{Where $\mathit{nodes}$ is a function that retrieves all nodes from a graph.}, with a coercing function $\mathit{coerce} : \mathit{Scalar} \to \mathit{Scalar}$ and a value validation predicate $\mathit{is\_valid\_scalar\_value} : \mathit{graphQLSchema} \to \mathit{Name} \to \mathit{Scalar} \to \mathit{Bool}$, simply denoted $\llbracket \sset \rrbracket^{u}_{\graph}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
 \end{definition}
 
 %Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. 
 The definition starts with the base case of empty selection set, which results in an empty response (1). 
 Single fields correspond to accessing a node's property that matches the field name (2). 
-As specified in \spec (\cf\S6.4.3~\cite{gqlspec}), scalar values must be coerced and verified to match the scalar type expected by the schema, otherwise the value is considered null.
-We model this with a function  $\mathit{coerce} : \mathit{Value} \to \mathit{ResponseValue}$.
-% \td{Does this make more sense with the changes?}
-%\et{this is weird, I would have expected coerce to return an option, since you said earlier that possible null values are modeled with options}
-%\td{Aja! Yep, it actually is (ResponseValue (option Vals))}
-%\et{so fix the signature!}
-%
-%\et{Also, you have both "Vals" and "Value" as names/postfixes for something that should be essentially the same.}
-%
-\td{We build a wfCoercion by proving that the coerced value is not redundant -- this might need more explanation}.\et{where is that used/relevant? I see that wfCOercion only shows up, without explanation, in Section 4. It should be introduced in section 3, maybe later below (it's not necessary for the figure it seems)}\et{when showing execute-query! btw your signature here does not match the one you use in section 4, which has a wfCoercion as argument! (beware with those details)}
-\td{Yeah, you are right -- I'll change it}
+To ensure that only valid results are produced, the function \texttt{complete\_value} (\cf\S6.4.3~\cite{gqlspec}) transforms invalid values into null and coerces valid ones, after checking that they adhere to their expected types in the schema.
 Nested fields (3) represent a traversal to neighboring nodes: the semantics searches for nodes that are connected by an edge whose label matches the field name and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
 In both field cases (2-3), evaluation has to ensure that selections with the same response name are only evaluated once. 
-This is performed by calling the $\mathit{collect}$, $\mathit{merge}$ and $\mathit{filter}$ functions, which respectively gather fields sharing the same response name, merge their subselections, and remove their repeated occurrences. Finally, inline fragments (4) simply condition whether their subselections should be evaluated in the current node. The decision is based on the $\mathit{fragment\_type\_applies}$ predicate that verifies whether the type condition is the same or a supertype of the node's type.\footnote{Aliased fields are not included here; they are evaluated the same way as unaliased fields, but differ in that the key-value pair produced is renamed accordingly.}
+This is performed by calling the $\mathit{collect}$, $\mathit{merge}$ and $\mathit{filter}$ functions, which respectively gather fields sharing the same response name, merge their subselections, and remove their repeated occurrences. Finally, inline fragments (4) simply condition whether their subselections should be evaluated in the current node. The decision is based on the $\mathit{fragment\_type\_applies}$\td{ref to original def in spec?} predicate that verifies whether the type condition is the same or a supertype of the node's type.\footnote{Aliased fields are not included here; they are evaluated the same way as unaliased fields, but differ in that the key-value pair produced is renamed accordingly.}
 
 %The definition of the evaluation function for selections, displayed in Figure~\ref{fig:semantics}, only refers to the base case of an empty list, field selections without renaming and inline fragments. The complete definition can be found in the file \texttt{QuerySemantics.v}.
 
@@ -739,9 +735,11 @@ The semantics of queries is then formalized as follows:
 Definition execute_query (s : wfGraphQLSchema)
   (is_a_valid_scalar_value : graphQLSchema -> Name -> 
         Scalar -> bool)
-  (g : conformedGraph s is_a_valid_scalar_value) 
+  (g : conformedGraph s is_a_valid_scalar_value)
+  (coerce : Scalar -> Scalar) 
   (|$\varphi$| : query) :=
-    execute_selection_set s g g.(root) |$\varphi$|.(selection_set).
+    execute_selection_set s is_valid_scalar_value g coerce
+      g.(root) |$\varphi$|.(selection_set).
 \end{minted}
 
 %The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.
