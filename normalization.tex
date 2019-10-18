@@ -443,8 +443,7 @@ Likewise, the proof follows by well-founded induction over the size of the selec
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Lemma normalize_selections_preserves_semantics
   (s : wfGraphQLSchema) (g : conformedGraph s) 
-  (coerce : Scalar -> Scalar) (|$\sel$|s : seq Selection) 
-  (u : node) :
+  (|$\sel$|s : seq Selection) (u : node) :
     u |\textbackslash|in g.(nodes) ->
     execute_selection_set s |\vscalar| g coerce
       u (normalize_selections s u.(ntype) |$\sel$s|) =
@@ -453,10 +452,11 @@ Lemma normalize_selections_preserves_semantics
 
 Theorem normalize_preserves_query_semantics 
   (s : wfGraphQLSchema) (g : conformedGraph s)
-  (coerce : Scalar -> Scalar) (|$\query$| : query) :
+  (|$\query$| : query) :
     execute_query s g coerce (normalize s |$\query$|) =
     execute_query s g coerce |$\query$|.
 \end{minted}
+\td{Also removed coerce from the definition here -- I could actually do the same with the schema and the graph tbh...}
 %\et{I guess you need the Lemma first, to be able to prove the Theorem.}
 
 % This concludes our proofs of normalization and establish that the first premise assumed by \HP is correct in the context of our system.
@@ -482,15 +482,14 @@ The proof is once again performed by induction over the size of the selection se
 \begin{minted}[bgcolor=coqbg, escapeinside=||,mathescape=true]{coq}
 Theorem exec_query_eq_simpl_exec 
   (s : wfGraphQLSchema) (g : conformedGraph s)
-  (coerce : Scalar -> Scalar) (|$\query$| : query) : 
+  (|$\query$| : query) : 
     is_in_normal_form s |$\query$| -> 
     execute_query s g coerce |$\query$| =
     simpl_execute_query s g coerce |$\query$|.
     
 Lemma exec_sel_eq_simpl_exec
   (s : wfGraphQLSchema) (g : conformedGraph s) 
-  (coerce : Scalar -> Scalar) (|$\sel$|s : seq Selection) 
-  (u : node) :
+  (|$\sel$|s : seq Selection) (u : node) :
     are_in_normal_form s |$\sel$|s -> 
     execute_selection_set s |\vscalar| g coerce
       u |$\sel$|s = 

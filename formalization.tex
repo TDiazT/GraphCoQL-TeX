@@ -261,8 +261,8 @@ and (4), the arguments are defined in the corresponding field in the schema and 
 With this in mind, the notion of conformance of a graph \wrt a schema is formalized as follows:
 %
 \begin{minted}[bgcolor=coqbg, escapeinside=||]{coq}
-Variable (|\vscalar| : 
-  graphQLSchema -> Name -> Scalar -> bool).
+Variable 
+  (|\vscalar| : graphQLSchema -> Name -> Scalar -> bool).
   
 Definition is_a_conforming_graph 
       (s : wfGraphQLSchema) 
@@ -701,7 +701,7 @@ Definition GraphQLResponse := seq (Name * ResponseValue).
 %\td{Maybe merge this informal description with the description of the figure?}
 %\et{yes}
 Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. %In this sense:
-Because \gql is not tied to any technology, the resolution of selections in a query might produce invalid results or in a different format than expected (\eg integer values as strings). 
+Because \gql is not tied to any technology, the resolution of selections in a query might produce invalid results\td{Actually, I mean that they might not exist -- null} or in a different format than expected (\eg integer values as strings). 
 In order to resolve these potential issues, the \spec considers invalid results as null values and 
 requires that valid ones are \emph{coerced} into proper values, which must also respect the expected types (otherwise are also considered null).
 
@@ -719,6 +719,7 @@ Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema
 The definition starts with the base case of empty selection set, which results in an empty response (1). 
 Single fields correspond to accessing a node's property that matches the field name (2). 
 To ensure that only valid results are produced, the function \texttt{complete\_value} (\cf\S6.4.3~\cite{gqlspec}) transforms invalid values into null and coerces valid ones, after checking that they adhere to their expected types in the schema.
+The coercion function is included as a parameter in the corresponding modules.
 Nested fields (3) represent a traversal to neighboring nodes: the semantics searches for nodes that are connected by an edge whose label matches the field name and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
 In both field cases (2-3), evaluation has to ensure that selections with the same response name are only evaluated once. 
 This is performed by calling the $\mathit{collect}$, $\mathit{merge}$ and $\mathit{filter}$ functions (adapted from \S6.3.2-6.4.3~\cite{gqlspec}), which respectively gather fields sharing the same response name, merge their subselections, and remove their repeated occurrences. Finally, inline fragments (4) simply condition whether their subselections should be evaluated in the current node. The decision is based on the $\mathit{fragment\_type\_applies}$ predicate (\cf\S6.3.2~\cite{gqlspec})\td{ref to original def in spec?} that verifies whether the type condition is the same or a supertype of the node's type.\footnote{Aliased fields are not included here; they are evaluated the same way as unaliased fields, but differ in that the key-value pair produced is renamed accordingly.}
@@ -731,14 +732,14 @@ Let $\graph$ be a graph and $\query$ a query containing a selection set $\sset$,
 
 The semantics of queries is then formalized as follows:
 \begin{minted}[bgcolor=coqbg, escapeinside=||, mathescape=true]{coq}
+Variable (coerce : Scalar -> Scalar).
 Definition execute_query (s : wfGraphQLSchema)
-  (|\vscalar| : graphQLSchema -> Name -> Scalar -> bool)
   (g : conformedGraph s |\vscalar|)
-  (coerce : Scalar -> Scalar) 
   (|$\query$| : query) :=
     execute_selection_set s |\vscalar| g coerce
       g.(root) |$\query$|.(selection_set).
 \end{minted}
+\td{Since this is. the first occurrence of coerce, in code, I include it as a variable (note that I use \vscalar in the graph parameter, since I already mentioned that I use it as a parameter in the corresponding modules)}
 
 %The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.
 
