@@ -194,11 +194,11 @@ The definition of a graph in \gcoql is then captured by the following structures
 % A \texttt{label} represents the set of labels over an edge or keys in a node's property. 
 %\td{Probably the name is not the best}\fo{Fully agree. I suggest changing \texttt{fld} to \texttt{label}, \texttt{Field} to \texttt{Label} and \texttt{label} to \texttt{name} (or \texttt{lname} if there is a clash) }. 
 %
-\td{The code actually looks like that, with the @ in every Value occurrence. Should we leave it or remove it for presentation?}\et{in practice, you could make it an implicit parameter instead of a variable, right? \texttt{Inductive Value \{Scalar : eqType\} : Type := ...}}
-\et{in any case, in the paper, just use Value and forget about the Scalar argument}
+%\td{The code actually looks like that, with the @ in every Value occurrence. Should we leave it or remove it for presentation?}\et{in practice, you could make it an implicit parameter instead of a variable, right? \texttt{Inductive Value \{Scalar : eqType\} : Type := ...}}
+%\et{in any case, in the paper, just use Value and forget about the Scalar argument}
 \begin{minted}[bgcolor=coqbg]{coq}
 Record label := 
-  Label { lname : string; args : seq (string * @Value Scalar) }.
+  Label { lname : string; args : seq (string * Value) }.
 
 Record node := 
   Node { ntype : Name; nprops : seq (label * Value) }.
@@ -219,7 +219,8 @@ graphs above is fully independent of schemas. To relate the data to the type sys
 %\td{Over here we should start including the notion of Value type + valid scalar}
 %
 \begin{definition}
-A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if: \td{Should this definition include the predicate? \eg, with a value validation predicate bleble}\et{instead say that the value validation predicate is a global (module) parameter -- ok, seems you're doing that in the next paragraph below}
+A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if: 
+%\td{Should this definition include the predicate? \eg, with a value validation predicate bleble}\et{instead say that the value validation predicate is a global (module) parameter -- ok, seems you're doing that in the next paragraph below}
 \begin{itemize}
     \item the types of $\mathcal{G}$ root node and $\mathcal{S}$ query
       root coincide,
@@ -238,11 +239,11 @@ in the schema and that its properties are correct. In turn, a property is correc
 its key and arguments are defined in a field in the corresponding type, and any value, either in an argument or
 the property's value, is \emph{valid} \wrt the expected types described in the schema. 
 For instance, if a field has type \texttt{Float}, 
-then a node's property matching the field must have a value that represents a double-precision fractional value\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include these base restrictions but leave it open to implementation.}.
-To model value validation throughout our development, we parameterize the corresponding modules with a predicate $ is\_valid\_scalar\_value : graphQLSchema \to Name \to Scalar \to Bool$.
-\td{I am trying to push this definition here and then not having to redefine it or explain it again}\et{yep, that's better}
-\td{Probably not the best name for the predicate tbh}
-\et{what about check\_scalar ?}
+then a node's property matching the field must have a value that represents a double-precision fractional value\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754 (\cf\S3.5.2~\cite{gqlspec}). We do not include these base restrictions but leave it open to implementation.}.
+To model value validation throughout our development, we parameterize the corresponding modules with a predicate $ \mathit{\vscalar} : \mathit{graphQLSchema} \to \mathit{Name} \to \mathit{Scalar} \to \mathit{Bool}$.
+%\td{I am trying to push this definition here and then not having to redefine it or explain it again}\et{yep, that's better}
+%\td{Probably not the best name for the predicate tbh}
+%\et{what about check\_scalar ?}
 
 Meanwhile, the conformance of edges validates that: (1) an edge's label corresponds to a field in the
 source node's type, (2) the target node's type corresponds to the field's type (either the same type, an implementation
@@ -259,8 +260,8 @@ and (4), the arguments are defined in the corresponding field in the schema and 
 
 With this in mind, the notion of conformance of a graph \wrt a schema is formalized as follows:
 %
-\begin{minted}[bgcolor=coqbg]{coq}
-Variable (is_a_valid_scalar_value : 
+\begin{minted}[bgcolor=coqbg, escapeinside=||]{coq}
+Variable (|\vscalar| : 
   graphQLSchema -> Name -> Scalar -> bool).
   
 Definition is_a_conforming_graph 
@@ -274,11 +275,9 @@ Definition is_a_conforming_graph
 % As a side note, this notion was only loosely defined in \HP, but it is properly addressed in a recent work of one of its authors ~\cite{olafschema}.
 
 Similarly to \gql schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph, containing a graph and a proof of its conformance to a particular schema.
-\td{Since I mention above that it uses this predicate and show it as a variable, maybe we can skip it?} \et{yes}
+%\td{Since I mention above that it uses this predicate and show it as a variable, maybe we can skip it?} \et{yes}
 \begin{minted}[bgcolor=coqbg]{coq}
-Record conformedGraph (s : wfGraphQLSchema) 
-(*  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
-    Scalar -> bool) := *)
+Record conformedGraph (s : wfGraphQLSchema) :=
   ConformedGraph { graph : graphQLGraph;
                        _ : is_a_conforming_graph s graph }.
 \end{minted}
@@ -538,17 +537,13 @@ A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection s
 %\td{Updated}
 %\td{Need to adjust names}
 %The implementation can be seen in the code below, however due to space limitations we only informally describe the %three mentioned rules. The complete definitions can be found in the file \texttt{QueryConformance.v}.
-\td{Similar case}
+%\td{Similar case}
 \begin{minted}[bgcolor=coqbg, escapeinside=@@, mathescape=true]{coq}
 Definition query_conforms 
-  (s : wfGraphQLSchema) (@$\query$@ : query)
-(*  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
-    Scalar -> bool) *) : bool :=
+  (s : wfGraphQLSchema) (@$\query$@ : query) : bool :=
     selections_conform s s.(query_type) @$\query$@.(selection_set).
     
 Definition selections_conform (s : wfGraphQLSchema)
-(*  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
-        Scalar -> bool) *)
   (ts : Name) (@$\sel$@s : seq Selection) : bool :=
     let @$\sel$@s_with_scope := [seq (ts, @$\sel$@) | @$\sel$@ <- @$\sel$@s] in 
       all (is_consistent ts) @$\sel$@s &&
@@ -717,7 +712,7 @@ requires that valid ones are \emph{coerced} into proper values, which must also 
 %\end{itemize}
 
 \begin{definition}
-Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $\sset$ over $\graph$ from node $u \in \mathit{nodes}(\graph)$\footnote{Where $\mathit{nodes}$ is a function that retrieves all nodes from a graph.}, with a coercing function $\mathit{coerce} : \mathit{Scalar} \to \mathit{Scalar}$ and a value validation predicate $\mathit{is\_valid\_scalar\_value} : \mathit{graphQLSchema} \to \mathit{Name} \to \mathit{Scalar} \to \mathit{Bool}$, simply denoted $\llbracket \sset \rrbracket^{u}_{\graph}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
+Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $\sset$ over $\graph$ from node $u \in \mathit{nodes}(\graph)$\footnote{Where $\mathit{nodes}$ is a function that retrieves all nodes from a graph.}, with a coercing function $\mathit{coerce} : \mathit{Scalar} \to \mathit{Scalar}$ and a value validation predicate $\mathit{\vscalar} : \mathit{graphQLSchema} \to \mathit{Name} \to \mathit{Scalar} \to \mathit{Bool}$, simply denoted $\llbracket \sset \rrbracket^{u}_{\graph}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
 \end{definition}
 
 %Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. 
@@ -726,7 +721,7 @@ Single fields correspond to accessing a node's property that matches the field n
 To ensure that only valid results are produced, the function \texttt{complete\_value} (\cf\S6.4.3~\cite{gqlspec}) transforms invalid values into null and coerces valid ones, after checking that they adhere to their expected types in the schema.
 Nested fields (3) represent a traversal to neighboring nodes: the semantics searches for nodes that are connected by an edge whose label matches the field name and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
 In both field cases (2-3), evaluation has to ensure that selections with the same response name are only evaluated once. 
-This is performed by calling the $\mathit{collect}$, $\mathit{merge}$ and $\mathit{filter}$ functions, which respectively gather fields sharing the same response name, merge their subselections, and remove their repeated occurrences. Finally, inline fragments (4) simply condition whether their subselections should be evaluated in the current node. The decision is based on the $\mathit{fragment\_type\_applies}$\td{ref to original def in spec?} predicate that verifies whether the type condition is the same or a supertype of the node's type.\footnote{Aliased fields are not included here; they are evaluated the same way as unaliased fields, but differ in that the key-value pair produced is renamed accordingly.}
+This is performed by calling the $\mathit{collect}$, $\mathit{merge}$ and $\mathit{filter}$ functions (adapted from \S6.3.2-6.4.3~\cite{gqlspec}), which respectively gather fields sharing the same response name, merge their subselections, and remove their repeated occurrences. Finally, inline fragments (4) simply condition whether their subselections should be evaluated in the current node. The decision is based on the $\mathit{fragment\_type\_applies}$ predicate (\cf\S6.3.2~\cite{gqlspec})\td{ref to original def in spec?} that verifies whether the type condition is the same or a supertype of the node's type.\footnote{Aliased fields are not included here; they are evaluated the same way as unaliased fields, but differ in that the key-value pair produced is renamed accordingly.}
 
 %The definition of the evaluation function for selections, displayed in Figure~\ref{fig:semantics}, only refers to the base case of an empty list, field selections without renaming and inline fragments. The complete definition can be found in the file \texttt{QuerySemantics.v}.
 
@@ -737,13 +732,12 @@ Let $\graph$ be a graph and $\query$ a query containing a selection set $\sset$,
 The semantics of queries is then formalized as follows:
 \begin{minted}[bgcolor=coqbg, escapeinside=||, mathescape=true]{coq}
 Definition execute_query (s : wfGraphQLSchema)
-  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
-        Scalar -> bool)
-  (g : conformedGraph s is_a_valid_scalar_value)
+  (|\vscalar| : graphQLSchema -> Name -> Scalar -> bool)
+  (g : conformedGraph s |\vscalar|)
   (coerce : Scalar -> Scalar) 
-  (|$\varphi$| : query) :=
-    execute_selection_set s is_valid_scalar_value g coerce
-      g.(root) |$\varphi$|.(selection_set).
+  (|$\query$| : query) :=
+    execute_selection_set s |\vscalar| g coerce
+      g.(root) |$\query$|.(selection_set).
 \end{minted}
 
 %The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.

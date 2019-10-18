@@ -410,8 +410,8 @@ Of course, defining a normalization procedure in itself does not ensure anything
 
 First, we prove that the normalization procedure correctly produces queries in normal form. The proof is performed by generalizing the statement and proving that the normalization of selection sets results in non-redundant selections that are also in ground-typed normal form.
 Both cases are proven by well-founded induction over the size of the selection set and auxiliary lemmas about subtyping. 
-\td{Here as well, types are @Selection Scalar, which seems like a bit too much}
-\et{use the same implicit parameter trick?}
+%\td{Here as well, types are @Selection Scalar, which seems like a bit too much}
+%\et{use the same implicit parameter trick?}
 % \et{watchout: "selection tree" vs. "selection set": is there any difference?} 
 % \td{The selection set is a list, but selections have a tree structure... So, idk. Probably just simpler to say
 % selection set}
@@ -443,15 +443,17 @@ Likewise, the proof follows by well-founded induction over the size of the selec
 \begin{minted}[escapeinside=||,mathescape=true,bgcolor=coqbg]{coq}
 Lemma normalize_selections_preserves_semantics
   (s : wfGraphQLSchema) (g : conformedGraph s) 
-  (coerce : wfCoercion) (|$\sel$|s : seq Selection) (u : node) :
+  (coerce : Scalar -> Scalar) (|$\sel$|s : seq Selection) 
+  (u : node) :
     u |\textbackslash|in g.(nodes) ->
-    s, g |$\vdash \llbracket$| normalize_selections s u.(ntype) |$\sel$|s |$\rrbracket$|
-        in u with coerce =
-    s, g |$\vdash$| |$\llbracket$| |$\sel$|s |$\rrbracket$| in u with coerce. 
-    
+    execute_selection_set s |\vscalar| g coerce
+      u (normalize_selections s u.(ntype) |$\sel$s|) =
+    execute_selection_set s is_valid_scalar_value g coerce
+      u |$\sel$s|.
+
 Theorem normalize_preserves_query_semantics 
   (s : wfGraphQLSchema) (g : conformedGraph s)
-  (coerce : wfCoercion) (|$\query$| : query) :
+  (coerce : Scalar -> Scalar) (|$\query$| : query) :
     execute_query s g coerce (normalize s |$\query$|) =
     execute_query s g coerce |$\query$|.
 \end{minted}
@@ -480,18 +482,20 @@ The proof is once again performed by induction over the size of the selection se
 \begin{minted}[bgcolor=coqbg, escapeinside=||,mathescape=true]{coq}
 Theorem exec_query_eq_simpl_exec 
   (s : wfGraphQLSchema) (g : conformedGraph s)
-  (coerce : wfCoercion) (|$\query$| : query) : 
+  (coerce : Scalar -> Scalar) (|$\query$| : query) : 
     is_in_normal_form s |$\query$| -> 
     execute_query s g coerce |$\query$| =
     simpl_execute_query s g coerce |$\query$|.
     
 Lemma exec_sel_eq_simpl_exec
   (s : wfGraphQLSchema) (g : conformedGraph s) 
-  (coerce : wfCoercion) (|$\sel$|s : seq Selection) (u : node) :
+  (coerce : Scalar -> Scalar) (|$\sel$|s : seq Selection) 
+  (u : node) :
     are_in_normal_form s |$\sel$|s -> 
-    s, g |$\vdash$| |$\llbracket$| |$\sel$|s |$\rrbracket$| in u with coerce =
-    s, g |$\vdash$| |$\llparenthesis$| |$\sel$|s |$\rrparenthesis$| in u with coerce.
- 
+    execute_selection_set s |\vscalar| g coerce
+      u |$\sel$|s = 
+    simpl_execute_selection_set s |\vscalar| g coerce
+      u |$\sel$|s.     
 \end{minted}
 %\et{fix parentheses above}
 
