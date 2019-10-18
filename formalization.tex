@@ -194,7 +194,8 @@ The definition of a graph in \gcoql is then captured by the following structures
 % A \texttt{label} represents the set of labels over an edge or keys in a node's property. 
 %\td{Probably the name is not the best}\fo{Fully agree. I suggest changing \texttt{fld} to \texttt{label}, \texttt{Field} to \texttt{Label} and \texttt{label} to \texttt{name} (or \texttt{lname} if there is a clash) }. 
 %
-\td{The code actually looks like that, with the @ in every Value occurrence. Should we leave it or remove it for presentation?}
+\td{The code actually looks like that, with the @ in every Value occurrence. Should we leave it or remove it for presentation?}\et{in practice, you could make it an implicit parameter instead of a variable, right? \texttt{Inductive Value \{Scalar : eqType\} : Type := ...}}
+\et{in any case, in the paper, just use Value and forget about the Scalar argument}
 \begin{minted}[bgcolor=coqbg]{coq}
 Record label := 
   Label { lname : string; args : seq (string * @Value Scalar) }.
@@ -218,7 +219,7 @@ graphs above is fully independent of schemas. To relate the data to the type sys
 %\td{Over here we should start including the notion of Value type + valid scalar}
 %
 \begin{definition}
-A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if: \td{Should this definition include the predicate? \eg, with a value validation predicate bleble}
+A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if: \td{Should this definition include the predicate? \eg, with a value validation predicate bleble}\et{instead say that the value validation predicate is a global (module) parameter -- ok, seems you're doing that in the next paragraph below}
 \begin{itemize}
     \item the types of $\mathcal{G}$ root node and $\mathcal{S}$ query
       root coincide,
@@ -239,8 +240,9 @@ the property's value, is \emph{valid} \wrt the expected types described in the s
 For instance, if a field has type \texttt{Float}, 
 then a node's property matching the field must have a value that represents a double-precision fractional value\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754. We do not include these base restrictions but leave it open to implementation.}.
 To model value validation throughout our development, we parameterize the corresponding modules with a predicate $ is\_valid\_scalar\_value : graphQLSchema \to Name \to Scalar \to Bool$.
-\td{I am trying to push this definition here and then not having to redefine it or explain it again}
+\td{I am trying to push this definition here and then not having to redefine it or explain it again}\et{yep, that's better}
 \td{Probably not the best name for the predicate tbh}
+\et{what about check\_scalar ?}
 
 Meanwhile, the conformance of edges validates that: (1) an edge's label corresponds to a field in the
 source node's type, (2) the target node's type corresponds to the field's type (either the same type, an implementation
@@ -272,7 +274,7 @@ Definition is_a_conforming_graph
 % As a side note, this notion was only loosely defined in \HP, but it is properly addressed in a recent work of one of its authors ~\cite{olafschema}.
 
 Similarly to \gql schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph, containing a graph and a proof of its conformance to a particular schema.
-\td{Since I mention above that it uses this predicate and show it as a variable, maybe we can skip it?}
+\td{Since I mention above that it uses this predicate and show it as a variable, maybe we can skip it?} \et{yes}
 \begin{minted}[bgcolor=coqbg]{coq}
 Record conformedGraph (s : wfGraphQLSchema) 
 (*  (is_a_valid_scalar_value : graphQLSchema -> Name -> 
