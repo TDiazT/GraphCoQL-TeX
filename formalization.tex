@@ -265,21 +265,21 @@ Variable
   (|\vscalar| : graphQLSchema -> Name -> Scalar -> bool).
   
 Definition is_a_conforming_graph 
-      (s : wfGraphQLSchema) 
-      (g : graphQLGraph) : bool :=
-  root_type_conforms s g.(root) &&
-  edges_conform s g &&
-  nodes_conform s g.(nodes).
+  (s : wfGraphQLSchema) 
+  (g : graphQLGraph) : bool :=
+    root_type_conforms s g.(root) &&
+    edges_conform s g &&
+    nodes_conform s g.(nodes).
 \end{minted}
 %
 % As a side note, this notion was only loosely defined in \HP, but it is properly addressed in a recent work of one of its authors ~\cite{olafschema}.
 
 Similarly to \gql schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph, containing a graph and a proof of its conformance to a particular schema.
 %\td{Since I mention above that it uses this predicate and show it as a variable, maybe we can skip it?} \et{yes}
-\begin{minted}[bgcolor=coqbg]{coq}
+\begin{minted}[bgcolor=coqbg, escapeinside=||]{coq}
 Record conformedGraph (s : wfGraphQLSchema) :=
   ConformedGraph { graph : graphQLGraph;
-                       _ : is_a_conforming_graph s graph }.
+           _ : is_a_conforming_graph s graph |\vscalar|}.
 \end{minted}
 
  %These properties include validation rules such as: every node must have an object type and their properties must be defined in their associated type, or an edge's label must be declared as a field in the source node's type and the target node must have a type compatible to the field's return type, among other things.
