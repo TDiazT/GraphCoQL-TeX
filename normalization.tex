@@ -424,14 +424,9 @@ Theorem normalized_query_is_in_nf
   (s : wfGraphQLSchema) (|$\query$| : query) :
     is_in_normal_form s (normalize s |$\query$|).
     
-Lemma normalized_selections_are_in_gt_nf
+Lemma normalized_selections_are_in_nf
   (s : wfGraphQLSchema) (ts : Name) (|$\sel$|s : seq Selection) :
-    all (is_in_ground_typed_nf s) 
-      (normalize_selections s ts |$\sel$|s).
- 
-Lemma normalized_selections_are_non_redundant 
-  (s : wfGraphQLSchema) (ts : Name) (|$\sel$|s : seq Selection) :
-    are_non_redundant (normalize_selections s ts |$\sel$|s).
+    are_in_normal_form s (normalize_selections s ts |$\sel$|s).
 \end{minted}
 
 Next, we prove that normalization preserves the semantics of queries. We follow a similar approach as above and prove a generalized statement about the execution of selection sets. Whereas the evaluation of a query is performed over the root node of the graph, the statement about preservation of semantics for selections is over any node in the graph. 
