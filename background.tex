@@ -5,10 +5,15 @@
 %\gql is a framework that provides a common language to define the interface to a service's data and to query it.
 %It provides a language to describe how the data is structured and how it can be queried. This is called the schema or type system of the service. The schema consists of types and their fields. Queries may only be performed over these types and their fields. The resolution of each field is defined by the implementors, since \gql is not tied to any particular technology.
 
-We briefly introduce \gql by means of a running example, which we use throughout the rest of the paper.
+We briefly introduce \gql by means of a running example. %that we use in
+%the reminder of the presentation.
+The example is about a fictional
+dataset \goodbois containing information about animals, specifically
+dogs and pigs. We discuss the dataset schema together with the
+underlying data model as well as the definition of an API to access
+the dataset.  %, and discusses the definition of an API to access
+%the dataset.
 
-The example is about the fictional \goodbois dataset containing information on dogs, pigs and their relationship, 
-and how to develop an API in \gql to access it.
 
 %In the rest of this section, we will introduce \gql by means of an example. We will recurrently come back to this example throughout the rest of the paper.\td{Maybe not if we don't have space lol}
 
@@ -17,26 +22,8 @@ and how to develop an API in \gql to access it.
 Contrarily to traditional RESTful web services, where APIs may be defined with several endpoints, 
 \gql defines an API with a single endpoint and a schema, describing the service's type system and capabilities.
 The type system consists of a set of types and fields, describing how data is structured and how it may be queried.
-Indeed, as we will see, queries over a \gql API can only be done over the types and fields defined in the schema.
-
-In our current scenario, we model the \goodbois dataset as shown in Figure~\ref{fig:schema_ex}. 
-We define animals with the interface \texttt{Animal} and two object types, namely \texttt{Dog} and \texttt{Pig}, implementing it. 
-Both interface and object types describe sets of fields, which represent their relations and the data that may be requested on them. 
-For instance, all animals have a name, age and a list of friends. Note how we model the list of friends in the field \texttt{friends} with the type \texttt{[Animal]}.
-An object implementing an interface may add more fields, such as the fields \texttt{toy} and \texttt{oink}.
-We also include the object type \texttt{Toy} which does not implement any interface. 
-To model how good an animal is, we use the enum type \texttt{Good} containing four scalar values; 
-\texttt{BESTBOI}, \texttt{GOODBOI}, \texttt{OKBOI}, \texttt{BADBOI}.
-The schema also includes the union type \texttt{Search}, containing a disjunction of other object types.
-Finally, we define the object type \texttt{Query} that represents the entry point from where users have to 
-start querying the API and explore the type system. In this API, a user may only access the \goodbois dataset by 
-either requesting a particular animal, or search for an object in the union type \texttt{Search}.
-
-
-
-%Let's picture ourselves having a database with information about dogs and pigs; the \textit{GoodBois} database. We want to define an API so our frontend developers may get the information and display it in our website. Our first step is then to describe how the data is structured and how it may be queried. This is done by means of the schema, which represents the type system of our \gql service.
-
-%Figure \ref{fig:schema_ex} depicts our type system. We define an interface for animals and two types implementing it; \texttt{Dog} and \texttt{Pig}. We know that animals have other animal friends, so we define the field \texttt{friends} whose return type is a list of other animals. We can also define enumeration types, which contain scalar values such as \texttt{GOODBOI}, and union types containing other object types. Finally, we have to define a \texttt{Query} type, which represents the entry point to our service's data. Any query that our frontend developers may do must begin by accessing this type's fields.
+Indeed, as we will see, queries over a \gql API can only be done over
+the types and fields defined in the schema.
 
 \begin{figure}
     \centering
@@ -48,12 +35,14 @@ interface Animal {
   age: Int
   friends: [Animal]
 }
+
 type Dog implements Animal {
   name: String
   age: Int
   friends: [Animal]
   favoriteToy: Toy
 }
+
 type Pig implements Animal {
   name: String
   age: Int
@@ -67,15 +56,19 @@ type Pig implements Animal {
 type Toy {
   chewiness: Float
 }
+
 enum Good { 
   BESTBOI GOODBOI 
   OKBOI BADBOI 
 }
+
 union Search = Dog | Pig | Toy
+
 type Query {
   goodboi(goodness: Good): Animal
   search(text: String): Search
 }
+
 schema {
   query: Query
 }
@@ -86,18 +79,54 @@ schema {
     \label{fig:schema_ex}
 \end{figure}
 
+In our current scenario, we model the \goodbois dataset as shown in Figure~\ref{fig:schema_ex}. 
+We define animals with the interface \texttt{Animal} and two object
+types, namely \texttt{Dog} and \texttt{Pig}, implementing the interface. 
+Both interface and object types describe sets of fields, which represent their relations and the data that may be requested on them. 
+For instance, all animals have a name, age and a list of friends. Note how we model the list of friends in the field \texttt{friends} with the type \texttt{[Animal]}.
+An object implementing an interface may add more fields, such as the fields \texttt{favoriteToy} and \texttt{oink}.
+We also include the object type \texttt{Toy} which does not implement any interface. 
+To model how good an animal is, we use the enum type \texttt{Good}
+containing four scalar values. %: \texttt{BESTBOI}, \texttt{GOODBOI}, \texttt{OKBOI} and \texttt{BADBOI}.
+The schema also includes the union type \texttt{Search}, consisting of
+the disjoint union of three (object) types. % \texttt{Dog},  \texttt{Pig} and
+% \texttt{Toy}.\fo{If needed, here there is room for gaining some space (by removing
+%  these 2 enums).}
+Finally, we define the object type \texttt{Query} that represents the entry point from where users have to 
+start querying the API and explore the type system. In this API, a user may only access the \goodbois dataset by 
+either requesting a particular animal or by searching for an object in the union type \texttt{Search}.
+
+
+
+%Let's picture ourselves having a database with information about dogs and pigs; the \textit{GoodBois} database. We want to define an API so our frontend developers may get the information and display it in our website. Our first step is then to describe how the data is structured and how it may be queried. This is done by means of the schema, which represents the type system of our \gql service.
+
+%Figure \ref{fig:schema_ex} depicts our type system. We define an interface for animals and two types implementing it; \texttt{Dog} and \texttt{Pig}. We know that animals have other animal friends, so we define the field \texttt{friends} whose return type is a list of other animals. We can also define enumeration types, which contain scalar values such as \texttt{GOODBOI}, and union types containing other object types. Finally, we have to define a \texttt{Query} type, which represents the entry point to our service's data. Any query that our frontend developers may do must begin by accessing this type's fields.
+
+
 % This is all it takes to describe our data and how our developers can query it. It describes exactly the data they can access and which are the entry points to it. However, each field has to somehow connected to actual data. When a developer requests the field \texttt{chewiness} we have to actually get that information from somewhere.
 
 \paragraph{Graph data model.}
 % Since \gql does not impose a particular technology or data model, it is not simple to reason about queries and their semantics. It is the job of the service's implementor to define how  each field of a given type is resolved.
 
-The complete \goodbois dataset is stored in a graph as depicted by Figure~\ref{fig:graph_ex}. 
-Nodes have object types as defined in the schema and properties (key-value pairs) with their individual information.
-Edges between nodes are also labeled, indicating the relationship between the object values. For instance, the node 
-furthermost to the left has type \texttt{Query} and two outgoing edges, whose labels match the field \texttt{goodboi}.
-The edges reach nodes with type \texttt{Dog} and \texttt{Pig}, which are implementations of the \texttt{Animal} type (the type of the field \texttt{goodboi} in the schema).
-These nodes contain properties such as their \texttt{name} or \texttt{age} and more edges connecting them with 
-their friends.
+The complete \goodbois dataset is represented with the graph in
+Figure~\ref{fig:graph_ex}. Nodes in the graph represent object values
+as defined in the schema; they are tagged with the corresponding
+object type and include a set of properties (key-value pairs) that
+describe the object content. Edges between nodes are accompanied with
+a label that indicates the relationship they establish. For instance,
+the top-most and right-most nodes in the graph represent two objects
+of type \texttt{Dog} and \texttt{Toy}, respectively. To indicate that
+they are related by the \texttt{favoriteToy} relation, the graph
+includes a so-labelled edge between these nodes. This is possible
+because objects of type \texttt{Dog} contain a field
+\texttt{favoriteToy}, holding a value of type \texttt{Toy}.
+
+
+% For instance, the node 
+% furthermost to the left has type \texttt{Query} and two outgoing edges, whose labels match the field \texttt{goodboi}.
+% The edges reach nodes with type \texttt{Dog} and \texttt{Pig}, which are implementations of the \texttt{Animal} type (the type of the field \texttt{goodboi} in the schema).
+% These nodes contain properties such as their \texttt{name} or \texttt{age} and more edges connecting them with 
+% their friends.
 
 
 %illustrates our service's graph database. There is a root node from which every query must begin. This root node represents the \texttt{Query} type described in the schema. We also see that each node has a type, such as \texttt{Dog} or \texttt{Toy}, and properties such as their names. Each edge is also labeled with a name as defined in the schema. For instance, the edge connecting the dog named ``Casel'' is labeled \texttt{favoriteToy}, as declared in the type \texttt{Dog} in the schema.

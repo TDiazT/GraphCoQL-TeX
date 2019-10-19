@@ -149,7 +149,14 @@
 }
 
 \begin{abstract}
-\gql is a novel language for specifying and querying web APIs, allowing clients to flexibility and efficiently retrieve data of interest. The \gql language specification is unfortunately only available in prose, making it hard to develop robust formal results for this language. Recently, Hartig and Pérez proposed a formal semantics for \gql in order to study the complexity of \gql queries. These semantics are however not mechanized and leave certain key aspects unverified. We present \gcoql, the first mechanized formalization of \gql, developed in the \coq proof assistant.  \gcoql covers the schema definition DSL, query definitions, validation of both schema and queries, as well as the semantics of queries over a graph data model.
+\gql is a novel language for specifying and querying web APIs,
+allowing clients to flexibility and efficiently retrieve data of
+interest. The \gql language specification is unfortunately only
+available in prose, making it hard to develop robust formal results
+for this language. Recently, Hartig and Pérez proposed a formal
+semantics for \gql in order to study the complexity of \gql
+queries. These semantics\fo{``introduced \emph{a} semantics [\ldots] \emph{These}
+  semantics \emph{are}'' mismatch} are however not mechanized and leave certain key aspects unverified. We present \gcoql, the first mechanized formalization of \gql, developed in the \coq proof assistant.  \gcoql covers the schema definition DSL, query definitions, validation of both schema and queries, as well as the semantics of queries over a graph data model.
 We illustrate the application of \gcoql by formalizing the key query transformation and interpretation techniques of Hartig and Pérez, and proving them correct, after addressing some imprecisions and minor issues. 
 We hope that \gcoql can serve as a solid formal baseline for both language design and verification efforts for \gql.
 \end{abstract}
