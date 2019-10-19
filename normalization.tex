@@ -447,14 +447,14 @@ Lemma normalize_selections_preserves_semantics
     u |\textbackslash|in g.(nodes) ->
     execute_selection_set s |\vscalar| g coerce
       u (normalize_selections s u.(ntype) |$\sel$s|) =
-    execute_selection_set s is_valid_scalar_value g coerce
+    execute_selection_set s |\vscalar| g coerce
       u |$\sel$s|.
 
 Theorem normalize_preserves_query_semantics 
   (s : wfGraphQLSchema) (g : conformedGraph s)
   (|$\query$| : query) :
-    execute_query s g coerce (normalize s |$\query$|) =
-    execute_query s g coerce |$\query$|.
+    execute_query s |\vscalar| g coerce (normalize s |$\query$|) =
+    execute_query s |\vscalar| g coerce |$\query$|.
 \end{minted}
 \td{Also removed coerce from the definition here -- I could actually do the same with the schema and the graph tbh...}
 %\et{I guess you need the Lemma first, to be able to prove the Theorem.}
@@ -484,8 +484,8 @@ Theorem exec_query_eq_simpl_exec
   (s : wfGraphQLSchema) (g : conformedGraph s)
   (|$\query$| : query) : 
     is_in_normal_form s |$\query$| -> 
-    execute_query s g coerce |$\query$| =
-    simpl_execute_query s g coerce |$\query$|.
+    execute_query s |\vscalar| g coerce |$\query$| =
+    simpl_execute_query s |\vscalar| g coerce |$\query$|.
     
 Lemma exec_sel_eq_simpl_exec
   (s : wfGraphQLSchema) (g : conformedGraph s) 
