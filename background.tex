@@ -11,7 +11,7 @@ The example is about a fictional
 dataset \goodbois containing information about animals, specifically
 dogs and pigs. We discuss the dataset schema together with the
 underlying data model as well as the definition of an API to access
-the dataset.  %, and discusses the definition of an API to access
+the dataset \td{The schema defines the API, so this sounds a bit weird}.  %, and discusses the definition of an API to access
 %the dataset.
 
 
@@ -112,13 +112,13 @@ The complete \goodbois dataset is represented with the graph in
 Figure~\ref{fig:graph_ex}. Nodes in the graph represent object values
 as defined in the schema; they are tagged with the corresponding
 object type and include a set of properties (key-value pairs) that
-describe the object content. Edges between nodes are accompanied with
+describe the object's content. Edges between nodes are accompanied with
 a label that indicates the relationship they establish. For instance,
 the topmost node in the graph represents an object of type
 \texttt{Dog}. The node properties say that the dog is called
-Marie and is 4 years old. The node outgoing edges say that the dog's
-favorite toy is represented by the graph rightmost node and that the dog's
-(only) friend is represented by the graph central node.
+Marle and is 4 years old. The node's outgoing edges say that the dog's
+favorite toy is represented by the graph's rightmost node and that the dog's
+(only) friend is represented by the graph's central node.
 
 % Finally, observe
 % that the topmost node of type \texttt{Dog} include two properties, ref
@@ -176,13 +176,13 @@ namely \texttt{Dog} and \texttt{Pig}, one can use more specific
 selections to further specify the fields that should be requested for
 each concrete type. This is achieved by the pair of selections
 \ifrag{Dog}{\texttt{favoriteToy \{ chewiness \} }} and \ifrag{Pig}{
-  \texttt{loudness:oink} }, which indicates that in the case of a 
+  \texttt{loudness:oink} }, which indicate that in the case of a 
 dog, the query should request information about field
 \texttt{favoriteToy}, while in the case of a pig, the query should
 retrieve field \texttt{oink}. In this case, the field selection
-\texttt{loudness:oink} indicates that instead of using the original
-field name \texttt{oink}, in the response the resulting value should
-be renamed to \texttt{loudness}. %\fo{Maybe introduce here ``inline
+\texttt{loudness:oink} indicates that, instead of using the original
+field name \texttt{oink}, the resulting value should
+be renamed to \texttt{loudness} in the response. %\fo{Maybe introduce here ``inline
 %  fragment'', ``selection'', etc.}
 
 This query is then evaluated over the graph, resulting in the response
@@ -255,7 +255,7 @@ query {
 \label{fig:qres_ex}
 \end{figure}
 
-
+\td{We can probably skip this paragraph to save space}
 As a final note, one of the appeals of \gql is that if we change our minds and no longer wish to request the friends's names, it would only suffice to remove the field selection 
 \texttt{name} from the \texttt{friends} subselections, and the generated response would no longer contain that piece of information. Similarly, reordering the output is simply done
 by reordering the selections in the query.
