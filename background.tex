@@ -5,8 +5,8 @@
 %\gql is a framework that provides a common language to define the interface to a service's data and to query it.
 %It provides a language to describe how the data is structured and how it can be queried. This is called the schema or type system of the service. The schema consists of types and their fields. Queries may only be performed over these types and their fields. The resolution of each field is defined by the implementors, since \gql is not tied to any particular technology.
 
-We briefly introduce \gql by means of a running example. %that we use in
-%the reminder of the presentation.
+We briefly introduce \gql by means of a running example  that we use in
+the rest of the presentation.
 The example is about a fictional
 dataset \goodbois containing information about animals, specifically
 dogs and pigs. We discuss the dataset schema together with the
@@ -94,7 +94,7 @@ the disjoint union of three (object) types. % \texttt{Dog},  \texttt{Pig} and
 %  these 2 enums).}
 Finally, we define the object type \texttt{Query} that represents the entry point from where users have to 
 start querying the API and explore the type system. In this API, a user may only access the \goodbois dataset by 
-either requesting a particular animal or by searching for an object in the union type \texttt{Search}.
+either requesting a particular animal (with a given goodness level) or by searching for an object in the union type \texttt{Search}.
 
 
 
@@ -114,12 +114,19 @@ as defined in the schema; they are tagged with the corresponding
 object type and include a set of properties (key-value pairs) that
 describe the object content. Edges between nodes are accompanied with
 a label that indicates the relationship they establish. For instance,
-the top-most and right-most nodes in the graph represent two objects
-of type \texttt{Dog} and \texttt{Toy}, respectively. To indicate that
-they are related by the \texttt{favoriteToy} relation, the graph
-includes a so-labelled edge between these nodes. This is possible
-because objects of type \texttt{Dog} contain a field
-\texttt{favoriteToy}, holding a value of type \texttt{Toy}.
+the topmost node in the graph represents an object of type
+\texttt{Dog}. The node properties say that the dog is called
+Marie and is 4 years old. The node outgoing edges say that the dog's
+favorite toy is represented by the graph rightmost node and that the dog's
+(only) friend is represented by the graph central node.
+
+% Finally, observe
+% that the topmost node of type \texttt{Dog} include two properties, ref
+% As stated
+% in the schema, dogs also have a name and an age, which 
+
+% Besides
+% this field, objects of type \texttt{Dog} contain two additional fields
 
 
 % For instance, the node 
@@ -155,22 +162,41 @@ As previously hinted, \gql queries are performed over the types and fields defin
 They have a tree structure, similar to \json, which follows the fields and relations established between the types
 in the type system.
 
-To illustrate this, we define the query in Figure~\ref{fig:qres_ex}. Intuitively, we request the name of the best animal in \goodbois, as well as 
-the name and some additional information of its friends. The query starts by selecting the field \texttt{goodboi} of the \texttt{Query} type
-and providing the argument \texttt{BESTBOI}. The type of this field is the interface \texttt{Animal}, therefore the query continues by selecting the field \texttt{name}, with scalar type \texttt{String}, 
-and the field \texttt{friends}, with type \texttt{[Animal]}. 
-Because the latter has a list type over the interface type \texttt{Animal}, which has two object types (\texttt{Dog} and \texttt{Pig}) implementing it, it is possible 
-to use selections that allow to further specify what fields should be requested on the concrete types. 
-That is the case of the selections \ifrag{Dog}{ favoriteToy \{ chewiness \} }, which indicates that if the friend is a dog then it should request information on its favorite toy, and 
-\ifrag{Pig}{ loudness:oink }, specifying that for a pig friend it should request the field \texttt{oink}. The field selection \texttt{loudness:oink} indicates that the resulting value should be renamed 
-to \texttt{loudness}, instead of \texttt{oink}.
+To illustrate this, we define the query in
+Figure~\ref{fig:qres_ex}. Intuitively, we request the name of the best
+animal in \goodbois, as well as the name and some additional
+information of its friends. The query starts by selecting the field
+\texttt{goodboi} of the \texttt{Query} type and providing the argument
+\texttt{BESTBOI}. The type of this field is the interface
+\texttt{Animal}, therefore the query continues selecting the field
+\texttt{name}, with scalar type \texttt{String}, and the field
+\texttt{friends}, with type \texttt{[Animal]}.  Because the interface
+type \texttt{Animal} is implemented by two different object types,
+namely \texttt{Dog} and \texttt{Pig}, one can use more specific
+selections to further specify the fields that should be requested for
+each concrete type. This is achieved by the pair of selections
+\ifrag{Dog}{\texttt{favoriteToy \{ chewiness \} }} and \ifrag{Pig}{
+  \texttt{loudness:oink} }, which indicates that in the case of a 
+dog, the query should request information about field
+\texttt{favoriteToy}, while in the case of a pig, the query should
+retrieve field \texttt{oink}. In this case, the field selection
+\texttt{loudness:oink} indicates that instead of using the original
+field name \texttt{oink}, in the response the resulting value should
+be renamed to \texttt{loudness}. %\fo{Maybe introduce here ``inline
+%  fragment'', ``selection'', etc.}
 
-This query is then evaluated over the graph, resulting in the response depicted to the right in Figure~\ref{fig:qres_ex}, which closely resembles the query.
-The intuition behind the evaluation process is that the query indicates what edges to traverse in the graph and what properties to access from 
-each node. In this manner, starting from the node with type \texttt{Query}, the field \texttt{goodboi(goodness: BESTBOI)} indicates that the evaluation should continue 
-in a neighboring node, by traversing the edge whose label matches the field. The first step then takes the evaluation process to the node with type \texttt{Dog}.
-From there, the query accesses the value of the node's property matching the field \texttt{name} and then continues navigating the graph in search of the
-friends.
+This query is then evaluated over the graph, resulting in the response
+depicted on the right of Figure~\ref{fig:qres_ex}, which closely
+resembles the query.  The intuition behind the evaluation process is
+that the query indicates what edges to traverse in the graph and what
+properties to access on each node. In this manner, starting from the
+node with type \texttt{Query}, the field \texttt{goodboi(goodness:
+  BESTBOI)} indicates that the evaluation should continue in an
+adjacent node reached after traversing an edge whose label matches the
+field. The first step then takes the evaluation process to the central
+node, of type \texttt{Dog}.  From there, the query accesses the value
+of the node's property matching the field \texttt{name} and then
+continues navigating the graph in search of the dog's friends.
 
 %As previously mentioned, the queries we perform over our system must be over the types and fields defined in the schema. Every query must start by requesting information from the \texttt{Query} type. That means that, in our setting, queries must all start with the \texttt{goodness} or \texttt{search} fields.
 
@@ -233,7 +259,9 @@ query {
 As a final note, one of the appeals of \gql is that if we change our minds and no longer wish to request the friends's names, it would only suffice to remove the field selection 
 \texttt{name} from the \texttt{friends} subselections, and the generated response would no longer contain that piece of information. Similarly, reordering the output is simply done
 by reordering the selections in the query.
-We would not be required to define a new endpoint nor we would get information we no longer needed.
+We would not be required to define a new endpoint nor we would get
+information we no longer needed, as is usual the case with RESTful
+services. 
 
 
 %If we wanted to ask another the same query but now without the friends' names, we would only have to remove the \texttt{name} field and \textit{voilà}, that's it. We use the same endpoint as before and the \gql service handles the resolution of our fields.
