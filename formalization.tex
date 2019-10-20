@@ -1,12 +1,15 @@
 % !TEX root = ./main.tex
 \section{\gcoql}\label{sec:form}
 
-In this section we describe our formalization of \gql in \coq. We start by defining a schema and its properties, then the graph data model and finally we review queries and their semantics. The definitions are as close as possible with respect to the \spec. This eyeball correspondence between the definitions in prose and the code gives a first level of trust that our formalization is correct.%, following the examples of X, Y and Z.
-Whenever there is a mismatch we point it out and explain the reasoning behind each decision. 
+In this section we describe our formalization of \gql in \coq. We start by defining a schema and its properties, then the graph data model and finally we review queries and their semantics. % The definitions are as close as possible with respect to the \spec. This eyeball correspondence between the definitions in prose and the code gives a first level of trust that our formalization is correct.%, following the examples of X, Y and Z.
+% Whenever there is a mismatch we point it out and explain the reasoning behind each decision. 
 
 
 \subsection{Schema}\label{subsec:schema}
-We formalize schemas and type definitions following the \spec. A schema is represented as a record, containing a list of type definitions and a root type that specifies the available selections (\eg \texttt{Query} in the example from Figure \ref{fig:schema_ex}):
+We formalize schemas and type definitions following the \spec. A
+schema is represented as a record, containing a list of type
+definitions and a root query type that specifies the entry points to the
+dataset. %  available selections (\eg \texttt{Query} in the example from Figure \ref{fig:schema_ex}):
 %
 
 \begin{minted}[bgcolor=coqbg]{coq}
@@ -15,7 +18,7 @@ Record graphQLSchema := GraphQLSchema {
     type_definitions : seq TypeDefinition }.
 \end{minted}
 %
-Schemas may also include additional root types for specifying mutations and subscriptions (\cf\S3.2.1~\cite{gqlspec}). These operations are, however, out of the scope of our formalization.
+Schemas may also include additional root types for specifying mutations and subscriptions (\cf\S3.2.1~\cite{gqlspec}). These operations are, however, out of the scope of our work.
 
 Our formalization of type definitions closely follows the \spec, as
 depicted in Figure~ \ref{fig:types_def}. A type may be a scalar type,
@@ -25,7 +28,9 @@ interface type definitions comprise an (ordered) set of fields; union
 types are defined by a set of type names and enumeration types by a
 set of values. For the corresponding type definitions to be valid, all
 such three sets should be non-empty. While the \spec enforces this
-requirement syntactically (see the grammar on the left of Figure~\ref{fig:types_def}), we perform this validation when verifying the (overall) well-formedness schemas.     
+requirement syntactically (see the grammar on the left of
+Figure~\ref{fig:types_def}), we perform this validation when verifying
+the (overall) well-formedness of schemas.     
 %
 \setlength{\grammarparsep}{10pt plus 1pt minus 1pt} % increase separation between rules
 \begin{figure*}[h]
@@ -93,7 +98,12 @@ requirement syntactically (see the grammar on the left of Figure~\ref{fig:types_
 
 % As can be seen in the figure, we tried to match the \spec's definition as much as possible. This eyeball correspondence gives us a degree of confidence about the implementation.  % We currently do not include the \textit{Input Object} types, as well as anything related to \textit{introspection}.
 
-In this regard, observe that the provided definitions of schema and types allow building ``invalid'' schemas. For instance, one can build an object that implements scalar types or use a nonexistent type as the query type. To avoid this problem, the \spec provides several validation rules, scattered throughout the document (though most can be found in \S3~\cite{gqlspec} under each type description).
+In this regard, observe that the provided definitions of schema and
+types allow building ``invalid'' schemas. For instance, one can build
+an object that implements scalar types or use a nonexistent type as
+the root query type. To avoid this problem, the \spec provides several
+validation rules, scattered throughout the document (many can be found
+\eg in \cite[\S3]{gqlspec}). 
  % the \textbf{Type Validation} subsection of each type described in ..  
  We gather all these rules and refer to them as the \textit{well-formedness}
 condition of a \gql schema:\footnote{In \HP, this notion is called {\em consistency}.}
@@ -119,9 +129,10 @@ Definition is_a_wf_schema (s : graphQLSchema) : bool :=
 % \et{naming inconsistency between is\_a\_wf\_schema and is\_wf\_typedef: skip the "a" in the case of schema}
 % \td{I had actually renamed it is\_a\_wf\_typedef. I prefer with the "a" tbh}
 The notion of well-formedness for type definitions requires \eg that
-union members contain existent object types and that object and
-interface types contain at least one field. Due to space limitations,
-we omit the full definition and refer the interested reader to our
+the members of union types are existent object types and that object and
+interface types contain at least one field. %Due to space limitations,
+% we omit the f
+Full definition can be found in our
 \coq development. %file \texttt{SchemaWellFormedness.v}.
 
 %We will, though, resume the discussion about non-emptiness of fields, union and enum members, which are included in the predicate. The main reason behind this decision is that, even though the \spec embeds this information in the grammar, it still includes it in their validation rules later on. We believe that it is simpler to use common lists instead of defining new structures or using dependent types, from an implementation point of view, while still preserving the correspondence to the algorithmic description given by the \spec.
@@ -160,42 +171,42 @@ Having reviewed our formalization of schemas, we now discuss our formalization o
 
 
 \subsection{Data Model}\label{subsec:graph}
-Following \HP, we adopt a data model based on graphs, where data are
-modeled as directed property graph, with labeled edges and typed
+Following \HP, we adopt a data model based on graphs, where datasets are
+modeled as directed property graphs, with labeled edges and typed
 nodes. Nodes contain a type and a set of properties (key-value pairs)
-and  edges contain single labels that describe the relations between
-adjacent nodes. Also, every property and label may contain a list of
-arguments (key-value pairs). %Refer to Figure~\ref{fig:graph_ex} for an example.
-
+and edges contain single labels. Properties and labels may contain a list of
+arguments (key-value pairs). Values are either scalar or
+lists of other values.  %Refer to Figure~\ref{fig:graph_ex} for an example.
+%
 %To represent the values associated to properties and arguments, we consider the type \Vals. 
 % A value in \Vals may be a single scalar value or a list of values\td{This choice is based on the limitations of the model}.\fo{I think we should address this in the Discussion section, where we discuss the limitations of our formalization. We could even remove the last sentence from the paragraph.}
-
+%
 \begin{definition}
 A \emph{\gql graph} is defined by:
 \begin{itemize}
     \item a root node, and
     \item a collection of edges of the form ($u$, $\fld$, $v$), where $u, v$ are nodes and
-      $\fld$ is a label with arguments
-      (key-value pairs).
+      $\fld$ is a label with arguments.
 \end{itemize}
 \end{definition}
+%
+\noindent To model graphs in \coq, we first model values. This requires fixing a
+domain of scalar values with decidable equality.
 
-To model the values in a graph, as well as across the rest of our development, we define an inductive type \texttt{Value}, representing 
-either scalar or lists of values. The corresponding modules are then parameterized by the
-\texttt{Scalar} type.
+% the values in a graph, as well as across the rest of our development, we define an inductive type \texttt{Value}, representing 
+% either scalar or lists of values. The corresponding modules are then parameterized by the
+% \texttt{Scalar} type.
+
 \begin{minted}[bgcolor=coqbg]{coq}
 Variable (Scalar : eqType).
+
 Inductive Value : Type :=
 | SValue : Scalar -> Value 
 | LValue : seq Value -> Value.
 \end{minted}
 
-The definition of a graph in \gcoql is then captured by the following structures.
-% A \texttt{label} represents the set of labels over an edge or keys in a node's property. 
-%\td{Probably the name is not the best}\fo{Fully agree. I suggest changing \texttt{fld} to \texttt{label}, \texttt{Field} to \texttt{Label} and \texttt{label} to \texttt{name} (or \texttt{lname} if there is a clash) }. 
-%
-%\td{The code actually looks like that, with the @ in every Value occurrence. Should we leave it or remove it for presentation?}\et{in practice, you could make it an implicit parameter instead of a variable, right? \texttt{Inductive Value \{Scalar : eqType\} : Type := ...}}
-%\et{in any case, in the paper, just use Value and forget about the Scalar argument}
+Now we proceed to model labels, nodes and, finally, graphs. 
+
 \begin{minted}[bgcolor=coqbg]{coq}
 Record label := 
   Label { lname : string; args : seq (string * Value) }.
@@ -207,15 +218,23 @@ Record graphQLGraph :=
   GraphQLGraph { root : node; 
                  edges : seq (node * label * node) }.
 \end{minted}
-The root node of a \gql graph represents the starting point from where queries are evaluated. Note that edges are modeled as a list, and not as a set; unicity of its members is handled by a separate validation. 
- % and include a posterior separate validation on uniqueness of its members.
-We found this approach to be more convenient in the current development, but this design decision would be fairly easy to revisit if needed.
+
+% The root node of a \gql graph represents the starting point from where
+% queries are evaluated.
+
+Note that graphs are modeled using a sequence ---rather than a set---
+of edges; verifying edge unicity is very simple.  We found this design
+decision more convenient as, overall, it led to a simpler
+formalization.
+%but this design decision would be fairly easy to revisit if needed.
 % \td{Added this}
 
 
-Intuitively, the data modeled by a \gql graph is expected to respect
-(the type system described by) a schema. However, the definition of
-graphs above is fully independent of schemas. To relate the data to the type system, we define the notion of \textit{conformance} of a graph \wrt a schema, partially based on~\cite{gqlph}.
+Intuitively, the dataset modeled by a \gql graph is built following a
+schema. However, the definition of \gql graph above is fully
+independent of schemas. To relate the dataset to the schema, we employ
+the following notion of \textit{conformance}, partially based
+on~\cite{gqlph}:
 %\td{Over here we should start including the notion of Value type + valid scalar}
 %
 \begin{definition}
@@ -235,20 +254,30 @@ A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if:
 
 
 The conformance of nodes validates that a node's type is declared as an object type
-in the schema and that its properties are correct. In turn, a property is correct if 
-its key and arguments are defined in a field in the corresponding type, and any value, either in an argument or
+in the schema and that its properties are correct. In turn, a property is \emph{correct} if 
+its key and arguments are defined in a field in the corresponding
+object type, and any value, either in an argument or
 the property's value, is \emph{valid} \wrt the expected types described in the schema. 
 For instance, if a field has type \texttt{Float}, 
 then a node's property matching the field must have a value that represents a double-precision fractional value\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754 (\cf\S3.5.2~\cite{gqlspec}). We do not include these base restrictions but leave it open to implementation.}.
-To model value validation throughout our development, we parameterize the corresponding modules with a predicate $ \mathit{\vscalar} : \mathit{graphQLSchema} \to \mathit{Name} \to \mathit{Scalar} \to \mathit{Bool}$.
+To model this validation of values, we parameterize our \coq development
+with a Boolean predicate $\mathit{\vscalar} : \mathit{graphQLSchema}
+\to \mathit{Name} \to \mathit{Scalar} \to \mathit{Bool}$. 
 %\td{I am trying to push this definition here and then not having to redefine it or explain it again}\et{yep, that's better}
 %\td{Probably not the best name for the predicate tbh}
 %\et{what about check\_scalar ?}
 
-Meanwhile, the conformance of edges validates that: (1) an edge's label corresponds to a field in the
-source node's type, (2) the target node's type corresponds to the field's type (either the same type, an implementation
-or part of a union), (3) if the type is not a list type then there should only be one outgoing edge, from the source node, with the given label,
-and (4), the arguments are defined in the corresponding field in the schema and their values are valid \wrt their expected types.
+Finally, the conformance of edges validates that: (1) the label
+matches some field in the type of the source node, (2) the type of the
+target node is compatible with the type of the matched field (by being
+either the same type, an implementation of or member of a union), (3)
+if the type (of the target node) is not a list type, then there should
+no other 
+edge outgoing from the source node and with the same label, and (4), the
+arguments of the label are defined in the corresponding field in the schema and
+their values are valid \wrt their expected types. \fo{I'm not sure
+  whether it is worth giving so many details here. If space is needed,
+maybe we can cut off here.}
 
 %includes rules such as checking that a node
 %type is declared as an object type in the schema and that its
@@ -288,16 +317,8 @@ Record conformedGraph (s : wfGraphQLSchema) :=
 
 
 \subsection{Queries}\label{subsec:query}
-To define queries we faithfully follow the \spec, as shown in
-Figure~\ref{fig:query_def}. A query consists of a list of selections, and can optionally be named.
-% consists of an optional name
-% \fo{We should mention this also in \S 2}\td{Not really necessary, or is it?} and a list of selections. 
-A selection $\sel$ can be a single field $\fld$ with arguments, an aliased field $\afld$, or a possibly-aliased field followed by a set of subselections $\sset$, or an inline fragment $\ifrag{t}{\sset}$ comprising a type condition \texttt{t} and a set of subselections $\sset$. 
-Whenever a field selection contains an empty list of arguments, we simply omit the \texttt{[$\args$]} and, instead, only use the field's name.
 
-% Fields can be accompanied by a list of arguments and can also be renamed.
-
-\begin{figure*}[h]
+\begin{figure*}[t!]
   \centering
   \begin{subfigure}{.5\textwidth}
   \begin{displaymath}
@@ -356,14 +377,34 @@ Whenever a field selection contains an empty list of arguments, we simply omit t
   (left) \spec grammar; 
   (right) \gcoql definition. %\et{why Vals instead of Val?}\td{This was to keep close similarity to \HP (way at the beginning) -- do you think Val is better?}
   \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t} correspond to identifiers for field names, field aliases and type conditions, respectively.
-  Symbol $\alpha$ stands for a key-value pair.}}
+  Symbol $\alpha$ stands for a key-value pair.} \fo{Cannot push this
+  figure to the (top of) previous page, where referred.}} 
   % , representing the arguments of fields. \et{rather alpha is a key-value pair, and overbar is the list notation}}
   %\td{Brackets in optional query name may conflict with the others? It is a diff font, but idk if maybe using something else=}
   %\et{yeah that's a bit unfortunate. A solution is to use $( ... )^?$ to denote optional elements (without parenthesis when it's a single element)}
   %\td{Is it me or the query record looks flattened?} \et{???}
-  %\td{To be completely accurate, the parenthesis in field selections are not necessary unless there are arguments}\td{This might add some noise?}\et{yeah I think that'd be too much (and not very relevant)}
+  %\td{To be completely accurate, the parenthesis in field selections
+  %are not necessary unless there are arguments}\td{This might add
+  %some noise?}\et{yeah I think that'd be too much (and not very
+  %relevant)} 
   \label{fig:query_def}
 \end{figure*}
+
+
+To define queries we faithfully follow the \spec, as shown in
+Figure~\ref{fig:query_def}. A query consists of a list of selections, and can optionally be named.
+% consists of an optional name
+% \fo{We should mention this also in \S 2}\td{Not really necessary, or is it?} and a list of selections. 
+A selection can be a single field with arguments ($\fld$), a field
+with arguments followed by a set of subselections
+($\fld \texttt{\{} \sset \texttt{\}}$) or an inline fragment
+comprising a type condition and a set of subselections
+($\ifrag{t}{\sset}$). Fields can be renamed or aliased ($\afld$). For
+notational simplicity, when a field selection contains an empty list
+of arguments, we omit it and simple write the field name.
+
+% Fields can be accompanied by a list of arguments and can also be renamed.
+
 
 Intuitively, a valid query and its selection set form a tree, where leaves correspond to fields of scalar types and inner nodes correspond either to fields of some object type or abstract type (\ie~interface or union),
 % \fo{abstract type not defined}\td{Ok like this?} 
@@ -385,7 +426,7 @@ Observe that the definition of queries in Figure~\ref{fig:query_def}
 is not bound to any schema, requiring thus a separate validation
 process to ensure that they adhere to a given schema. We introduce the
 notion of query \textit{conformance}, based on a set of validation
-rules scattered throughout the \spec (\cf\S5~\cite{gqlspec}). The
+rules scattered throughout the \spec (\cf \cite[\S5]{gqlspec}). The
 validity of queries depends on the validity of their selection sets,
 which in turn requires the notion of \textit{type in scope} at a
 given selection location\footnote{The \spec refers to it as the \emph{type in scope} or \emph{parent type}. Some algorithmic descriptions make use of the types in scope but are not explicit in their signatures.}. % Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied.
