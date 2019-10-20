@@ -349,9 +349,8 @@ Finally, the conformance of edges validates that: (1) the label
 matches some field in the type of the source node, (2) the type of the
 target node is compatible with the type of the matched field (by being
 either the same type, an implementation of or member of a union), (3)
-if the type (of the target node) is not a list type, then there should
-no other 
-edge outgoing from the source node and with the same label, and (4), the
+if the type of the field is not a list type, then there should be
+no other outgoing edge from the source node and with the same label, and (4), the
 arguments of the label are defined in the corresponding field in the schema and
 their values are valid \wrt their expected types. \fo{I'm not sure
   whether it is worth giving so many details here. If space is needed,
