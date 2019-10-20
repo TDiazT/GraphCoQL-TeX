@@ -96,7 +96,13 @@ the (overall) well-formedness of schemas.
 
 % As can be seen from the figure, our implementation looses information about non-emptiness of fields, union and enum members. We push this validation to a posterior predicate, as well as the discussion about the reasons behind this decision, to the following paragraphs.
 
-% As can be seen in the figure, we tried to match the \spec's definition as much as possible. This eyeball correspondence gives us a degree of confidence about the implementation.  % We currently do not include the \textit{Input Object} types, as well as anything related to \textit{introspection}.
+% As can be seen in the figure, we tried to match the \spec's
+% definition as much as possible. This eyeball correspondence gives us
+% a degree of confidence about the implementation.  % We currently do
+% not include the \textit{Input Object} types, as well as anything
+% related to \textit{introspection}.
+
+
 
 In this regard, observe that the provided definitions of schema and
 types allow building ``invalid'' schemas. For instance, one can build
@@ -229,95 +235,6 @@ formalization.
 %but this design decision would be fairly easy to revisit if needed.
 % \td{Added this}
 
-
-Intuitively, the dataset modeled by a \gql graph is built following a
-schema. However, the definition of \gql graph above is fully
-independent of schemas. To relate the dataset to the schema, we employ
-the following notion of \textit{conformance}, partially based
-on~\cite{gqlph}:
-%\td{Over here we should start including the notion of Value type + valid scalar}
-%
-\begin{definition}
-A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if: 
-%\td{Should this definition include the predicate? \eg, with a value validation predicate bleble}\et{instead say that the value validation predicate is a global (module) parameter -- ok, seems you're doing that in the next paragraph below}
-\begin{itemize}
-    \item the types of $\mathcal{G}$ root node and $\mathcal{S}$ query
-      root coincide,
-    \item every node of $\mathcal{G}$ \textit{conforms} to
-      $\mathcal{S}$, and
-    \item every edge of $\mathcal{G}$ \textit{conforms} to
-      $\mathcal{S}$. 
-   
-\end{itemize}
-\end{definition}
-%
-
-
-The conformance of nodes validates that a node's type is declared as an object type
-in the schema and that its properties are correct. In turn, a property is \emph{correct} if 
-its key and arguments are defined in a field in the corresponding
-object type, and any value, either in an argument or
-the property's value, is \emph{valid} \wrt the expected types described in the schema. 
-For instance, if a field has type \texttt{Float}, 
-then a node's property matching the field must have a value that represents a double-precision fractional value\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754 (\cf\S3.5.2~\cite{gqlspec}). We do not include these base restrictions but leave it open to implementation.}.
-To model this validation of values, we parameterize our \coq development
-with a Boolean predicate $\mathit{\vscalar} : \mathit{graphQLSchema}
-\to \mathit{Name} \to \mathit{Scalar} \to \mathit{Bool}$. 
-%\td{I am trying to push this definition here and then not having to redefine it or explain it again}\et{yep, that's better}
-%\td{Probably not the best name for the predicate tbh}
-%\et{what about check\_scalar ?}
-
-Finally, the conformance of edges validates that: (1) the label
-matches some field in the type of the source node, (2) the type of the
-target node is compatible with the type of the matched field (by being
-either the same type, an implementation of or member of a union), (3)
-if the type (of the target node) is not a list type, then there should
-no other 
-edge outgoing from the source node and with the same label, and (4), the
-arguments of the label are defined in the corresponding field in the schema and
-their values are valid \wrt their expected types. \fo{I'm not sure
-  whether it is worth giving so many details here. If space is needed,
-maybe we can cut off here.}
-
-%includes rules such as checking that a node
-%type is declared as an object type in the schema and that its
-%properties are defined as fields in the corresponding type. Among
-%others, the conformance of edges ensures that edge labels are declared
-%as a field in the source node's type and the target node has a type
-%compatible with the field's return type. Full definitions of both
-%these notions can be found in the \coq development. %are found in file \texttt{GraphConformance.v}.
-
-With this in mind, the notion of conformance of a graph \wrt a schema is formalized as follows:
-%
-\begin{minted}[bgcolor=coqbg, escapeinside=||]{coq}
-Variable 
-  (|\vscalar| : graphQLSchema -> Name -> Scalar -> bool).
-  
-Definition is_a_conforming_graph 
-  (s : wfGraphQLSchema) 
-  (g : graphQLGraph) : bool :=
-    root_type_conforms s g.(root) &&
-    edges_conform s g &&
-    nodes_conform s g.(nodes).
-\end{minted}
-%
-% As a side note, this notion was only loosely defined in \HP, but it is properly addressed in a recent work of one of its authors ~\cite{olafschema}.
-
-Similarly to \gql schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph, containing a graph and a proof of its conformance to a particular schema.
-%\td{Since I mention above that it uses this predicate and show it as a variable, maybe we can skip it?} \et{yes}
-\begin{minted}[bgcolor=coqbg, escapeinside=||]{coq}
-Record conformedGraph (s : wfGraphQLSchema) :=
-  ConformedGraph { graph : graphQLGraph;
-           _ : is_a_conforming_graph s graph |\vscalar|}.
-\end{minted}
-
- %These properties include validation rules such as: every node must have an object type and their properties must be defined in their associated type, or an edge's label must be declared as a field in the source node's type and the target node must have a type compatible to the field's return type, among other things.
-
-%With both the schema and the underlying data model we can proceed to define \gql queries and their semantics.
-
-
-\subsection{Queries}\label{subsec:query}
-
 \begin{figure*}[t!]
   \centering
   \begin{subfigure}{.5\textwidth}
@@ -376,9 +293,9 @@ Record conformedGraph (s : wfGraphQLSchema) :=
   \caption{Definition of \gql queries:
   (left) \spec grammar; 
   (right) \gcoql definition. %\et{why Vals instead of Val?}\td{This was to keep close similarity to \HP (way at the beginning) -- do you think Val is better?}
-  \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t} correspond to identifiers for field names, field aliases and type conditions, respectively.
-  Symbol $\alpha$ stands for a key-value pair.} \fo{Cannot push this
-  figure to the (top of) previous page, where referred.}} 
+  \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t}
+    correspond to identifiers for field names, field renames or aliases and type conditions, respectively.
+  Symbol $\alpha$ stands for key-value pair.}} 
   % , representing the arguments of fields. \et{rather alpha is a key-value pair, and overbar is the list notation}}
   %\td{Brackets in optional query name may conflict with the others? It is a diff font, but idk if maybe using something else=}
   %\et{yeah that's a bit unfortunate. A solution is to use $( ... )^?$ to denote optional elements (without parenthesis when it's a single element)}
@@ -390,23 +307,116 @@ Record conformedGraph (s : wfGraphQLSchema) :=
   \label{fig:query_def}
 \end{figure*}
 
+Intuitively, the dataset modeled by a \gql graph is built following a
+schema. However, the definition of \gql graph above is fully
+independent of schemas. To relate the dataset to the schema, we employ
+the following notion of \textit{conformance}, partially based
+on~\cite{gqlph}:
+%\td{Over here we should start including the notion of Value type + valid scalar}
+%
+\begin{definition}
+A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if: 
+%\td{Should this definition include the predicate? \eg, with a value validation predicate bleble}\et{instead say that the value validation predicate is a global (module) parameter -- ok, seems you're doing that in the next paragraph below}
+\begin{itemize}
+    \item the types of $\mathcal{G}$ root node and $\mathcal{S}$ query
+      root coincide,
+    \item every node of $\mathcal{G}$ \textit{conforms} to
+      $\mathcal{S}$, and
+    \item every edge of $\mathcal{G}$ \textit{conforms} to
+      $\mathcal{S}$. 
+   
+\end{itemize}
+\end{definition}
+%
+
+
+The conformance of nodes validates that a node's type is declared as an object type
+in the schema and that its properties are correct. In turn, a property is \emph{correct} if 
+its key and arguments are defined in a field in the corresponding
+object type, and any value, either in an argument or
+the property's value, is \emph{valid} \wrt the expected types described in the schema. 
+For instance, if a field has type \texttt{Float}, 
+then a node's property matching the field must have a value that represents a double-precision fractional value\footnote{The \spec declares a set of minimal scalar values and how they should be represented, such as floating-point values adhering to IEEE 754 (\cf\S3.5.2~\cite{gqlspec}). We do not include these base restrictions but leave it open to implementation.}.
+To model this validation of values, we parameterize our \coq development
+with a Boolean predicate $\mathit{\vscalar} : \mathit{graphQLSchema}
+\to \mathit{Name} \to \mathit{Scalar} \to \mathit{Bool}$. 
+%\td{I am trying to push this definition here and then not having to redefine it or explain it again}\et{yep, that's better}
+%\td{Probably not the best name for the predicate tbh}
+%\et{what about check\_scalar ?}
+
+Finally, the conformance of edges validates that: (1) the label
+matches some field in the type of the source node, (2) the type of the
+target node is compatible with the type of the matched field (by being
+either the same type, an implementation of or member of a union), (3)
+if the type (of the target node) is not a list type, then there should
+no other 
+edge outgoing from the source node and with the same label, and (4), the
+arguments of the label are defined in the corresponding field in the schema and
+their values are valid \wrt their expected types. \fo{I'm not sure
+  whether it is worth giving so many details here. If space is needed,
+maybe we can cut off here.}
+
+%includes rules such as checking that a node
+%type is declared as an object type in the schema and that its
+%properties are defined as fields in the corresponding type. Among
+%others, the conformance of edges ensures that edge labels are declared
+%as a field in the source node's type and the target node has a type
+%compatible with the field's return type. Full definitions of both
+%these notions can be found in the \coq development. %are found in file \texttt{GraphConformance.v}.
+
+
+
+With this in mind, the notion of conformance of a graph \wrt a schema is formalized as follows:
+%
+\begin{minted}[bgcolor=coqbg, escapeinside=||]{coq}
+Variable 
+  (|\vscalar| : graphQLSchema -> Name -> Scalar -> bool).
+  
+Definition is_a_conforming_graph 
+  (s : wfGraphQLSchema) 
+  (g : graphQLGraph) : bool :=
+    root_type_conforms s g.(root) &&
+    edges_conform s g &&
+    nodes_conform s g.(nodes).
+\end{minted}
+%
+% As a side note, this notion was only loosely defined in \HP, but it is properly addressed in a recent work of one of its authors ~\cite{olafschema}.
+
+Similarly to \gql schemas, we define a structure that encapsulates the notion of a \textit{conformed} graph, containing a graph and a proof of its conformance to a particular schema.
+%\td{Since I mention above that it uses this predicate and show it as a variable, maybe we can skip it?} \et{yes}
+\begin{minted}[bgcolor=coqbg, escapeinside=||]{coq}
+Record conformedGraph (s : wfGraphQLSchema) :=
+  ConformedGraph { graph : graphQLGraph;
+           _ : is_a_conforming_graph s graph |\vscalar|}.
+\end{minted}
+
+ %These properties include validation rules such as: every node must have an object type and their properties must be defined in their associated type, or an edge's label must be declared as a field in the source node's type and the target node must have a type compatible to the field's return type, among other things.
+
+%With both the schema and the underlying data model we can proceed to define \gql queries and their semantics.
+
+
+\subsection{Queries}\label{subsec:query}
+
+
 
 To define queries we faithfully follow the \spec, as shown in
 Figure~\ref{fig:query_def}. A query consists of a list of selections, and can optionally be named.
 % consists of an optional name
 % \fo{We should mention this also in \S 2}\td{Not really necessary, or is it?} and a list of selections. 
-A selection can be a single field with arguments ($\fld$), a field
+A \emph{selection} can be a single field with arguments ($\fld$), a field
 with arguments followed by a set of subselections
 ($\fld \texttt{\{} \sset \texttt{\}}$) or an inline fragment
 comprising a type condition and a set of subselections
-($\ifrag{t}{\sset}$). Fields can be renamed or aliased ($\afld$). For
+($\ifrag{t}{\sset}$). Fields can be renamed or aliased ($\afld$, $\afld \texttt{\{} \sset \texttt{\}}$). For
 notational simplicity, when a field selection contains an empty list
 of arguments, we omit it and simple write the field name.
 
 % Fields can be accompanied by a list of arguments and can also be renamed.
 
 
-Intuitively, a valid query and its selection set form a tree, where leaves correspond to fields of scalar types and inner nodes correspond either to fields of some object type or abstract type (\ie~interface or union),
+Intuitively, a query has a tree structure, where leaves correspond to
+fields of scalar types and inner nodes correspond to either fields of
+some object type or abstract type (\ie~ an interface or union),
 % \fo{abstract type not defined}\td{Ok like this?} 
 or to inline fragments that condition when their subselections are evaluated. 
 
@@ -469,9 +479,8 @@ query {
 
 % The importance of this type in scope is that fields or inline fragments might be valid in certain cases but not in others. Similarly, a field may have a particular return type in one case and a different one in another type, like in the following example. Both types have an \texttt{age} field, but in one case it returns an integer value while in the other a floating point value. If that field is encountered in a query, it is necessary to know to which type it is being requested.
 
-Now that we have clarified the notion of type in scope, we are in
-condition of defining the notion of query conformance, which in turn
-depends on the notion of selection set conformance.
+Now that we have clarified the notion of type in scope, we 
+define the notion of conformance for selection sets.
 
 %\td{A query conforms when its selections conform to the Query type}
 \begin{definition}
@@ -488,12 +497,12 @@ A \gql selection set $\sset$ \textit{conforms} to a schema $\schema$ over a type
 \end{itemize}
 \end{definition}
 
-The first rule ensures that every selection is well-formed on its own, with
-respect to the type in scope. Its requirements vary according to the
+The first rule ensures that every selection is well-formed on its own,
+\wrt the type in scope. Its requirements vary according to the
 kind of selection. For instance, if the selection is a field, the rule
 checks that the field is part of the type in scope and that its
 arguments are correctly provided; if the selection is an inline
-fragment, then the type condition must at least share one subtype with
+fragment, then the type condition must share at least one subtype with
 the type in scope. This rule also includes validating the values used
 in arguments, similarly to the case of graphs.
 
@@ -527,20 +536,23 @@ query {
 \end{minted}
 \end{minipage}
 
-Intuitively, the previous query is invalid because its evaluation can produce results with the same key 
-(key \texttt{name}) but associated to values of different type (\eg string and integer values).
+\medskip
+\noindent Intuitively, the query is invalid because its evaluation produces results with the same key 
+(\texttt{name}) but associated to values of different types (\ie
+string and integer).
 
 %\td{We are not exactly capturing that the fields can be inside fragments, is it ok?}\et{I don't get it}
-The definition of field \emph{type-compatibility} is recursive. Two nested
+Formally, the definition of field \emph{type-compatibility} is recursive. Two nested
 field selections are type-compatible if whenever
 they have the same response name, any two fields in the concatenation of their
 subselections are also type-compatible. Two single field selections
 are always type-compatible, unless they have the same response
-name and different (scalar or enum) type.
+name and different %(scalar or enum)
+type.
 
 Finally, the renaming-consistency condition ensures that fields with
-the same response name refer to the same piece of information. For
-instance:
+the same response name refer to the same piece of
+information. Consider, for instance, the following query:
 % \td{This leaves a lot of empty space :/}
 \begin{minted}[escapeinside=||,mathescape=true]{js}
 query { goodboi {
@@ -548,25 +560,32 @@ query { goodboi {
           |$\ldots$| on Pig { age:oink } }
 \end{minted}
 
-Intuitively, this query is considered invalid because the fields with response name \texttt{age} both refer to distinct pieces of information;
-the first occurrence refers to the age of the animal, while the second accesses the field \texttt{oink} but renames it accordingly.
+\noindent The query is considered invalid because the fields with response name \texttt{age} both refer to distinct pieces of information;
+the first occurrence refers to field \texttt{age} of an \texttt{Animal}, while the second
+occurrence refers to the field \texttt{oink} of a \texttt{Pig}.
 
 %\fo{Add example and briefly explain} 
 
-Two field selections are \emph{renaming-consistent} if whenever they have the
-same response name and lie under overlapping types in context
-\fo{@Eric, is there any standard terminology for this
-  ``overlapping'', meaning that they share at least one subtype?},
-  \et{sharing a subtype means that their "(subtyping) meet/glb" exists--is that what you're referring to?}
-  \td{Yeah, at least I believe it is}
+Formally, two field selections are \emph{renaming-consistent} if
+whenever they have the same response name and lie under types in scope
+with at least one common subtype,
+% \fo{@Eric, is there any standard terminology for this
+%   ``overlapping'', meaning that they share at least one subtype?},
+%   \et{sharing a subtype means that their "(subtyping) meet/glb" exists--is that what you're referring to?}
+%   \td{Yeah, at least I believe it is}
 they have the same (actual) name, the same arguments and any two
 fields in the concatenation of their subselections are also
 renaming-consistent.
 
-The last two rules are defined as a single validation rule in the \spec (\cf\S5.3.2~\cite{gqlspec}). 
-We choose to split them because we noticed that they indeed can be defined separately, simplifying their implementation as well as facilitating 
-reasoning about them\footnote{Our algorithm implements an optimized version of the rule. A team at XING recently published another optimized algorithm~\cite{xingalg}.}.
+In the \spec, the last two rules are defined as a single validation
+rule (\cf~\cite[\S5.3.2]{gqlspec}). 
+We choose to split them because we noticed that they can indeed be defined separately, simplifying their implementation as well as facilitating 
+reasoning about them\footnote{Our \coq development uses an optimized
+  version of the algorithm in the \spec. Recently, a team at XING
+  developed another optimized algorithm~\cite{xingalg}.}.
 
+With the notion of conformance for selection sets at hand, the notion
+of conformance for queries is straightforward:
 
 \begin{definition}
 A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection set conforms to $\schema$ over the query root type.
@@ -574,7 +593,103 @@ A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection s
 
 %\et{this is the beginning of the problem I'm having with your statements about queries. There is the notion of *a query*, noted $\varphi$, yet from now on your statements are about *queries*. The definition below mixes "the content" (consistency, compatible response, etc.) with "the sequence" (all, list comprehension, etc). Worse, later on in the development, you use $\varphi$ as the variable name of type "seq Queries" (while fig6 uses a bar over). See also my later comments about your "plural formulations"}
 
-\noindent In \gcoql, this is captured with the following predicates.
+\begin{figure*}[t!]
+\centering
+\begin{subfigure}{.5\textwidth}
+
+  \begin{displaymath}
+	\begin{array}{rcl}
+	\response & ::= & \texttt{v}\\
+	& | & \texttt{\{} (\fkey : \response) \ldots (\fkey : \response) \texttt{\}} \\
+	& | & \texttt{[} \response \ldots \response \texttt{]}
+	\end{array}
+	\end{displaymath}
+	
+	
+\iffalse
+    \begin{grammar}
+    		<ResponseValue> ::= <value>
+		\alt \textbf{\texttt{\{}} (<name> \textbf{\texttt{:}} <ResponseValue>)* \textbf{\texttt{\}}}
+		\alt  \textbf{\texttt{[}} <ResponseValue>* \textbf{\texttt{]}}
+ \end{grammar}
+ \fi
+ 
+  \end{subfigure}%
+  \begin{subfigure}{.5\textwidth}
+\begin{minted}[bgcolor=coqbg]{coq}
+Inductive ResponseValue : Type :=
+| Leaf : option Value -> ResponseValue
+| Object : seq (Name * ResponseValue) -> ResponseValue
+| Array : seq ResponseValue -> ResponseValue.
+  
+Definition GraphQLResponse := seq (Name * ResponseValue).
+\end{minted}
+   
+  \end{subfigure}
+  \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).
+  %\et{the @ sign here shouldn't be necessary since A is an explicit parameter (I suspect in your Coq dev it's implicit)}\et{wait, that definition of ResponseValue cannot possibly be correct: if A is an explicit parameter, you can't use those constructor signatures, so you should declare with curly brackets.}
+  %\et{Explain in the text what's going on with the parametrization over eqType.}
+   \newline{\footnotesize The keywords \texttt{v} and \fkey represent leaf values and keys in a key-value pair, respectively.}
+  }
+  \label{fig:response_def}
+
+\end{figure*}
+
+
+\begin{figure*}[h!]
+\small
+    \centering
+    \begin{align*}
+    % Empty
+    & (1) & \eval{\cdot}{u} &= [\cdot] \\
+    % SingleField
+    & (2) & \evalu{\fld :: \sset} &= 
+        \resp{(\mathit{complete\_value(ftype_{type(u)}(f), property_{u}(\fld))})} :: \evalfilteru{\sset}{\fkey}  \\
+    % Nested field
+    & (3) & \evalu{\nfld{\overline{\beta}} :: \sset} &=
+    \begin{cases}
+        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_{type(u), \fkey} (\sset))}}{v_{i}})\; \mathit{neighbors}_{\fld}(u) \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
+         \hfill \text{ if } 
+            \mathit{ftype_{type(u)}(\fkey)} = L \text{ and } \{v_{1}, \ldots, v_{k}\} = 
+        \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in \mathit{edges}(\graph)\} \\
+        %
+    \fkey:\{\eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_{type(u), \fkey} (\sset))}}{v}\} ::  \evalfilteru{\sset}{\fkey}  
+         \hfill \text{ if } 
+        \mathit{ftype_{type(u)}(\fkey)}  \neq L \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+    %
+    \resp{\nval} :: \evalfilteru{\sset}{\fkey} 
+    \qquad \qquad \qquad \qquad \qquad
+  \text{ if } \mathit{ftype_{type(u)}(\fkey)}  \neq L  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+    \end{cases}\\
+    %inline fragment
+    & (4) & \evalu{\ifrag{t}{\overline{\beta}} :: \sset} &= 
+    \begin{cases}
+    \evalu{\overline{\beta} \mdoubleplus \sset} 
+     & \text{ if }\mathit{fragment\_type\_applies_{type(u)}(\texttt{t})}\\
+    \evalu{\sset} 
+    & \text{ otherwise}
+    \end{cases}
+    \end{align*}
+    \caption{Semantics of \gql selection sets, adapted from~\cite{gqlph} and the \spec. 
+    \td{$\mathit{fragment\_type\_applies}$ is actually called $\mathit{does\_fragment\_type\_applies}$ in the spec (as I had it before). 
+	This one is simpler to read and makes more sense, but I wondered if it shouldn't be the other name}
+    \newline {\footnotesize 
+    $\mathit{property}$ and $\mathit{type}$ are accessors to a node's property and type. $\mathit{neighbors}$ gets the neighbors of a node whose edge is labeled with the given field.
+    $\mathit{edges}$ gets the set of edges of a graph.  $\mathit{is\_valid\_response}$ validates the coerced value.
+    $\mathit{ftype}$ retrieves the field's type in the schema. $L$ represents the list type.}}
+    %The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
+    %Meanwhile, $\mathit{merge}$ joins the subqueries of the input selections. The $\mathit{type}$ function retrieves the type of the given field in the node's type.
+	%The $\mathit{fragment\_type\_applies}$ predicate checks if the fragment's type condition is related to the node's type and whether its contents should be evaluated in the given node.
+	%Finally, $E$ are the graph's edges, while $L_{t}$ is simply the list type.
+	% \et{then why the $_t$ subscript?}\td{Simply bc its "List type" -- I took the same notation as in \HP to somehow show the similarity between both definitions.}\et{remove it, it's confusingly suggesting that the L type is indexed by some t}}
+ %  %  \fo{This definition is given using syntax you have never introduced (what does :: mean? what does f:v mean? what does ++ mean?, etc, etc). Also, you must explain what all auxiliary functions (filter, property, merge, neighbors, etc, etc) do} 
+   % \et{explain also what are $u$ $G$ $L_t$ and $E$}
+%    \et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}
+    \label{fig:semantics}
+\end{figure*}
+
+
+\noindent In \gcoql, this is captured by the following predicates:
 %\td{Updated}
 %\td{Need to adjust names}
 %The implementation can be seen in the code below, however due to space limitations we only informally describe the %three mentioned rules. The complete definitions can be found in the file \texttt{QueryConformance.v}.
@@ -593,7 +708,9 @@ Definition selections_conform (s : wfGraphQLSchema)
 \end{minted}
 
 % This concludes the definition of \gql queries, the validation process and the notion of size of selections. 
-From now on, it is assumed that queries conform to a given schema. Finally, most of the recursive definitions over selection sets are well-founded using a notion of size.
+As a technical observation, most of our recursive definitions over
+selection sets are well-founded according to the following notion of
+size:
 \begin{definition}[\cite{gqlph}]
 % \td{It is in essence the same, except that they define selections along with queries}
 The \emph{size} of a selection $\sel$ and selection set $\sset$, noted $\ssize{\cdot}$, is recursively defined as:
@@ -601,10 +718,12 @@ The \emph{size} of a selection $\sel$ and selection set $\sset$, noted $\ssize{\
 \begin{align*}
     \ssize{\fld}  = \ssize{\afld} &=  1\\
     \ssize{\nfld{\sset}} = \ssize{\anfld{\sset}} = \ssize{\ifrag{t}{\sset}} &= 1 + \ssize{\sset}\\
-    \ssize{\sset} &= \sum_{\sel_{i} \in\; \sset}{\ssize{\sel_{i}}}
+    \ssize{\sset} &= \textstyle\sum_{\sel_{i} \in\; \sset}{\ssize{\sel_{i}}}
     \end{align*}
 \end{small}
 \end{definition} 
+
+For the reminder of our presentation, we assume that queries conform to a given schema.
 
 %\td{Cannot define $\sset$ in Coq (lexer error), so I had to go with $\sel$ instead of the selection set and simply \texttt{sel} for an atomic selection}
  %\et{you can use "$\sel$s"}
@@ -667,9 +786,7 @@ The \emph{size} of a selection $\sel$ and selection set $\sset$, noted $\ssize{\
 % \td{This looks a bit weird... Should it be a "definition" or just inline it as \HP does?}
 
 
-
-
-
+ 
 \subsection{Semantics}\label{subsec:semantics}
 Now we have all the prerequisites to define the semantics of \gql queries and their selection sets. We begin by briefly examining the responses generated by executing queries and then we give an informal description of the semantics, finishing with the formal definition. %We finish by discussing some implementation choices and comparison with the \spec and \HP.
 
@@ -680,47 +797,7 @@ We model responses with a tree structure, similar to JSON, as shown in Figure~\r
 % \et{this is not an appropriate description of the Coq definition: explain the parametrization that's going on. Then, if one accepts your parametrization by the eqType, why not baking the option in the Leaf constructor directly? (ie. Leaf : option A $\rightarrow$ RV)}
 % \td{Is it ok with the changes?}
 
-\begin{figure*}[h]
-\centering
-\begin{subfigure}{.5\textwidth}
 
-  \begin{displaymath}
-	\begin{array}{rcl}
-	\response & ::= & \texttt{v}\\
-	& | & \texttt{\{} (\fkey : \response) \ldots (\fkey : \response) \texttt{\}} \\
-	& | & \texttt{[} \response \ldots \response \texttt{]}
-	\end{array}
-	\end{displaymath}
-	
-	
-\iffalse
-    \begin{grammar}
-    		<ResponseValue> ::= <value>
-		\alt \textbf{\texttt{\{}} (<name> \textbf{\texttt{:}} <ResponseValue>)* \textbf{\texttt{\}}}
-		\alt  \textbf{\texttt{[}} <ResponseValue>* \textbf{\texttt{]}}
- \end{grammar}
- \fi
- 
-  \end{subfigure}%
-  \begin{subfigure}{.5\textwidth}
-\begin{minted}[bgcolor=coqbg]{coq}
-Inductive ResponseValue : Type :=
-| Leaf : option Value -> ResponseValue
-| Object : seq (Name * ResponseValue) -> ResponseValue
-| Array : seq ResponseValue -> ResponseValue.
-  
-Definition GraphQLResponse := seq (Name * ResponseValue).
-\end{minted}
-   
-  \end{subfigure}
-  \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).
-  %\et{the @ sign here shouldn't be necessary since A is an explicit parameter (I suspect in your Coq dev it's implicit)}\et{wait, that definition of ResponseValue cannot possibly be correct: if A is an explicit parameter, you can't use those constructor signatures, so you should declare with curly brackets.}
-  %\et{Explain in the text what's going on with the parametrization over eqType.}
-   \newline{\footnotesize The keywords \texttt{v} and \fkey represent leaf values and keys in a key-value pair, respectively.}
-  }
-  \label{fig:response_def}
-
-\end{figure*}
 %
 
 %\fo{What is the role of \texttt{ArrayResponse}? When presenting our domain of values \textit{Vals} you mentioned that it can be a scalar value, or a ``list'' of values. Is the \texttt{ArrayResponse} the counterpart of this ``list''? }
@@ -792,57 +869,7 @@ Definition execute_query (s : wfGraphQLSchema)
 
 %Our first attempt at defining the semantics was to follow \HP's post-processing approach. Our intention was to be as close as possible to their formalization to later prove their transformation and equivalence results, which we cover in Section~\ref{sec:norm}. However, the non-structural recursive nature of both the transformations and the post-processing function made reasoning about semantic equivalence very hard.
 
-\begin{figure*}[t]
-\small
-    \centering
-    \begin{align*}
-    % Empty
-    & (1) & \eval{\cdot}{u} &= [\cdot] \\
-    % SingleField
-    & (2) & \evalu{\fld :: \sset} &= 
-        \resp{(\mathit{complete\_value(ftype_{type(u)}(f), property_{u}(\fld))})} :: \evalfilteru{\sset}{\fkey}  \\
-    % Nested field
-    & (3) & \evalu{\nfld{\overline{\beta}} :: \sset} &=
-    \begin{cases}
-        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_{type(u), \fkey} (\sset))}}{v_{i}})\; \mathit{neighbors}_{\fld}(u) \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
-         \hfill \text{ if } 
-            \mathit{ftype_{type(u)}(\fkey)} = L \text{ and } \{v_{1}, \ldots, v_{k}\} = 
-        \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in \mathit{edges}(\graph)\} \\
-        %
-    \fkey:\{\eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_{type(u), \fkey} (\sset))}}{v}\} ::  \evalfilteru{\sset}{\fkey}  
-         \hfill \text{ if } 
-        \mathit{ftype_{type(u)}(\fkey)}  \neq L \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
-    %
-    \resp{\nval} :: \evalfilteru{\sset}{\fkey} 
-    \qquad \qquad \qquad \qquad \qquad
-  \text{ if } \mathit{ftype_{type(u)}(\fkey)}  \neq L  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
-    \end{cases}\\
-    %inline fragment
-    & (4) & \evalu{\ifrag{t}{\overline{\beta}} :: \sset} &= 
-    \begin{cases}
-    \evalu{\overline{\beta} \mdoubleplus \sset} 
-     & \text{ if }\mathit{fragment\_type\_applies_{type(u)}(\texttt{t})}\\
-    \evalu{\sset} 
-    & \text{ otherwise}
-    \end{cases}
-    \end{align*}
-    \caption{Semantics of \gql selection sets, adapted from~\cite{gqlph} and the \spec. 
-    \td{$\mathit{fragment\_type\_applies}$ is actually called $\mathit{does\_fragment\_type\_applies}$ in the spec (as I had it before). 
-	This one is simpler to read and makes more sense, but I wondered if it shouldn't be the other name}
-    \newline {\footnotesize 
-    $\mathit{property}$ and $\mathit{type}$ are accessors to a node's property and type. $\mathit{neighbors}$ gets the neighbors of a node whose edge is labeled with the given field.
-    $\mathit{edges}$ gets the set of edges of a graph.  $\mathit{is\_valid\_response}$ validates the coerced value.
-    $\mathit{ftype}$ retrieves the field's type in the schema. $L$ represents the list type.}}
-    %The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
-    %Meanwhile, $\mathit{merge}$ joins the subqueries of the input selections. The $\mathit{type}$ function retrieves the type of the given field in the node's type.
-	%The $\mathit{fragment\_type\_applies}$ predicate checks if the fragment's type condition is related to the node's type and whether its contents should be evaluated in the given node.
-	%Finally, $E$ are the graph's edges, while $L_{t}$ is simply the list type.
-	% \et{then why the $_t$ subscript?}\td{Simply bc its "List type" -- I took the same notation as in \HP to somehow show the similarity between both definitions.}\et{remove it, it's confusingly suggesting that the L type is indexed by some t}}
- %  %  \fo{This definition is given using syntax you have never introduced (what does :: mean? what does f:v mean? what does ++ mean?, etc, etc). Also, you must explain what all auxiliary functions (filter, property, merge, neighbors, etc, etc) do} 
-   % \et{explain also what are $u$ $G$ $L_t$ and $E$}
-%    \et{rename does\_fragment\_type\_apply to fragment\_type\_applies (and make it hide the $=$ true.)}
-    \label{fig:semantics}
-\end{figure*}
+
 
 %The first one is that we currently do not handle errors during execution. This is due to two main reasons: the evaluation function assumes it receives valid queries and we have not yet implemented non-null types. These relates to the two kinds of errors one may encounter when evaluating \gql queries: validation and execution errors. The first ones are captured before execution and displayed to the user. Our semantics has to deal with a case which would be ruled out by the validation process. We believe both cases can be covered by including X (monad/reasonably exceptional type theory/etc)\td{rewrite}.
 
