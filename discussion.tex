@@ -5,19 +5,19 @@
 
 Currently, \gcoql captures the core of \gql, but not the full specification. While this is already valuable to study key aspects of \gql---as illustrated in \S\ref{sec:norm}---more work is needed to fully cover the specification. 
 For the sake of exhaustiveness, we now list all missing features, referring to the \spec sections~\cite{gqlspec} where they are defined.\\
-Executable definitions:
+- \emph{Executable definitions:}\ \ %
 % \et{meaning?}\td{That is just the name \gql gives to these features}: 
 mutations (\S2.3), subscriptions (\S2.3), fragments (\S2.8).\\
-Types and type operations: Non-null types (\S2.11-3.4.1-3.12), schema and type extensions (\S3.2.2-3.4.3), arguments default values (\S3.6.1), input object types (\S3.10), directives (\S3.13).\\
-Queries: input object values (\S2.9.8), variables (\S2.10), variable and argument coercion (\S6.1.2-6.4.1), normal and serial execution (\S6.3.1), error handling (\S6.4.4).\\
-Finally, introspection is not supported (\S4). 
+- \emph{Types and type operations:}\ \ Non-null types (\S2.11-3.4.1-3.12), schema and type extensions (\S3.2.2-3.4.3), argument default values (\S3.6.1), input object types (\S3.10), directives (\S3.13).\\
+- \emph{Queries:}\ \ input object values (\S2.9.8), variables (\S2.10), variable and argument coercion (\S6.1.2-6.4.1), normal and serial execution (\S6.3.1), error handling (\S6.4.4).\\
+- \emph{Introspection:}\ \ fully unsupported (\S4). 
 
 
 
 \paragraph{Trustworthiness.}
 
 % To address the trustworthiness of \gcoql, 
-We have striven to establish a direct ``eyeball correspondence'' between \gcoql and the \spec whenever possible---though this correspondence has not (yet) been as seriously and systematically established as in the \jscert~\cite{jscert} and \coqr~\cite{coqr} projects, among others. 
+We have striven to establish a direct ``eyeball correspondence'' between \gcoql and the \spec whenever possible---though this correspondence has not (yet) been as seriously and systematically established as in other language formalization efforts such as \jscert~\cite{jscert} and \coqr~\cite{coqr}. 
 In particular, the \gcoql definitions closely follow the algorithmic definitions of the \spec and, whenever it corresponds, we explicitly reference the specific sections in the \spec where the definitions are included. 
 % \et{how does this correspondence manifest? do you reference the spec sections explicitly in the Coq development?}\et{argue}\td{I had links and then removed them, but I can add them again}\{yes!}
 
@@ -37,7 +37,7 @@ As mentioned earlier, \gcoql adopts a graph data model in order to give semantic
 \paragraph{Validation.}
 
 In order to further validate that \gcoql adequately captures the semantics of \gql, we implemented several examples, coming from different sources. 
-In all examples we define the values used in arguments and properties of nodes as elements of an inductive type, which wraps standard Coq types such as integers and strings, 
+In all examples we define the values used in arguments and properties of nodes as elements of an inductive type, which wraps standard \coq types such as integers and strings, 
 and a coercion function to transform these values into the corresponding JSON format.
 
 % \et{you say four sources, but below there is only three}
@@ -45,7 +45,7 @@ and a coercion function to transform these values into the corresponding JSON fo
 % \td{I didn't want to reuse the same example they used, bc it felt like just copy paste -- Although now it is not that far off tbh}
 
 First, we implement all of the examples used in the \spec validation section (\cf\S5~\cite{gqlspec}), for features that \gcoql currently supports.
-These correspond to tests over fields, such as valid definition in given types in context, proper use of arguments and 
+These correspond to tests over fields, such as valid definition in given types in scope, proper use of arguments and 
 whether they are are type-compatible and renaming-consistent. Also, the examples include validation over inline fragments and 
 whether they can be used in certain contexts. 
 
