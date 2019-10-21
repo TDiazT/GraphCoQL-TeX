@@ -226,6 +226,7 @@ query {
     }
   }
 }
+
 \end{minted}
 \label{fig:query_ex}
 \end{subfigure}%
@@ -251,18 +252,17 @@ query {
 \end{minted}
 \label{fig:response_ex}
 \end{subfigure}
-
-\caption{Example of \gql query (left) and its response (right).}
+\caption{\gql query (left) and its response (right).}
 \label{fig:qres_ex}
 \end{figure}
 
-\td{We can probably skip this paragraph to save space}
-As a final note, one of the appeals of \gql is that if we change our minds and no longer wish to request the friends's names, it would only suffice to remove the field selection 
-\texttt{name} from the \texttt{friends} subselections, and the generated response would no longer contain that piece of information. Similarly, reordering the output is simply done
-by reordering the selections in the query.
-We would not be required to define a new endpoint nor we would get
-information we no longer needed, as is usual the case with RESTful
-services. 
+% \td{We can probably skip this paragraph to save space}
+% As a final note, one of the appeals of \gql is that if we change our minds and no longer wish to request the friends's names, it would only suffice to remove the field selection 
+% \texttt{name} from the \texttt{friends} subselections, and the generated response would no longer contain that piece of information. Similarly, reordering the output is simply done
+% by reordering the selections in the query.
+% We would not be required to define a new endpoint nor we would get
+% information we no longer needed, as is usual the case with RESTful
+% services. 
 
 
 %If we wanted to ask another the same query but now without the friends' names, we would only have to remove the \texttt{name} field and \textit{voilà}, that's it. We use the same endpoint as before and the \gql service handles the resolution of our fields.

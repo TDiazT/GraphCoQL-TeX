@@ -17,6 +17,15 @@
 \usepackage{wrapfig}
 
 
+
+
+\linepenalty=20
+\clubpenalty=120
+\widowpenalty=120
+%\parpenalty=-120
+
+%\raggedbottom
+
 % Minted options
 \setminted{fontsize=\footnotesize}
 \definecolor{coqbg}{rgb}{0.95,0.95,0.95}
@@ -49,9 +58,14 @@
 \newcommand{\mynote}[3]
     {{\color{#3} \fbox{\bfseries\sffamily\scriptsize#1}
     {\small$\blacktriangleright$\textsf{\emph{#2}}$\blacktriangleleft$}}~}
-\newcommand{\et}[1]{\mynote{ET}{#1}{purple}}
-\newcommand{\fo}[1]{\mynote{FO}{#1}{brown}}
-\newcommand{\td}[1]{\mynote{TD}{#1}{blue}}
+% \newcommand{\et}[1]{\mynote{ET}{#1}{purple}}
+% \newcommand{\fo}[1]{\mynote{FO}{#1}{brown}}
+% \newcommand{\td}[1]{\mynote{TD}{#1}{blue}}
+
+\newcommand{\et}[1]{}
+\newcommand{\fo}[1]{}
+\newcommand{\td}[1]{}
+
 
 \newcommand\mdoubleplus{\mathbin{+\mkern-5mu+}}
 
@@ -94,7 +108,7 @@
 \newcommand{\ftype}[2]{ftype (#1, #2)}
 
 % simpl semantics
-\newcommand{\seval}[2]{\llparenthesis #1 \rrparenthesis^{#2}_{G}}
+\newcommand{\seval}[2]{\llparenthesis #1 \rrparenthesis^{#2}_{\graph}}
 \newcommand{\sevalu}[1]{\seval{#1}{u}}
 
 \newcommand{\queries}{\overline{\varphi}}

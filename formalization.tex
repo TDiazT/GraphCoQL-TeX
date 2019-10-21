@@ -46,11 +46,11 @@ the (overall) well-formedness of schemas.
 	 | & \texttt{interface } \name \texttt{ \{} \mathit{Field}^{+} \texttt{\}}\\
 	 | & \texttt{union } \name \texttt{ = } \name\; (\texttt{|} \name)^{*}\\
 	 | & \texttt{enum } \name \texttt{ \{} \name^{+} \texttt{\}} \\
-	& \\
+	& \\[-1ex]
 	\mathit{Field} & ::= \name \texttt{ (} \mathit{Arg^{+}} \texttt{)}^{?} \texttt{ : } \mathit{Type}\\
-	& \\
+	& \\[-1ex]
     \mathit{Arg} & ::= \name \texttt{ : } \mathit{Type}\\
-	& \\
+	& \\[-1ex]
     \mathit{Type} & ::=\\ 
      | & \name \\
  	 | &  \texttt{[}  \mathit{Type} \texttt{]}
@@ -236,80 +236,72 @@ Note that graphs are modeled using a sequence ---rather than a set---
 of edges; verifying edge unicity is very simple.  We found this design
 decision more convenient as, overall, it led to a simpler
 formalization.
-%but this design decision would be fairly easy to revisit if needed.
+
+
+% but this design decision would be fairly easy to revisit if needed.
 % \td{Added this}
 
-\begin{figure*}[t!]
-  \centering
-  \begin{subfigure}{.5\textwidth}
-  \begin{displaymath}
-	\begin{array}{rcl}
-	\query & ::= & \texttt{query } (\name)^{?} \texttt{ \{}  \sset \texttt{\}} \\
-	&& \\
-	\sel & ::= & \fld \\
-	& | & \afld \\		
-	& | & \nfld{\sset} \\
-	& | & \anfld{\sset} \\
-	& | & \ifrag{t}{\sset} \\
-	\end{array}
-	\end{displaymath}
+% \begin{figure*}[t!]
+%   \centering
+%   \begin{subfigure}{.5\textwidth}
+%   \begin{displaymath}
+% 	\begin{array}{rcl}
+% 	\query & ::= & \texttt{query } (\name)^{?} \texttt{ \{}  \sset \texttt{\}} \\
+% 	&& \\
+% 	\sel & ::= & \fld \\
+% 	& | & \afld \\		
+% 	& | & \nfld{\sset} \\
+% 	& | & \anfld{\sset} \\
+% 	& | & \ifrag{t}{\sset} \\
+% 	\end{array}
+% 	\end{displaymath}
 	
-	\iffalse
-    \begin{grammar}
-    		<Query> ::= [\textbf{\texttt{query}} [<name>]] \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
+% 	\iffalse
+%     \begin{grammar}
+%     		<Query> ::= [\textbf{\texttt{query}} [<name>]] \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
 		
-        <Selection> ::= <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{)}}
-        \alt <alias> \textbf{\texttt{:}} <name> [\textbf{\texttt{(}} <Arg>$^{+}$ \textbf{\texttt{)}}]
-        \alt <name> [\textbf{\texttt{(}} <Arg>$^{+}$ \textbf{\texttt{)}}] \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
-        \alt <alias> \textbf{\texttt{:}} <name> [\textbf{\texttt{(}} <Arg>$^{+}$ \textbf{\texttt{)}}] \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
-        \alt \textbf{\texttt{... on}} <name> \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
+%         <Selection> ::= <name> \textbf{\texttt{(}} <Arg>* \textbf{\texttt{)}}
+%         \alt <alias> \textbf{\texttt{:}} <name> [\textbf{\texttt{(}} <Arg>$^{+}$ \textbf{\texttt{)}}]
+%         \alt <name> [\textbf{\texttt{(}} <Arg>$^{+}$ \textbf{\texttt{)}}] \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
+%         \alt <alias> \textbf{\texttt{:}} <name> [\textbf{\texttt{(}} <Arg>$^{+}$ \textbf{\texttt{)}}] \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
+%         \alt \textbf{\texttt{... on}} <name> \textbf{\texttt{\{}} <Selection>$^{+}$ \textbf{\texttt{\}}}
         
-        <Arg> ::= <name> \textbf{\texttt{:}} <value>
-    \end{grammar}
-    \fi 
+%         <Arg> ::= <name> \textbf{\texttt{:}} <value>
+%     \end{grammar}
+%     \fi 
     
-  \end{subfigure}%
-  \begin{subfigure}{.5\textwidth}
+%   \end{subfigure}%
+%   \begin{subfigure}{.5\textwidth}
 
-    \begin{minted}[bgcolor=coqbg]{coq}
-    
-    Record query := 
-         Query { qname : option string; 
-                 selection_set : seq Selection }.
-                   
-    Inductive Selection : Type :=
-    | SingleField (name : Name)
-                  (arguments : seq (Name * Value))
-    | SingleAliasedField (alias : Name)
-                         (name : Name)
-                         (arguments : seq (Name * Value))
-    | NestedField (name : Name)
-                  (arguments : seq (Name * Value))
-                  (subselections : seq Selection)
-    | NestedAliasedField (alias : Name)
-                         (name : Name)
-                         (arguments : seq (Name * Value))
-                         (subselections : seq Selection)
-    | InlineFragment (type_condition : Name)
-                     (subselections : seq Selection).
-    \end{minted}
-  \end{subfigure}
-  \caption{Definition of \gql queries:
-  (left) \spec grammar; 
-  (right) \gcoql definition. %\et{why Vals instead of Val?}\td{This was to keep close similarity to \HP (way at the beginning) -- do you think Val is better?}
-  \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t}
-    correspond to identifiers for field names, field renames or aliases and type conditions, respectively.
-  Symbol $\alpha$ stands for key-value pair.}} 
-  % , representing the arguments of fields. \et{rather alpha is a key-value pair, and overbar is the list notation}}
-  %\td{Brackets in optional query name may conflict with the others? It is a diff font, but idk if maybe using something else=}
-  %\et{yeah that's a bit unfortunate. A solution is to use $( ... )^?$ to denote optional elements (without parenthesis when it's a single element)}
-  %\td{Is it me or the query record looks flattened?} \et{???}
-  %\td{To be completely accurate, the parenthesis in field selections
-  %are not necessary unless there are arguments}\td{This might add
-  %some noise?}\et{yeah I think that'd be too much (and not very
-  %relevant)} 
-  \label{fig:query_def}
-\end{figure*}
+%     \begin{minted}[bgcolor=coqbg]{coq}
+%     Record query := 
+%          Query { qname : option string; 
+%                  selection_set : seq Selection }.                   
+%     Inductive Selection : Type :=
+%     | SingleField (name : Name)
+%                   (arguments : seq (Name * Value))
+%     | SingleAliasedField (alias : Name)
+%                          (name : Name)
+%                          (arguments : seq (Name * Value))
+%     | NestedField (name : Name)
+%                   (arguments : seq (Name * Value))
+%                   (subselections : seq Selection)
+%     | NestedAliasedField (alias : Name)
+%                          (name : Name)
+%                          (arguments : seq (Name * Value))
+%                          (subselections : seq Selection)
+%     | InlineFragment (type_condition : Name)
+%                      (subselections : seq Selection).
+%     \end{minted}
+%   \end{subfigure}
+%   \caption{Definition of \gql queries:
+%   (left) \spec grammar; 
+%   (right) \gcoql definition. %\et{why Vals instead of Val?}\td{This was to keep close similarity to \HP (way at the beginning) -- do you think Val is better?}
+%   \newline{\footnotesize Symbols \texttt{f}, \texttt{a} and \texttt{t}
+%     correspond to identifiers for field names, field renames or aliases and type conditions, respectively.
+%   Symbol $\alpha$ stands for key-value pair.}} 
+%   \label{fig:query_def}
+% \end{figure*}
 
 Intuitively, the dataset modeled by a \gql graph is built following a
 schema. However, the definition of \gql graph above is fully
@@ -357,6 +349,53 @@ graphs. For instance, given an edge, it requires that the label match
 some field in the type of the source node and that the type of the
 target node be compatible with the type of the matched field. The full
 definition can be found in the \coq development.
+
+\begin{figure}[t!]
+  \centering
+
+  \begin{displaymath}
+	\begin{array}{rcl}
+	\query & ::= & \texttt{query } (\name)^{?} \texttt{ \{}  \sset \texttt{\}} \\
+	&& \\
+	\sel & ::= & \fld \\
+	& | & \afld \\		
+	& | & \nfld{\sset} \\
+	& | & \anfld{\sset} \\
+	& | & \ifrag{t}{\sset} \\
+	\end{array}
+	\end{displaymath}
+ 
+    \begin{minted}[bgcolor=coqbg]{coq}
+    Record query := 
+         Query { qname : option string; 
+                 selection_set : seq Selection }.
+                   
+    Inductive Selection : Type :=
+    | SingleField (name : Name)
+                  (arguments : seq (Name * Value))
+    | SingleAliasedField (alias : Name)
+                         (name : Name)
+                         (arguments : seq (Name * Value))
+    | NestedField (name : Name)
+                  (arguments : seq (Name * Value))
+                  (subselections : seq Selection)
+    | NestedAliasedField (alias : Name)
+                         (name : Name)
+                         (arguments : seq (Name * Value))
+                         (subselections : seq Selection)
+    | InlineFragment (type_condition : Name)
+                     (subselections : seq Selection).
+    \end{minted}
+
+   \caption{Definition of \gql queries:
+  (top) \spec grammar; 
+  (bottom) \gcoql definition. %\et{why Vals instead of Val?}\td{This was to keep close similarity to \HP (way at the beginning) -- do you think Val is better?}
+  \newline{\footnotesize In the \spec grammar, symbols \texttt{f}, \texttt{a} and \texttt{t}
+    correspond to identifiers for field names, field renames or aliases and type conditions, respectively.
+  Symbol $\alpha$ corresponds to key-value pairs.}} 
+  \label{fig:query_def}
+\end{figure}
+
 
 It is worth noting that, in accordance with the flexibility advocated
 by graph databases, the notion of conformance does not require that a
@@ -421,7 +460,6 @@ Record conformedGraph (s : wfGraphQLSchema) :=
 \subsection{Queries}\label{subsec:query}
 
 
-
 To define queries we faithfully follow the \spec, as shown in
 Figure~\ref{fig:query_def}. A query consists of a list of selections, and can optionally be named.
 % consists of an optional name
@@ -433,6 +471,9 @@ comprising a type condition and a set of subselections
 ($\ifrag{t}{\sset}$). Fields can be renamed or aliased ($\afld$, $\afld \texttt{\{} \sset \texttt{\}}$). For
 notational simplicity, when a field selection contains an empty list
 of arguments, we omit it and simply write the field name.
+
+
+
 
 % Fields can be accompanied by a list of arguments and can also be renamed.
 
@@ -464,7 +505,7 @@ validity of queries depends on the validity of their selection sets,
 which in turn requires the notion of \textit{type in scope}%
 %\begin{minipage}[t]{.25\textwidth}
 \begin{wrapfigure}[10]{r}{.20\textwidth}
-  \vspace{-2.5ex}
+  \vspace{-1.3ex}
   \begin{flushright}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
   query {
@@ -514,7 +555,8 @@ define the notion of conformance for selection sets.
 
 %\td{A query conforms when its selections conform to the Query type}
 \begin{definition}
-A \gql selection set $\sset$ \textit{conforms} to a schema $\schema$ over a type in scope $\mathit{ts}$ if:
+A \gql selection set $\sset$ \textit{conforms} to a schema $\schema$
+over a type in scope $\mathit{ts}$ if:
 \begin{itemize}
 \item every selection in $\sset$ is  well-formed, and
 
@@ -524,8 +566,7 @@ A \gql selection set $\sset$ \textit{conforms} to a schema $\schema$ over a type
   renaming-consistent\footnote{In the \spec
     (\cf~\cite[\S5.3.2]{gqlspec}), these two notions roughly correspond
     to \emph{having-the-same-response-shape} and
-    \emph{fields-can-merge}, respectively.}.
-       
+    \emph{fields-can-merge}, respectively.}.       
 \end{itemize}
 \end{definition}
 
@@ -538,9 +579,10 @@ fragment, then the type condition must share at least one subtype with
 the type in scope. This rule also includes validating the values used
 in arguments, similarly to the case of graphs.
 
-
 In the second rule, the type-compatibility requirement forbids the
 selection set in \eg the following query:
+
+\smallskip
 
 \begin{minipage}[t]{.22\textwidth}
 \begin{minted}[escapeinside=||,mathescape=true]{js}
@@ -569,6 +611,7 @@ query {
 \end{minipage}
 
 \medskip
+
 \noindent Intuitively, the query is invalid because its evaluation produces results with the same key 
 (\texttt{name}) but associated to values of different types (\ie
 string and integer).
@@ -679,7 +722,7 @@ Definition GraphQLResponse := seq (Name * ResponseValue).
 Definition query_conforms 
   (s : wfGraphQLSchema) (@$\query$@ : query) : bool :=
     selections_conform s s.(query_type) @$\query$@.(selection_set).
-    
+  
 Definition selections_conform (s : wfGraphQLSchema)
   (ts : Name) (@$\sel$@s : seq Selection) : bool :=
     let @$\sel$@s_with_scope := [seq (ts, @$\sel$@) | @$\sel$@ <- @$\sel$@s] in 
@@ -853,7 +896,8 @@ selection sets.
   \begin{flushright}
   \fbox{$\eval{\cdot}{u} ~\colon~ \textit{seq Selection} \rightarrow  \textit{GraphQLResponse}$}    
   \end{flushright}
-\centering
+  \centering
+    \vspace{-1ex}
     \begin{align*}
     % signature
  %    & \\[2ex]
@@ -900,7 +944,9 @@ selection sets.
      % and "u.type"}\fo{fully agree; the same for neighbors}
     %\td{Not forget to update the simplified semantics} \fo{please, go
      % for it}
-    $\mathit{edges}$ gets the set of edges of a graph.  $\mathit{ftype}$ retrieves the type of a field in a schema. $\mathit{list}$ represents the list type.}}
+    $\mathit{edges}$ gets the set of edges of a graph.
+    $\mathit{ftype}$ retrieves the type of a field from the underlying
+    schema. $\mathit{list}$ represents the list type (over any other type).}}
     %The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
     %Meanwhile, $\mathit{merge}$ joins the subqueries of the input selections. The $\mathit{type}$ function retrieves the type of the given field in the node's type.
 	%The $\mathit{fragment\_type\_applies}$ predicate checks if the fragment's type condition is related to the node's type and whether its contents should be evaluated in the given node.

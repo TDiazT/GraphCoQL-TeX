@@ -1,6 +1,46 @@
 % !TEX root = ./main.tex
 \section{Case Study: Normalization}\label{sec:norm}
 
+\begin{figure*}[t]
+  \small
+  \begin{flushright}
+  \fbox{$\tnorm{\cdot} ~\colon~ \textit{seq Selection} \rightarrow  \textit{seq Selection}$}    
+  \end{flushright}  
+  \centering
+  \vspace{-1ex}
+    \begin{align*}
+    % Empty
+    & (1) & \tnorm{\cdot} &= [\cdot] \\
+    % SingleField
+    & (2) & \tnorm{\fld :: \sset} &= 
+       	\fld :: \tnorm{\filter{\sset}{\fkey}} \\      
+        %
+    % Nested field
+    & (3) & \tnorm{\nfld{\overline{\beta}} :: \sset} &=
+    \begin{cases}
+        \nfld{\norm{\mathit{\ftype{ts}{\fkey}}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{fkey}{\sset})}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
+	            \mathit{is\_object\_type (\ftype{ts}{\fkey})}\\
+        %
+    \nfld{\mathit{map}\; (\lambda t_{i}.\; \ifrag{$t_{i}$}{\norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{\fkey}{\sset})}}})\; \mathit{get\_possible\_types (ts)}} 
+    		:: \tnorm{\filter{\sset}{\fkey}} \\
+		\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\; \text{ otherwise } 
+    \end{cases}\\
+    %inline fragment
+    & (4) & \tnorm{\ifrag{t}{\overline{\beta}} :: \sset} &= 
+    \begin{cases}
+    \tnorm{\overline{\beta} \mdoubleplus \sset} & 
+    \text{if }\mathit{fragment\_type\_applies(ts, \texttt{t})}\\
+    \tnorm{\sset} & \text{otherwise}
+    \end{cases}
+    \end{align*}
+    \caption{Normalization procedure for \gql selections. 
+	% \td{Forgot to add the inline fragments in 2nd case of eq. 3 -- I reformat it but not sure if it is aligned o not}\et{? the 3rd line}
+    	\newline{\footnotesize 
+      $\mathit{is\_object\_type}$ checks whether the given type is an object type in the schema. $\mathit{get\_possible\_types}$ get all object subtypes of the given type.}
+    }
+\label{fig:normalize}
+\end{figure*}
+
 To illustrate how \gcoql can be used to reason about query transformations, we study the {\em normalization} process proposed by Hartig and Pérez (\HP)~\cite{gqlph}, which is fundamental for the complexity results they prove.
 %
 Recall that these results are based on two premises: {\em a)} every query can be normalized to a semantically-equivalent query; {\em b)} on such queries, one can use a simplified evaluation function. For normalization,  \HP provide a set of equivalence rules to establish the existence of a normal form. However they do not provide an algorithm for query normalization, let alone prove it correct and semantics preserving. Likewise, they do not prove the equivalence of the simplified semantics when applied to normalized queries.
@@ -22,6 +62,8 @@ The notion of \textit{normal form} introduced by Hartig and Pérez consists of t
 %\et{should it be "groundedness"? (being bounded is boundedness, being rounded is roundedness, etc.)}
 Informally, a query is in ground-typed normal form, or {\em grounded} for short, if it is completely specified down to object types. Consider the queries below, based on the schema from Figure~\ref{fig:schema_ex}, which request the name of an animal: 
 %\td{Align to top or as it is? Aligning to top leaves a huge empty space :/}
+
+\smallskip
 
 \begin{minipage}[t]{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
@@ -46,6 +88,9 @@ query {
 } } }
 \end{minted} 
 \end{minipage}
+
+\smallskip
+
 The left query is not grounded because the field \texttt{name} is selected on the abstract type \texttt{Animal} type. In contrast, the right query is grounded because it specifies the (concrete) object types \texttt{Dog} and \texttt{Pig} on which it requests the information.
 %\et{verbose/repetitive} The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype. 
 
@@ -117,6 +162,8 @@ a non-redundant query is a query that does not produce repeated results.
 For example, consider the two queries below:
 %\td{Should this be another figure?}\et{do the same as you do for groundedness -- better to just inline if there are no references from other parts of the paper}\et{use the same trick with comments to indicate grounded/ungrounded}
 
+\smallskip
+
 \begin{minipage}[t]{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Redundant query
@@ -149,6 +196,8 @@ query {
 \end{minipage}
 %\et{fix layout}
 
+\bigskip
+
 The left query is redundant for two reasons: it requests the field \texttt{name} twice to the same type, and it uses two fragments with the same type condition. If no collection and merger of fields is performed during the evaluation, this will produce two values with the key \texttt{name}. 
 Conversely, the right query is non-redundant because it requests information about each type only once; only one fragment will actually be executed at a time, depending on the concrete object value that is used to evaluate the query.
 % It is important to notice that, even though it requests the field \texttt{name} in both, this is considered not redundant because 
@@ -177,37 +226,37 @@ A \gql query $\varphi$ is \textit{non-redundant} if its selection set is non-red
 
 \subsection{Defining Normalization}\label{subsec:normalization}
 
-\begin{figure}[t]
-\begin{minipage}[t]{.25\textwidth}
-\begin{minted}[escapeinside=||, mathescape=true]{js}
-// Query not in normal form
-query {
-  |$\ldots$| on Query {
-    goodboi {
-      name
-  }
-  }
-  goodboi {
-    name
-} }
-\end{minted}
-\end{minipage}%
-\begin{minipage}[t]{.25\textwidth}
-\begin{minted}[escapeinside=||, mathescape=true]{js}
-// Normalized query
-query {
-  goodboi {
-    |$\ldots$| on Dog {
-    name
-  }
-  |$\ldots$| on Pig {
-    name
-} } }
-\end{minted} 
-\end{minipage}
-\caption{Query normalization example.}
-\label{fig:norm-example}
-\end{figure}
+% \begin{figure}[t]
+% \begin{minipage}[t]{.25\textwidth}
+% \begin{minted}[escapeinside=||, mathescape=true]{js}
+% // Query not in normal form
+% query {
+%   |$\ldots$| on Query {
+%     goodboi {
+%       name
+%   }
+%   }
+%   goodboi {
+%     name
+% } }
+% \end{minted}
+% \end{minipage}%
+% \begin{minipage}[t]{.25\textwidth}
+% \begin{minted}[escapeinside=||, mathescape=true]{js}
+% // Normalized query
+% query {
+%   goodboi {
+%     |$\ldots$| on Dog {
+%     name
+%   }
+%   |$\ldots$| on Pig {
+%     name
+% } } }
+% \end{minted} 
+% \end{minipage}
+% \caption{Query normalization example.}
+% \label{fig:norm-example}
+% \end{figure}
 
 The normalization procedure transforms a query into a normalized one by grounding and removing redundancies in its selection set. The transformation can be understood as a form of abstract interpretation, which evaluates selections using only static information about the type in scope.
 
@@ -217,43 +266,6 @@ However, in order not to lose information during filtering, normalization collec
 
 Finally, to obtain a selection in ground-typed normal form, normalization performs two separate steps, depending on whether the selection is a field (3) or an inline fragment (4). For the former, the process either directly normalizes the subselections or wraps them with inline fragments, based on the field's type.
 For the latter, the process either removes fragments or lifts their subselections, depending on whether they apply to the given type in scope.
-
-\begin{figure*}[t]
-\small
-    \centering
-    \begin{align*}
-    % Empty
-    & (1) & \tnorm{\cdot} &= [\cdot] \\
-    % SingleField
-    & (2) & \tnorm{\fld :: \sset} &= 
-       	\fld :: \tnorm{\filter{\sset}{\fkey}} \\      
-        %
-    % Nested field
-    & (3) & \tnorm{\nfld{\overline{\beta}} :: \sset} &=
-    \begin{cases}
-        \nfld{\norm{\mathit{\ftype{ts}{\fkey}}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{fkey}{\sset})}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
-	            \mathit{is\_object\_type (\ftype{ts}{\fkey})}\\
-        %
-    \nfld{\mathit{map}\; (\lambda t_{i}.\; \ifrag{$t_{i}$}{\norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{\fkey}{\sset})}}})\; \mathit{get\_possible\_types (ts)}} 
-    		:: \tnorm{\filter{\sset}{\fkey}} \\
-		\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\; \text{ otherwise } 
-    \end{cases}\\
-    %inline fragment
-    & (4) & \tnorm{\ifrag{t}{\overline{\beta}} :: \sset} &= 
-    \begin{cases}
-    \tnorm{\overline{\beta} \mdoubleplus \sset} & 
-    \text{if }\mathit{fragment\_type\_applies(ts, \texttt{t})}\\
-    \tnorm{\sset} & \text{otherwise}
-    \end{cases}
-    \end{align*}
-    \caption{Normalization procedure for \gql selections. 
-	% \td{Forgot to add the inline fragments in 2nd case of eq. 3 -- I reformat it but not sure if it is aligned o not}\et{? the 3rd line}
-    	\newline{\footnotesize 
-      $\mathit{is\_object\_type}$ checks whether the given type is an object type in the schema. $\mathit{get\_possible\_types}$ get all object subtypes of the given type.}
-    }
-\label{fig:normalize}
-\end{figure*}
-
 
 
 %The complete normalization process is actually composed of two separate functions; \texttt{normalize}, which performs all the actual work but under the assumption that the type in context is an object type, and \texttt{normalize\_queries}, which makes no assumption but only pipes the work\et{?}\td{Don't know what else to add. One function does all the work, the other one just pipes the work the other, based on the type in context} \et{my question is because the expression "pipe the work" is not clear/correct} to the former. The main process can be informally described as consisting of two subprocesses that deal with the two aforementioned properties.\et{which? (merging, mentioned below, was not mentioned above)}
@@ -298,8 +310,45 @@ query {
 
 %\td{Unnecessary?} \et{yeah, I think all this is taking too much space for the actual technical content and insights it provides. Think of a more concise way to describe normalization, ie. by guiding the reader walk through FIgure 9}\et{examples are not necessary, you illustrated before when introducing the notions} \et{for now, I'm skipping the rest of 4.2, jumping to 4.3}
 %Next, to tackle inline fragments that are unnecessary or that specialize selections in the context of an object type, let us consider the following queries. The first query includes two fragments that are not necessary; a fragment with type condition \texttt{Query} and one with type condition \texttt{Animal}. The procedure eliminates both fragments, by lifting the subqueries.
-% \et{this paragraph can be skipped for gaining space} 
-Figure~\ref{fig:norm-example} illustrates normalization, with a query (on the left) and its normalized version (on the right). Subselections from fragment with type condition \texttt{Query} are lifted and the multiple occurrences of field \texttt{goodboi} are merged into a single occurrence. 
+% \et{this paragraph can be skipped for gaining space}
+
+\paragraph{Example.}  We illustrate the normalization procedure with
+the example below.
+
+\smallskip
+
+\begin{minipage}[t]{.25\textwidth}
+\begin{minted}[escapeinside=||, mathescape=true]{js}
+// Query not in normal form
+query {
+  |$\ldots$| on Query {
+    goodboi {
+      name
+  }
+  }
+  goodboi {
+    name
+} }
+\end{minted}
+\end{minipage}%
+\begin{minipage}[t]{.25\textwidth}
+\begin{minted}[escapeinside=||, mathescape=true]{js}
+// Normalized query
+query {
+  goodboi {
+    |$\ldots$| on Dog {
+    name
+  }
+  |$\ldots$| on Pig {
+    name
+} } }
+\end{minted} 
+\end{minipage}
+
+\medskip
+
+\noindent On the left we have the original query and on the right its normalized
+version. Subselections from fragment with type condition \texttt{Query} are lifted and the multiple occurrences of field \texttt{goodboi} are merged into a single occurrence. 
 Since the type of the field \texttt{goodboi} is the abstract type \texttt{Animal}, the subselections are wrapped in fragments for each concrete object subtype, namely \texttt{Dog} and \texttt{Pig}. The normalized query is both non-redundant and in ground-typed normal form. 
 
 
@@ -370,7 +419,12 @@ Of course, defining a normalization procedure in itself does not ensure anything
 % proving the correctness of our normalization procedure. 
 
 \begin{figure*}[t]
-    \centering \small
+  \small
+  \begin{flushright}
+  \fbox{$\seval{\cdot}{u} ~\colon~ \textit{seq Selection} \rightarrow  \textit{GraphQLResponse}$}    
+  \end{flushright}
+  \centering
+    \vspace{-1ex}
     \begin{align*}
     % Empty\sset
     & (1) & \seval{\cdot}{u} &= [\cdot] \\
@@ -401,7 +455,8 @@ Of course, defining a normalization procedure in itself does not ensure anything
     \sevalu{\sset} & \text{ otherwise}
     \end{cases}
     \end{align*}
-    \caption{Simplified semantics for selections in normal form, adapted from~\cite{gqlph}.} 
+    \caption{Simplified semantics for selections in normal form,
+      adapted from~\cite{gqlph}.\fo{flush left}} 
     %\td{Fixing}} %\et{why is it $\in L$ and not $= L$?}}
     % \et{this is exactly as in HP? if so, we should cite here as well (e.g. "(from [X])" or "(adapted from [X])" if there are some light changes)--we might want to put the "adapted from" in other figures as well to prevent plagiarism attacks!}}
     % \td{It is mostly the same, except that their definition is on atomic selections, that we use coercion of values + the fact that they define everything with set and functions (mentioned in \S\ref{subsec:discussion})}
