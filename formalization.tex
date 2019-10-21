@@ -24,7 +24,7 @@ Our formalization of type definitions closely follows the \spec, as
 depicted in Figure~ \ref{fig:types_def}. A type may be a scalar type,
 an object type, which possibly implements a set of interfaces, an
 interface type, a union type or an enumeration type. Object and
-interface type definitions comprise an (ordered) set of fields; union
+interface type definitions comprise an (ordered)\td{order is not really relevant in this case} set of fields; union
 types are defined by a set of type names and enumeration types by a
 set of values. For the corresponding type definitions to be valid, all
 such three sets should be non-empty. While the \spec enforces this
@@ -46,7 +46,7 @@ the (overall) well-formedness of schemas.
 	 | & \texttt{union } \name \texttt{ = } \name\; (\texttt{|} \name)^{*}\\
 	 | & \texttt{enum } \name \texttt{ \{} \name^{+} \texttt{\}} \\
 	& \\
-	\mathit{Field} & ::= \name \texttt{ (} \mathit{\overline{Arg}} \texttt{) : } \mathit{Type}\\
+	\mathit{Field} & ::= \name \texttt{ (} \mathit{Arg^{+}} \texttt{)}^{?} \texttt{ : } \mathit{Type}\\
 	& \\
     \mathit{Arg} & ::= \name \texttt{ : } \mathit{Type}\\
 	& \\
@@ -81,7 +81,7 @@ the (overall) well-formedness of schemas.
     \end{subfigure}
     \caption{Definition of \gql types: (left) \spec grammar; 
     (right) \gcoql definition.\newline
-    {\footnotesize The $(\cdot)^{?}$ notation denotes optional attributes, and the overline $\overline{\cdot}$ denotes a sequence of elements.} 
+    {\footnotesize The $(\cdot)^{?}$ notation denotes optional attributes.} 
     % \td{Changed the optional bracket here also -- to $( )^{?}$}
     % \td{Also changed $\overline{Field}$ bc the grammar specifies at least one}
     % \et{overbar or * -- you are using both. any difference?}
@@ -109,7 +109,8 @@ types allow building ``invalid'' schemas. For instance, one can build
 an object that implements scalar types or use a nonexistent type as
 the root query type. To avoid this problem, the \spec provides several
 validation rules, scattered throughout the document (many can be found
-\eg in \cite[\S3]{gqlspec}). 
+\eg in \cite[\S3]{gqlspec}\td{They may all be found there, but many are in the Validation section of each type}
+\td{Also, this notation is a bit different from the other cases, is it ok?}). 
  % the \textbf{Type Validation} subsection of each type described in ..  
  We gather all these rules and refer to them as the \textit{well-formedness}
 condition of a \gql schema:\footnote{In \HP, this notion is called {\em consistency}.}
@@ -117,7 +118,7 @@ condition of a \gql schema:\footnote{In \HP, this notion is called {\em consiste
 \begin{definition}
 A \gql schema is \textit{well-formed} if: 
 \begin{itemize}
-    \item its root type (is defined and) is an object type, 
+    \item its query root type (is defined and) is an object type, 
     \item there are no duplicated type names, and
     \item every type definition is \textit{well-formed}.
 \end{itemize}
@@ -138,7 +139,7 @@ The notion of well-formedness for type definitions requires \eg that
 the members of union types are existent object types and that object and
 interface types contain at least one field. %Due to space limitations,
 % we omit the f
-Full definition can be found in our
+Full definitions can be found in our
 \coq development. %file \texttt{SchemaWellFormedness.v}.
 
 %We will, though, resume the discussion about non-emptiness of fields, union and enum members, which are included in the predicate. The main reason behind this decision is that, even though the \spec embeds this information in the grammar, it still includes it in their validation rules later on. We believe that it is simpler to use common lists instead of defining new structures or using dependent types, from an implementation point of view, while still preserving the correspondence to the algorithmic description given by the \spec.
@@ -309,7 +310,7 @@ formalization.
 
 Intuitively, the dataset modeled by a \gql graph is built following a
 schema. However, the definition of \gql graph above is fully
-independent of schemas. To relate the dataset to the schema, we employ
+independent of schemas\td{any? -- too many "schemas" I feel :P (not sure how to rewrite it lol)}. To relate the dataset to the schema, we employ
 the following notion of \textit{conformance}, partially based
 on~\cite{gqlph}:
 %\td{Over here we should start including the notion of Value type + valid scalar}
@@ -331,7 +332,7 @@ A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if:
 
 
 The conformance of nodes validates that a node's type is declared as an object type
-in the schema and that its properties are correct. In turn, a property is \emph{correct} if 
+in the schema and that its properties conform. In turn, a property \emph{conforms} if 
 its key and arguments are defined in a field in the corresponding
 object type, and any value, either in an argument or
 the property's value, is \emph{valid} \wrt the expected types described in the schema. 
@@ -348,13 +349,13 @@ Finally, the conformance of edges validates that: (1) the label
 matches some field in the type of the source node, (2) the type of the
 target node is compatible with the type of the matched field (by being
 either the same type, an implementation of or member of a union), (3)
-if the type (of the target node) is not a list type, then there should
-no other 
-edge outgoing from the source node and with the same label, and (4), the
+if the type of the field is not a list type, then there should be
+no other outgoing edge from the source node and with the same label, and (4), the
 arguments of the label are defined in the corresponding field in the schema and
 their values are valid \wrt their expected types. \fo{I'm not sure
   whether it is worth giving so many details here. If space is needed,
 maybe we can cut off here.}
+\td{+1}
 
 %includes rules such as checking that a node
 %type is declared as an object type in the schema and that its
@@ -409,7 +410,7 @@ with arguments followed by a set of subselections
 comprising a type condition and a set of subselections
 ($\ifrag{t}{\sset}$). Fields can be renamed or aliased ($\afld$, $\afld \texttt{\{} \sset \texttt{\}}$). For
 notational simplicity, when a field selection contains an empty list
-of arguments, we omit it and simple write the field name.
+of arguments, we omit it and simply write the field name.
 
 % Fields can be accompanied by a list of arguments and can also be renamed.
 
@@ -471,7 +472,7 @@ query {
 
 
 \noindent In the first occurrence, the field is requesting information about the
-\texttt{Dog} type, while in the second it is requesting information about the \texttt{Pig} type. The distinction is important because some field selections might be valid in some contexts but not in others. This is the case, for instance, for field \texttt{favoriteToy}: It is valid in the context of a \texttt{Dog} type but it is invalid in the context of a \texttt{Pig} type, as \texttt{Pig} type does not contain any such field. %Similarly, the above query would also be invalid if \texttt{Pig} type contained a so-called field, but of type different from \texttt{Toy} ---the type of the same field in type \texttt{Dog}.
+\texttt{Dog} type, while in the second it is requesting information about the \texttt{Pig} type. The distinction is important because some field selections might be valid in some contexts but not in others. This is the case, for instance, for field \texttt{favoriteToy}: It is valid in the scope of a \texttt{Dog} type but it is invalid in the scope of a \texttt{Pig} type, as \texttt{Pig} type does not contain any such field. %Similarly, the above query would also be invalid if \texttt{Pig} type contained a so-called field, but of type different from \texttt{Toy} ---the type of the same field in type \texttt{Dog}.
 
 %Just as in the case of well-formedness of schemas or conformance of graphs, queries must go through a validation process. We define the property of \textit{conformance} of queries, based on validation rules scattered throughout the \textit{Validation} section of the \spec\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}.
 
@@ -488,7 +489,7 @@ A \gql selection set $\sset$ \textit{conforms} to a schema $\schema$ over a type
 \begin{itemize}
 \item every selection in $\sset$ is  well-formed, and
 
-\item any two field selections in $\sset$ are type-compatible and
+\item any two field selections in $\sset$, \td{including visiting fragments} are type-compatible and
   renaming-consistent\footnote{In the \spec
     (\cf\S5.3.2~\cite{gqlspec}), these two notions roughly correspond
     to \emph{having-the-same-response-shape} and
