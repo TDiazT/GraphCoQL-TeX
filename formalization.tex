@@ -444,18 +444,21 @@ given selection location\footnote{The \spec refers to it as the \emph{type in sc
 To illustrate this, consider the following query with two occurrences of field \texttt{name}.
 
 %\begin{minipage}[t]{.25\textwidth}
+\begin{wrapfigure}[9]{r}{.25\textwidth}
+\vspace{-2.5ex}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
-query {
-  goodboi {
-    |$\ldots$| on Dog {
-      name
-      favoriteToy
-    }
-    |$\ldots$| on Pig {
-      name
-      favoriteToy
-    } } }
+  query {
+    goodboi {
+      |$\ldots$| on Dog {
+        name
+        favoriteToy
+      }
+      |$\ldots$| on Pig {
+        name
+        favoriteToy
+  } } }
 \end{minted}
+\end{wrapfigure}
 %\end{minipage}%
 % \begin{minipage}[t]{.25\textwidth}
 % \begin{minted}[escapeinside=||, mathescape=true]{js}   
@@ -472,7 +475,8 @@ query {
 
 
 \noindent In the first occurrence, the field is requesting information about the
-\texttt{Dog} type, while in the second it is requesting information about the \texttt{Pig} type. The distinction is important because some field selections might be valid in some contexts but not in others. This is the case, for instance, for field \texttt{favoriteToy}: It is valid in the scope of a \texttt{Dog} type but it is invalid in the scope of a \texttt{Pig} type, as \texttt{Pig} type does not contain any such field. %Similarly, the above query would also be invalid if \texttt{Pig} type contained a so-called field, but of type different from \texttt{Toy} ---the type of the same field in type \texttt{Dog}.
+\texttt{Dog} type, while in the second it is requesting information about the \texttt{Pig} type. The distinction is important because some field selections might be valid in some contexts but not in others. 
+\td{Better? I feel there is something wrong, but not sure what} This is the case, for instance, for field \texttt{favoriteToy}: It is valid in the scope of a \texttt{Dog} type but it is invalid in the scope of a \texttt{Pig} type, as \texttt{Pig} type does not contain any such field. %Similarly, the above query would also be invalid if \texttt{Pig} type contained a so-called field, but of type different from \texttt{Toy} ---the type of the same field in type \texttt{Dog}.
 
 %Just as in the case of well-formedness of schemas or conformance of graphs, queries must go through a validation process. We define the property of \textit{conformance} of queries, based on validation rules scattered throughout the \textit{Validation} section of the \spec\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}.
 
