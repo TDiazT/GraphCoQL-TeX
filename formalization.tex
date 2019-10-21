@@ -651,11 +651,11 @@ Definition GraphQLResponse := seq (Name * ResponseValue).
     & (1) & \eval{\cdot}{u} &~=~ [\cdot] \\
     % SingleField
     & (2) & \evalu{\fld :: \sset} &~=~ 
-        \resp{(\mathit{complete\_value(ftype_{type(u)}(\texttt{f}), property_{u}(\fld))})} :: \evalfilteru{\sset}{\fkey}  \\
+        \resp{(\mathit{complete\_value(ftype(type(u), \texttt{f}), property(u, \fld))})} :: \evalfilteru{\sset}{\fkey}  \\
     % Nested field
     & (3) & \evalu{\nfld{\overline{\beta}} :: \sset} &~=~
     \begin{cases}
-        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_{type(u), \fkey} (\sset))}}{v_{i}})\; \mathit{neighbors}_{\fld}(u) \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
+        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect(type(u), \fkey, \sset))}}{v_{i}})\; \mathit{neighbors}_{\graph}(u, \fld) \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
          \hfill \text{ if } 
             \mathit{ftype_{type(u)}(\fkey)} = \mathit{list} \text{ and } \{v_{1}, \ldots, v_{k}\} = 
         \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in \mathit{edges}(\graph)\} \\
@@ -672,7 +672,7 @@ Definition GraphQLResponse := seq (Name * ResponseValue).
     & (4) & \evalu{\ifrag{t}{\overline{\beta}} :: \sset} &~=~ 
     \begin{cases}
     \evalu{\overline{\beta} \mdoubleplus \sset} 
-     & \text{ if }\mathit{fragment\_type\_applies_{type(u)}(\texttt{t})}\\
+     & \text{ if }\mathit{fragment\_type\_applies(type(u), \texttt{t})}\\
     \evalu{\sset} 
     & \text{ otherwise}
     \end{cases}
@@ -684,6 +684,8 @@ Definition GraphQLResponse := seq (Name * ResponseValue).
     %     footnote, in the text.}
     \newline {\footnotesize 
     $\mathit{property}$ and $\mathit{type}$ are accessors to a node property and type. $\mathit{neighbors}$ gets the neighbors of a node whose edge is labeled with the given field.
+    \td{To make it look cleaner, we can maybe use "u.property($\fld$)" and "u.type"}
+    \td{Not forget to update the simplified semantics}
     $\mathit{edges}$ gets the set of edges of a graph.  $\mathit{is\_valid\_response}$ validates the coerced value.
     $\mathit{ftype}$ retrieves the type of a field in a schema. $\mathit{list}$ represents the list type.}}
     %The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
