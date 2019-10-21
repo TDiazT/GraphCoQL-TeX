@@ -861,28 +861,30 @@ selection sets.
     & (1) & \eval{\cdot}{u} &~=~ [\cdot] \\
     % SingleField
     & (2) & \evalu{\fld :: \sset} &~=~ 
-        \resp{(\mathit{complete\_value(ftype(type(u), \texttt{f}), property(u, \fld))})} :: \evalfilteru{\sset}{\fkey}  \\
+        \resp{(\mathit{complete\_value(ftype(u.type, \fkey), u.property(\fld))})} :: \evalfilteru{\sset}{\fkey}  \\
     % Nested field
     & (3) & \evalu{\nfld{\overline{\beta}} :: \sset} &~=~
     \begin{cases}
-        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect(type(u), \fkey, \sset))}}{v_{i}})\; \mathit{neighbors}_{\graph}(u, \fld) \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
-         \hfill \text{ if } 
-            \mathit{ftype_{type(u)}(\fkey)} = \mathit{list} \text{ and } \{v_{1}, \ldots, v_{k}\} = 
+        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect(u.type, \fkey, \sset))}}{v_{i}})\; \mathit{u.neighbors_{\graph}(\fld)} \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
+             \qquad \qquad \qquad \qquad \qquad \qquad
+			 \text{ if } 
+            \mathit{ftype(u.type, \fkey)} = \mathit{list} \text{ and } \{v_{1}, \ldots, v_{k}\} = 
         \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in \mathit{edges}(\graph)\} \\
         %
-    \fkey:\{\eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_{type(u), \fkey} (\sset))}}{v}\} ::  \evalfilteru{\sset}{\fkey}  
-         \hfill \text{ if } 
-        \mathit{ftype_{type(u)}(\fkey)}  \neq \mathit{list} \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+    \fkey:\{\eval{\overline{\beta} \mdoubleplus \mathit{merge (collect(u.type, \fkey, \sset))}}{v}\} ::  \evalfilteru{\sset}{\fkey}  \\
+         \qquad \qquad \qquad \qquad \qquad \qquad \qquad
+		 \text{ if } 
+        \mathit{ftype(u.type, \fkey)}  \neq \mathit{list} \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     %
     \resp{\nval} :: \evalfilteru{\sset}{\fkey} 
-    \qquad \qquad \qquad \qquad \qquad
-  \text{ if } \mathit{ftype_{type(u)}(\fkey)}  \neq \mathit{list}  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+    \qquad \qquad \qquad \qquad 
+  \text{ if } \mathit{ftype(u.type, \fkey)}  \neq \mathit{list}  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     \end{cases}\\
     %inline fragment
     & (4) & \evalu{\ifrag{t}{\overline{\beta}} :: \sset} &~=~ 
     \begin{cases}
     \evalu{\overline{\beta} \mdoubleplus \sset} 
-     & \text{ if }\mathit{fragment\_type\_applies(type(u), \texttt{t})}\\
+     & \text{ if }\mathit{fragment\_type\_applies(u.type, \texttt{t})}\\
     \evalu{\sset} 
     & \text{ otherwise}
     \end{cases}
@@ -894,12 +896,11 @@ selection sets.
     %     footnote, in the text.}
     \newline {\footnotesize 
     $\mathit{property}$ and $\mathit{type}$ are accessors to a node property and type. $\mathit{neighbors}$ gets the neighbors of a node whose edge is labeled with the given field.
-    \td{To make it look cleaner, we can maybe use "u.property($\fld$)"
-      and "u.type"}\fo{fully agree; the same for neighbors}
-    \td{Not forget to update the simplified semantics} \fo{please, go
-      for it}
-    $\mathit{edges}$ gets the set of edges of a graph.  $\mathit{is\_valid\_response}$ validates the coerced value.
-    $\mathit{ftype}$ retrieves the type of a field in a schema. $\mathit{list}$ represents the list type.}}
+    %\td{To make it look cleaner, we can maybe use "u.property($\fld$)"
+     % and "u.type"}\fo{fully agree; the same for neighbors}
+    %\td{Not forget to update the simplified semantics} \fo{please, go
+     % for it}
+    $\mathit{edges}$ gets the set of edges of a graph.  $\mathit{ftype}$ retrieves the type of a field in a schema. $\mathit{list}$ represents the list type.}}
     %The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
     %Meanwhile, $\mathit{merge}$ joins the subqueries of the input selections. The $\mathit{type}$ function retrieves the type of the given field in the node's type.
 	%The $\mathit{fragment\_type\_applies}$ predicate checks if the fragment's type condition is related to the node's type and whether its contents should be evaluated in the given node.
@@ -937,7 +938,7 @@ selection sets.
  % $\mathit{complete\_value}$, used in rule (2) of the figure.
 \end{definition}
 
-In order not to clutter the notation, we omit the underlying schama
+In order not to clutter the notation, we omit the underlying schema
 when defining $\llbracket \sset \rrbracket^{u}_{\graph}$ in
 Figure~\ref{fig:semantics}. The schema is implicitly used \eg when
 invoking function $\mathit{complete\_value}$.
@@ -1003,8 +1004,6 @@ selection set of $\query$ from the root node of $\graph$, that is, $\eval{\query
 
 In \gcoql we have:
 \begin{minted}[bgcolor=coqbg, escapeinside=||, mathescape=true]{coq}
-Variable (coerce : Scalar -> Scalar).
-
 Definition execute_query (s : wfGraphQLSchema)
   (g : conformedGraph s |\vscalar|)
   (|$\query$| : query) :=
@@ -1012,7 +1011,7 @@ Definition execute_query (s : wfGraphQLSchema)
       g.(root) |$\query$|.(selection_set).
 \end{minted}
 
-\fo{Include also \vscalar above}\td{where? It doesn't appear in the definition of the semantics bc. it is used in complete\_value}
+%\fo{Include also \vscalar above}\td{where? It doesn't appear in the definition of the semantics bc. it is used in complete\_value}
 % \td{Since this is. the first occurrence of coerce, in code, I include it as a variable (note that I use \vscalar in the graph parameter, since I already mentioned that I use it as a parameter in the corresponding modules)}
 
 %The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.

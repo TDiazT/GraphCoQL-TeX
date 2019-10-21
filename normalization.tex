@@ -231,10 +231,10 @@ For the latter, the process either removes fragments or lifts their subselection
     % Nested field
     & (3) & \tnorm{\nfld{\overline{\beta}} :: \sset} &=
     \begin{cases}
-        \nfld{\norm{ftype_{ts}(\fkey)}{\overline{\beta} \mdoubleplus \mathit{merge (collect_{ts, \fkey} (\sset))}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
-	            \mathit{is\_object\_type (ftype_{ts} (\fkey))}\\
+        \nfld{\norm{\mathit{\ftype{ts}{\fkey}}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{fkey}{\sset})}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
+	            \mathit{is\_object\_type (\ftype{ts}{\fkey})}\\
         %
-    \nfld{\mathit{map}\; (\lambda t_{i}.\; \ifrag{$t_{i}$}{\norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (collect_{ts, \fkey} (\sset))}}})\; \mathit{get\_possible\_types (ts)}} 
+    \nfld{\mathit{map}\; (\lambda t_{i}.\; \ifrag{$t_{i}$}{\norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{\fkey}{\sset})}}})\; \mathit{get\_possible\_types (ts)}} 
     		:: \tnorm{\filter{\sset}{\fkey}} \\
 		\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\; \text{ otherwise } 
     \end{cases}\\
@@ -242,7 +242,7 @@ For the latter, the process either removes fragments or lifts their subselection
     & (4) & \tnorm{\ifrag{t}{\overline{\beta}} :: \sset} &= 
     \begin{cases}
     \tnorm{\overline{\beta} \mdoubleplus \sset} & 
-    \text{if }\mathit{fragment\_type\_applies_{ts}(\texttt{t})}\\
+    \text{if }\mathit{fragment\_type\_applies(ts, \texttt{t})}\\
     \tnorm{\sset} & \text{otherwise}
     \end{cases}
     \end{align*}
@@ -376,28 +376,28 @@ Of course, defining a normalization procedure in itself does not ensure anything
     & (1) & \seval{\cdot}{u} &= [\cdot] \\
     % SingleField
     & (2) & \sevalu{\fld :: \sset} &= 
-    \resp{(\mathit{complete\_value(ftype_{type(u)}(f), property_{u}(\fld))})} :: \sevalu{\sset} \\
+    \resp{(\mathit{complete\_value(ftype(u.type, \fkey), u.property(\fld))})} :: \sevalu{\sset} \\
     & (3) & % Nested field
     \sevalu{\nfld{\overline{\beta}} :: \sset} &=
     \begin{cases}
       \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \seval{\overline{\beta}}{v_{i}})\; 
-      \mathit{neighbors_{\fld}(u)} \texttt{]}} :: \sevalu{\sset}  \\
+      \mathit{u.neighbors_{\graph}(\fld)} \texttt{]}} :: \sevalu{\sset}  \\
      \hfill \text{ if } 
-            \mathit{ftype_{type(u)}(\fkey)} = L \text{ and } \{v_{1}, \ldots, v_{k}\} = 
-        \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in \mathit{edges}(\graph)\} \\
+            \mathit{ftype(u.type, \fkey)} = list \text{ and } \{v_{1}, \ldots, v_{k}\} = 
+        \{v_{i} \mid (u, \fld, v_{i}) \in \mathit{edges}(\graph)\} \\
         % 
       \resp{\{\seval{\subqueries{\beta}}{v}\})} :: \sevalu{\sset}  
       \hfill \text{ if } 
-        \mathit{ftype_{type(u)}(\fkey)}  \neq L \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+        \mathit{ftype(u.type, \fkey)}  \neq list \text{ and } (u, \fld, v) \in \mathit{edges}(\graph) \\
         %
       \resp{\nval} :: \sevalu{\sset} 
      \qquad \qquad \qquad \qquad \qquad
-    \text{ if } \mathit{ftype_{type(u)}(\fkey)}  \neq L  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+    \text{ if } \mathit{ftype(u.type, \fkey)}  \neq list  \text{ and } \nexists v \text{ s.t. }  (u, \fld, v) \in \mathit{edges}(\graph) \\
     \end{cases}\\
     %inline fragment
     & (4) & \sevalu{\ifrag{t}{\overline{\beta}}:: \sset} &= \begin{cases}
     \sevalu{\overline{\beta} \mdoubleplus \sset} & 
-  	\text{ if }\mathit{fragment\_type\_applies_{type(u)}(\texttt{t})}\\
+  	\text{ if }\mathit{fragment\_type\_applies (u.type, \texttt{t})}\\
     \sevalu{\sset} & \text{ otherwise}
     \end{cases}
     \end{align*}
