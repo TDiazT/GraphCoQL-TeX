@@ -619,7 +619,7 @@ A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection s
   \begin{subfigure}{.5\textwidth}
 \begin{minted}[bgcolor=coqbg]{coq}
 Inductive ResponseValue : Type :=
-| Leaf : option Value -> ResponseValue
+| Leaf : option Scalar -> ResponseValue
 | Object : seq (Name * ResponseValue) -> ResponseValue
 | Array : seq ResponseValue -> ResponseValue.
   
@@ -801,10 +801,10 @@ Now we have all the prerequisites to define the semantics of \gql queries and th
 
 
 Roughly speaking, a \gql response maps keys (fields names together
-with their arguments) to response
+with their arguments)\td{?}\td{a response maps keys to values, not their arguments. Or you meant the semantics?} to response
 values. We model responses values with a tree structure, similar to
 JSON. Concretely, a response value can be either a value in
-\texttt{Value} or the distinguished value \texttt{null}, an object
+\texttt{Scalar} or the distinguished value \texttt{null}, an object
 mapping keys to other response values, or an array of response
 values. Full definition is provided in Figure~\ref{fig:response_def}.
 % Null values in the leaves of the response tree are represented with option types.%\et{fix once fig 6 defs is clarified}
@@ -870,7 +870,7 @@ selection sets.
 
 \begin{definition}
   Let $\graph$ be a graph and $\sset$ a selection set, both conforming
-  to a schema $\mathcal{S}$. The evaluation $\llbracket \sset
+  to a schema $\schema$. The evaluation $\llbracket \sset
   \rrbracket^{u}_{\graph}$ of $\sset$ over graph $\graph$
   from node $u \in \mathit{nodes}(\graph)$ % \footnote{Where
     % $\mathit{nodes}$ is a function that retrieves all nodes from a
@@ -881,7 +881,7 @@ selection sets.
   $\mathit{coerce} \colon  \mathit{Scalar} \to \mathit{Scalar}$ and a value
   validation predicate
   $\mathit{\vscalar} \colon \mathit{graphQLSchema} \to \mathit{Name} \to
-  \mathit{Scalar} \to \mathit{Bool}$.
+  \mathit{Scalar} \to \mathit{Bool}$. \td{Mention that $\schema$ is also an implicit param}
 \end{definition}
 
 %Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. 
@@ -892,7 +892,7 @@ that only valid results are produced, the function
 $\mathit{complete\_value}$ (\cf~\cite[\S6.4.3]{gqlspec}) transforms
 invalid values into \texttt{null} and coerces valid ones, after
 checking that they adhere to their expected types according to the
-schema. % The coercion function is included as a parameter in the
+schema\td{Maybe correction here also, about invalid coercion resulting in null values as well?}. % The coercion function is included as a parameter in the
         % corresponding modules.
 Nested fields (3) represent a traversal to neighboring nodes: the
 evaluation function searches for nodes that are connected to the
@@ -900,16 +900,15 @@ current node by an edge whose label matches the field name and then
 evaluates the subselections on these nodes. If the field has type
 list, there is no constraint on the number of such neighboring nodes
 to recursively continue the evaluation. On the contrary, if the field
-does not have type list, then there should be at least one neighboring
-node (in fact, the case of multiple nodes is discarded by the
-conformance assumption on the selection set); if this is not the case,
-the result is considered \texttt{null}.
+does not have type list, then there should be at most one neighboring
+node; if there is no neighbor,
+the result is considered \texttt{null}. \td{Rewrote this to use "at most" and simplify text}
 
 To avoid the duplication of responses, rules (2) and (3) handling the
-evaluation of fields ensures that within a selection set, fields with the same
+evaluation of fields ensure that within a selection set, fields with the same
 response name are evaluated only once. This is achieved by collecting
 and merging all fields in subsequent selections that have the same
-name as the current field being evaluated (using auxiliary functions
+response name as the current field being evaluated (using auxiliary functions
 $\mathit{collect}$ and $\mathit{merge}$) and removing these fields
 from subsequent selections (using auxiliary function
 $\mathit{filter}$), before they are evaluated.
@@ -947,7 +946,7 @@ Definition execute_query (s : wfGraphQLSchema)
       g.(root) |$\query$|.(selection_set).
 \end{minted}
 
-\fo{Include also \vscalar above}
+\fo{Include also \vscalar above}\td{where? It doesn't appear in the definition of the semantics bc. it is used in complete\_value}
 % \td{Since this is. the first occurrence of coerce, in code, I include it as a variable (note that I use \vscalar in the graph parameter, since I already mentioned that I use it as a parameter in the corresponding modules)}
 
 %The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.
