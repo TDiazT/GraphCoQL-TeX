@@ -326,18 +326,19 @@ A \gql graph $\mathcal{G}$ \textit{conforms} to a schema $\mathcal{S}$ if:
 %
 
 
-The conformance of nodes validates that a node's type is declared as an object type
-in the schema and that its properties conform. In turn, a property \emph{conforms} if 
-its key and arguments are defined in a field in the corresponding
-object type, and any value, either in an argument or
-the property's value, is \emph{valid} \wrt the expected types described in the schema. 
-For instance, if a field has type \texttt{Float}, 
-then a node property matching the field must have a value that
-represents a double-precision fractional value\footnote{The \spec
-  declares a set of minimal scalar values and how they should be
-  represented, such as floating-point values adhering to IEEE 754
-  (\cf~\cite[\S3.5.2]{gqlspec}). We do not include these base
-  restrictions, leaving it open to the implementation.}.
+The conformance of nodes validates that a node's type is declared as
+an object type in the schema and that its properties conform. In turn,
+a property \emph{conforms} if its key and arguments are defined in a
+field in the corresponding object type, and any value, either in an
+argument or the property's value, is \emph{valid} \wrt the expected
+types described in the schema.  For instance, if a field has type
+\texttt{Float}, the \spec dictates that a node property matching the
+field must have a value that represents a double-precision fractional
+value (\cf~\cite[\S3.5.2]{gqlspec}). % \footnote{The \spec
+  % declares a set of minimal scalar values and how they should be
+  % represented, such as floating-point values adhering to IEEE 754
+  % (\cf~\cite[\S3.5.2]{gqlspec}). We do not include these base
+  % restrictions, leaving it open to the implementation.}
 To model this validation of values, we parameterize our \coq development
 with a Boolean predicate $\mathit{\vscalar} : \mathit{graphQLSchema}
 \to \mathit{Name} \to \mathit{Scalar} \to \mathit{Bool}$.
@@ -534,7 +535,7 @@ which in turn requires the notion of \textit{type in scope}%
 % \end{minipage}
 %\et{for space reason, we may want to take some liberties wrt the formatting of queries and responses (see some examples on this page)}
 %
-at a given selection location\footnote{The \spec refers to it as the \emph{type in scope} or \emph{parent type}. Some algorithmic descriptions make use of the types in scope but are not explicit in their signatures.}. % Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied.
+at a given selection location. % \footnote{The \spec refers to it as the \emph{type in scope} or \emph{parent type}. Some algorithmic descriptions make use of the types in scope but are not explicit in their signatures.} % Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied.
 To illustrate this, consider the query to the right with two occurrences of field \texttt{name}.
 \noindent In the first occurrence, the field is requesting information about the
 \texttt{Dog} type, while in the second it is requesting information
@@ -1030,8 +1031,9 @@ Finally, inline fragments (4) simply condition whether their
 subselections are evaluated (in the current node) or not. The decision
 is based on the $\mathit{fragment\_type\_applies}$ predicate (\cf
 \cite[\S6.3.2]{gqlspec}) that verifies whether the guard type matches
-the current node type or supertype thereof.\footnote{In the \spec,
-  function $\mathit{fragment\_type\_applies}$ is called $\mathit{does\_fragment\_type\_applies}$.}
+the current node type or supertype thereof.\footnote{Function
+  $\mathit{fragment\_type\_applies}$ is called
+  $\mathit{does\_fragment\_type\_applies}$ in the \spec.}
 
 To avoid redundancy, we have not covered aliased fields. They are
 evaluated the same way as unaliased fields, but differ in that the

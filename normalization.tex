@@ -91,7 +91,7 @@ query {
 
 \medskip
 
-The left query is not grounded because the field \texttt{name} is selected on the abstract type \texttt{Animal} type. In contrast, the right query is grounded because it specifies the (concrete) object types \texttt{Dog} and \texttt{Pig} on which it requests the information.
+\noindent The left query is not grounded because the field \texttt{name} is selected on the abstract type \texttt{Animal} type. In contrast, the right query is grounded because it specifies the (concrete) object types \texttt{Dog} and \texttt{Pig} on which it requests the information.
 %\et{verbose/repetitive} The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype. 
 
 % \td{Changing this definition}
