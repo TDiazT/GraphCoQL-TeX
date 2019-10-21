@@ -98,14 +98,11 @@ The left query is not grounded because the field \texttt{name} is selected on th
 \begin{definition}[\cite{gqlph}]
 A \gql selection set $\sset$ is in \textit{ground-typed normal form} if it satisfies the following grammar, where \texttt{t}is an object type: %where \texttt{ty} is the type in scope.
 \begin{displaymath}\small
-	\begin{array}{rcl}
-	\sset & ::= & \chi \ldots \chi \\
-	& | & \psi \ldots \psi\\
-	\psi & ::= & \ifrag{t}{\chi \ldots \chi}\\
-	\chi & ::= & \fld \\
-	& | & \afld\\
-	& | & \nfld{\sset}\\
-	& | & \anfld{\sset}	
+	\begin{array}{rclrcl}
+	\sset & ::= & \chi \ldots \chi & \chi & ::= & \fld \\
+	& | & \psi \ldots \psi & & | & \afld\\
+	& & & & | & \nfld{\sset}\\
+	\psi & ::= & \ifrag{t}{\chi \ldots \chi} & & | & \anfld{\sset}	
 	\end{array}
 \end{displaymath}
 	
