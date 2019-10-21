@@ -626,10 +626,11 @@ Definition GraphQLResponse := seq (Name * ResponseValue).
 \end{minted}
    
   \end{subfigure}
-  \caption{Definition of \gql responses, the grammar matching JSON (left) and the \coq implementation (right).
+  \caption{Definition of \gql responses:  (left) grammar à la
+    JSON; (right) \gcoql definition.
   %\et{the @ sign here shouldn't be necessary since A is an explicit parameter (I suspect in your Coq dev it's implicit)}\et{wait, that definition of ResponseValue cannot possibly be correct: if A is an explicit parameter, you can't use those constructor signatures, so you should declare with curly brackets.}
   %\et{Explain in the text what's going on with the parametrization over eqType.}
-   \newline{\footnotesize The keywords \texttt{v} and \fkey represent leaf values and keys in a key-value pair, respectively.}
+   \newline{\footnotesize The keywords \texttt{v} and \fkey\  represent leaf values and keys in a key-value pair, respectively.}
   }
   \label{fig:response_def}
 
@@ -637,32 +638,37 @@ Definition GraphQLResponse := seq (Name * ResponseValue).
 
 
 \begin{figure*}[h!]
-\small
-    \centering
+  \small
+  \begin{flushright}
+  \fbox{$\eval{\cdot}{u} ~\colon~ \textit{seq Selection} \rightarrow  \textit{GraphQLResponse}$}    
+  \end{flushright}
+\centering
     \begin{align*}
+    % signature
+ %    & \\[2ex]
     % Empty
-    & (1) & \eval{\cdot}{u} &= [\cdot] \\
+    & (1) & \eval{\cdot}{u} &~=~ [\cdot] \\
     % SingleField
-    & (2) & \evalu{\fld :: \sset} &= 
-        \resp{(\mathit{complete\_value(ftype_{type(u)}(f), property_{u}(\fld))})} :: \evalfilteru{\sset}{\fkey}  \\
+    & (2) & \evalu{\fld :: \sset} &~=~ 
+        \resp{(\mathit{complete\_value(ftype_{type(u)}(\texttt{f}), property_{u}(\fld))})} :: \evalfilteru{\sset}{\fkey}  \\
     % Nested field
-    & (3) & \evalu{\nfld{\overline{\beta}} :: \sset} &=
+    & (3) & \evalu{\nfld{\overline{\beta}} :: \sset} &~=~
     \begin{cases}
         \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_{type(u), \fkey} (\sset))}}{v_{i}})\; \mathit{neighbors}_{\fld}(u) \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
          \hfill \text{ if } 
-            \mathit{ftype_{type(u)}(\fkey)} = L \text{ and } \{v_{1}, \ldots, v_{k}\} = 
+            \mathit{ftype_{type(u)}(\fkey)} = \mathit{list} \text{ and } \{v_{1}, \ldots, v_{k}\} = 
         \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in \mathit{edges}(\graph)\} \\
         %
     \fkey:\{\eval{\overline{\beta} \mdoubleplus \mathit{merge (collect_{type(u), \fkey} (\sset))}}{v}\} ::  \evalfilteru{\sset}{\fkey}  
          \hfill \text{ if } 
-        \mathit{ftype_{type(u)}(\fkey)}  \neq L \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+        \mathit{ftype_{type(u)}(\fkey)}  \neq \mathit{list} \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     %
     \resp{\nval} :: \evalfilteru{\sset}{\fkey} 
     \qquad \qquad \qquad \qquad \qquad
-  \text{ if } \mathit{ftype_{type(u)}(\fkey)}  \neq L  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
+  \text{ if } \mathit{ftype_{type(u)}(\fkey)}  \neq \mathit{list}  \text{ and } \nexists v \text{ s.t. }  (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
     \end{cases}\\
     %inline fragment
-    & (4) & \evalu{\ifrag{t}{\overline{\beta}} :: \sset} &= 
+    & (4) & \evalu{\ifrag{t}{\overline{\beta}} :: \sset} &~=~ 
     \begin{cases}
     \evalu{\overline{\beta} \mdoubleplus \sset} 
      & \text{ if }\mathit{fragment\_type\_applies_{type(u)}(\texttt{t})}\\
@@ -670,13 +676,15 @@ Definition GraphQLResponse := seq (Name * ResponseValue).
     & \text{ otherwise}
     \end{cases}
     \end{align*}
-    \caption{Semantics of \gql selection sets, adapted from~\cite{gqlph} and the \spec. 
-    \td{$\mathit{fragment\_type\_applies}$ is actually called $\mathit{does\_fragment\_type\_applies}$ in the spec (as I had it before). 
-	This one is simpler to read and makes more sense, but I wondered if it shouldn't be the other name}
+    \caption{Semantics of \gql selection sets, adapted from~\HP and the \spec. 
+    % \td{$\mathit{fragment\_type\_applies}$ is actually called $\mathit{does\_fragment\_type\_applies}$ in the spec (as I had it before). 
+    %     This one is simpler to read and makes more sense, but I
+    %     wondered if it shouldn't be the other name}\fo{Added as a
+    %     footnote, in the text.}
     \newline {\footnotesize 
-    $\mathit{property}$ and $\mathit{type}$ are accessors to a node's property and type. $\mathit{neighbors}$ gets the neighbors of a node whose edge is labeled with the given field.
+    $\mathit{property}$ and $\mathit{type}$ are accessors to a node property and type. $\mathit{neighbors}$ gets the neighbors of a node whose edge is labeled with the given field.
     $\mathit{edges}$ gets the set of edges of a graph.  $\mathit{is\_valid\_response}$ validates the coerced value.
-    $\mathit{ftype}$ retrieves the field's type in the schema. $L$ represents the list type.}}
+    $\mathit{ftype}$ retrieves the type of a field in a schema. $\mathit{list}$ represents the list type.}}
     %The $\mathit{property}$ function is an accessor to a node's property value. The $\mathit{filter}$ function removes all fields with the given response name, while $\mathit{collect}$ gathers all fields that match the given response name. 
     %Meanwhile, $\mathit{merge}$ joins the subqueries of the input selections. The $\mathit{type}$ function retrieves the type of the given field in the node's type.
 	%The $\mathit{fragment\_type\_applies}$ predicate checks if the fragment's type condition is related to the node's type and whether its contents should be evaluated in the given node.
@@ -723,7 +731,7 @@ The \emph{size} of a selection $\sel$ and selection set $\sset$, noted $\ssize{\
 \end{small}
 \end{definition} 
 
-For the reminder of our presentation, we assume that queries conform to a given schema.
+% For the reminder of our presentation, we assume that queries conform to a given schema.
 
 %\td{Cannot define $\sset$ in Coq (lexer error), so I had to go with $\sel$ instead of the selection set and simply \texttt{sel} for an atomic selection}
  %\et{you can use "$\sel$s"}
@@ -790,9 +798,14 @@ For the reminder of our presentation, we assume that queries conform to a given 
 \subsection{Semantics}\label{subsec:semantics}
 Now we have all the prerequisites to define the semantics of \gql queries and their selection sets. We begin by briefly examining the responses generated by executing queries and then we give an informal description of the semantics, finishing with the formal definition. %We finish by discussing some implementation choices and comparison with the \spec and \HP.
 
-A first observation we need to make is that query semantics is not compositional, in the sense that the result of a sequence of selections is not obtained by concatenating the results of the individual selections. Therefore, our semantic function will take a (whole) sequence of selections and return a (whole) sequence of responses.  
 
-We model responses with a tree structure, similar to JSON, as shown in Figure~\ref{fig:response_def}. A response can be either a value (optional, to account for null), an object mapping keys to other responses, or an array of response values. 
+Roughly speaking, a \gql response maps keys (fields names together
+with their arguments) to response
+values. We model responses values with a tree structure, similar to
+JSON. Concretely, a response value can be either a value in
+\texttt{Value} or the distinguished value \texttt{null}, an object
+mapping keys to other response values, or an array of response
+values. Full definition is provided in Figure~\ref{fig:response_def}.
 % Null values in the leaves of the response tree are represented with option types.%\et{fix once fig 6 defs is clarified}
 % \et{this is not an appropriate description of the Coq definition: explain the parametrization that's going on. Then, if one accepts your parametrization by the eqType, why not baking the option in the Leaf constructor directly? (ie. Leaf : option A $\rightarrow$ RV)}
 % \td{Is it ok with the changes?}
@@ -815,13 +828,38 @@ We model responses with a tree structure, similar to JSON, as shown in Figure~\r
 
 
 
+
 % As we described in \S\ref{subsec:graph}, the underlying data model we use is a graph, therefore the semantics are instantiated to this setting. %In a following paragraph we briefly explore an alternative that is closer to the \spec, in the sense that it can be detached from a particular data model. 
 %\td{Maybe merge this informal description with the description of the figure?}
 %\et{yes}
-Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. %In this sense:
-Because \gql is not tied to any technology, the resolution of selections in a query might produce invalid results\td{Actually, I mean that they might not exist -- null} or in a different format than expected (\eg integer values as strings). 
-In order to resolve these potential issues, the \spec considers invalid results as null values and 
-requires that valid ones are \emph{coerced} into proper values, which must also respect the expected types (otherwise are also considered null).
+
+As a first step to define the semantics of queries, we observe that it
+is not compositional, in the sense that the result of a sequence of
+selections is not obtained by simply concatenating the results of the
+individual selections. Therefore, the evaluation function takes as
+input a (whole) selection set, rather than single selections. 
+
+Informally, the evaluation of a selection set represents a navigation
+over a graph, starting from the root node, traversing its edges and
+collecting data from its nodes. This data retrieval from nodes can,
+however, be unsuccessful for several reasons. For instance, a query
+might request non-existent information or might yield a response value
+of an unexpected type. 
+% (Bear in mind that the evaluation function is
+% total and accepts queries that conform to the corresponding schema as
+% well as queries that do not.)
+In these cases, the evaluation function simple returns
+\texttt{null}. On the other hand, values in nodes that are indeed
+employed for constructing a query response are \emph{coerced} into
+proper response values.
+
+With this in mind, we can now define the evaluation function of
+selection sets.
+
+
+% Because \gql is not tied to any technology, the resolution of selections in a query might produce invalid results\td{Actually, I mean that they might not exist -- null} or in a different format than expected (\eg integer values as strings). 
+% In order to resolve these potential issues, the \spec considers invalid results as null values and 
+% requires that valid ones are \emph{coerced} into proper values, which must also respect the expected types (otherwise are also considered null).
 
 %\begin{itemize}
  %   \item A field selection represents either accessing a node's property or traversing an edge to a neighboring node.
@@ -830,34 +868,86 @@ requires that valid ones are \emph{coerced} into proper values, which must also 
 %\end{itemize}
 
 \begin{definition}
-Let $\graph$ be a graph and $\sset$ a selection set, both conforming to a schema $\mathcal{S}$. The evaluation of $\sset$ over $\graph$ from node $u \in \mathit{nodes}(\graph)$\footnote{Where $\mathit{nodes}$ is a function that retrieves all nodes from a graph.}, with a coercing function $\mathit{coerce} : \mathit{Scalar} \to \mathit{Scalar}$ and a value validation predicate $\mathit{\vscalar} : \mathit{graphQLSchema} \to \mathit{Name} \to \mathit{Scalar} \to \mathit{Bool}$, simply denoted $\llbracket \sset \rrbracket^{u}_{\graph}$, is defined recursively as shown in Figure~\ref{fig:semantics}. 
+  Let $\graph$ be a graph and $\sset$ a selection set, both conforming
+  to a schema $\mathcal{S}$. The evaluation $\llbracket \sset
+  \rrbracket^{u}_{\graph}$ of $\sset$ over graph $\graph$
+  from node $u \in \mathit{nodes}(\graph)$ % \footnote{Where
+    % $\mathit{nodes}$ is a function that retrieves all nodes from a
+    % graph.}
+  is then defined by the rules in Figure~\ref{fig:semantics}. The
+  evaluation function 
+  is parametrized by a coercing function
+  $\mathit{coerce} \colon  \mathit{Scalar} \to \mathit{Scalar}$ and a value
+  validation predicate
+  $\mathit{\vscalar} \colon \mathit{graphQLSchema} \to \mathit{Name} \to
+  \mathit{Scalar} \to \mathit{Bool}$.
 \end{definition}
 
 %Informally, the evaluation of a query's selection set represents a navigation over a graph, starting from the root node, traversing its edges and collecting data from its nodes. 
-The definition starts with the base case of empty selection set, which results in an empty response (1). 
-Single fields correspond to accessing a node's property that matches the field name (2). 
-To ensure that only valid results are produced, the function \texttt{complete\_value} (\cf\S6.4.3~\cite{gqlspec}) transforms invalid values into null and coerces valid ones, after checking that they adhere to their expected types in the schema.
-The coercion function is included as a parameter in the corresponding modules.
-Nested fields (3) represent a traversal to neighboring nodes: the semantics searches for nodes that are connected by an edge whose label matches the field name and then evaluates the subselections on these nodes. If the field's type is not a list type, then the semantics should be able to at least traverse to a single neighboring node, otherwise the result is considered null. 
-In both field cases (2-3), evaluation has to ensure that selections with the same response name are only evaluated once. 
-This is performed by calling the $\mathit{collect}$, $\mathit{merge}$ and $\mathit{filter}$ functions (adapted from \S6.3.2-6.4.3~\cite{gqlspec}), which respectively gather fields sharing the same response name, merge their subselections, and remove their repeated occurrences. Finally, inline fragments (4) simply condition whether their subselections should be evaluated in the current node. The decision is based on the $\mathit{fragment\_type\_applies}$ predicate (\cf\S6.3.2~\cite{gqlspec})\td{ref to original def in spec?} that verifies whether the type condition is the same or a supertype of the node's type.\footnote{Aliased fields are not included here; they are evaluated the same way as unaliased fields, but differ in that the key-value pair produced is renamed accordingly.}
+The definition starts with the base case of empty selection set (1),
+which results in an empty response.  Single fields (2) correspond to
+accessing a node's property that matches the field name.  To ensure
+that only valid results are produced, the function
+$\mathit{complete\_value}$ (\cf~\cite[\S6.4.3]{gqlspec}) transforms
+invalid values into \texttt{null} and coerces valid ones, after
+checking that they adhere to their expected types according to the
+schema. % The coercion function is included as a parameter in the
+        % corresponding modules.
+Nested fields (3) represent a traversal to neighboring nodes: the
+evaluation function searches for nodes that are connected to the
+current node by an edge whose label matches the field name and then
+evaluates the subselections on these nodes. If the field has type
+list, there is no constraint on the number of such neighboring nodes
+to recursively continue the evaluation. On the contrary, if the field
+does not have type list, then there should be at least one neighboring
+node (in fact, the case of multiple nodes is discarded by the
+conformance assumption on the selection set); if this is not the case,
+the result is considered \texttt{null}.
+
+To avoid the duplication of responses, rules (2) and (3) handling the
+evaluation of fields ensures that within a selection set, fields with the same
+response name are evaluated only once. This is achieved by collecting
+and merging all fields in subsequent selections that have the same
+name as the current field being evaluated (using auxiliary functions
+$\mathit{collect}$ and $\mathit{merge}$) and removing these fields
+from subsequent selections (using auxiliary function
+$\mathit{filter}$), before they are evaluated.
+
+Finally, inline fragments (4) simply condition whether their
+subselections are evaluated (in the current node) or not. The decision
+is based on the $\mathit{fragment\_type\_applies}$ predicate (\cf
+\cite[\S6.3.2]{gqlspec}) that verifies whether the guard type matches
+the current node type or supertype thereof.\footnote{In the \spec,
+  function $\mathit{fragment\_type\_applies}$ is called $\mathit{does\_fragment\_type\_applies}$.}
+
+To avoid redundancy, we have not covered aliased fields. They are
+evaluated the same way as unaliased fields, but differ in that the
+key-value pair produced is renamed accordingly.
 
 %The definition of the evaluation function for selections, displayed in Figure~\ref{fig:semantics}, only refers to the base case of an empty list, field selections without renaming and inline fragments. The complete definition can be found in the file \texttt{QuerySemantics.v}.
 
 \begin{definition}
-Let $\graph$ be a graph and $\query$ a query containing a selection set $\sset$, both conforming to a schema $\schema$. The semantics of $\query$ over $\graph$\td{, with a coercing function XX and value validation YY}  is defined as the result of evaluating $\sset$ from the root node of $\graph$.
+Let $\graph$ be a graph and $\query$ a query, both conforming to a schema $\schema$. The result of
+evaluating $\query$ over $\graph$ is obtained by evaluating the
+selection set of $\query$ from the root node of $\graph$, that is, $\eval{\query}{}
+~=~\eval{\query.\mathit{selection\_set}}{\graph.\mathit{root}}$.
+% \td{, with a coercing function XX and value validation YY}\fo{Don't
+%   think it is necessary to repeat it}
 \end{definition}
 
-The semantics of queries is then formalized as follows:
+In \gcoql we have:
 \begin{minted}[bgcolor=coqbg, escapeinside=||, mathescape=true]{coq}
 Variable (coerce : Scalar -> Scalar).
+
 Definition execute_query (s : wfGraphQLSchema)
   (g : conformedGraph s |\vscalar|)
   (|$\query$| : query) :=
     execute_selection_set s |\vscalar| g coerce
       g.(root) |$\query$|.(selection_set).
 \end{minted}
-\td{Since this is. the first occurrence of coerce, in code, I include it as a variable (note that I use \vscalar in the graph parameter, since I already mentioned that I use it as a parameter in the corresponding modules)}
+
+\fo{Include also \vscalar above}
+% \td{Since this is. the first occurrence of coerce, in code, I include it as a variable (note that I use \vscalar in the graph parameter, since I already mentioned that I use it as a parameter in the corresponding modules)}
 
 %The formal definition of the semantics is depicted in Figure \ref{fig:semantics}. The definition displays the cases where a field selection is accessing a node's property, when it is navigating to other nodes and when it is evaluating an inline fragment. Aliased fields are omitted for brevity but the complete definition can be explored in the file \texttt{QuerySemantics.v}.
 
@@ -877,13 +967,14 @@ Definition execute_query (s : wfGraphQLSchema)
 
 %The main challenge in this case is to define what this nested list types represent in a graph. If we take a simple case of a field with type \texttt{[Human]}, we can model it as neighbors of a node. However, if we increase the nesting such as \texttt{[[Human]]}, it becomes harder to model. What does this represent in the graph? Should we introduce blank nodes in between the source node and the \texttt{Human} nodes? Are these inner edges labeled? Should there be a blank node per each level of nesting or a single one with edges to itself? All these questions do not have a straightforward answer. Our semantics, as the one definded in PH, simply ignores any nesting bigger than one.\td{This is where it can be modelled using Functors. The \spec checks if it received a collection and applies map to eventually get to the concrete values. Not sure how to put this out there.}
 
-This concludes the formalization of \gql schemas, graph data model, and queries and their semantics.  These definitions provide the base upon which further development and analysis can be performed in \gcoql.
+This concludes our formalization of \gql, which we later exploit to
+establish some results about a notion of normal form for queries.
 
 %\td{I feel there is not much to say about the semantics... The "juicy" bits are in the discussion section - limitations given by the graph model, functor approach to the spec's semantics, etc.}
 
 \subsection{Design considerations and discussion}\label{subsec:discussion}
 
-We now discuss some design considerations that manifested when developing 
+To conclude the section, we discuss some design considerations that manifested when developing 
 \gcoql, in particular with respect to the two existing sources of information on \gql, namely the \spec and \HP.
 
 %\et{I suggest to split this section in two parts: one that is related to the core (schema, data model, queries, semantics), and on that is related to normalization/simplified semantics. And to move the first to just after section 3 (either as a 3.5 or as a separate section 4 if it's length justifies it)}
