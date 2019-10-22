@@ -10,13 +10,13 @@
   \vspace{-1ex}
     \begin{align*}
     % Empty
-    & (1) & \tnorm{\cdot} &= [\cdot] \\
+    &(1)& \tnorm{\cdot} &~=~ [\cdot] \\
     % SingleField
-    & (2) & \tnorm{\fld :: \sset} &= 
+    &(2)& \tnorm{\fld :: \sset} &~=~ 
        	\fld :: \tnorm{\filter{\sset}{\fkey}} \\      
         %
     % Nested field
-    & (3) & \tnorm{\nfld{\overline{\beta}} :: \sset} &=
+    &(3)& \tnorm{\nfld{\overline{\beta}} :: \sset} &~=~
     \begin{cases}
         \nfld{\norm{\mathit{\ftype{ts}{\fkey}}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{\fkey}{\sset})}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
 	            \mathit{is\_object\_type (\ftype{ts}{\fkey})}\\
@@ -26,7 +26,7 @@
 		\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\; \text{ otherwise } 
     \end{cases}\\
     %inline fragment
-    & (4) & \tnorm{\ifrag{t}{\overline{\beta}} :: \sset} &= 
+    &(4)& \tnorm{\ifrag{t}{\overline{\beta}} :: \sset} &~=~ 
     \begin{cases}
     \tnorm{\overline{\beta} \mdoubleplus \sset} & 
     \text{if }\mathit{fragment\_type\_applies(ts, \texttt{t})}\\
@@ -502,12 +502,12 @@ set.
     \vspace{-1ex}
     \begin{align*}
     % Empty\sset
-    & (1) & \seval{\cdot}{u} &= [\cdot] \\
+    & (1) & \seval{\cdot}{u} &~=~ [\cdot] \\
     % SingleField
-    & (2) & \sevalu{\fld :: \sset} &= 
+    & (2) & \sevalu{\fld :: \sset} &~=~ 
     \resp{(\mathit{complete\_value(ftype(u.type, \fkey), u.property(\fld))})} :: \sevalu{\sset} \\
     & (3) & % Nested field
-    \sevalu{\nfld{\overline{\beta}} :: \sset} &=
+    \sevalu{\nfld{\overline{\beta}} :: \sset} &~=~
     \begin{cases}
       \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \seval{\overline{\beta}}{v_{i}})\; 
       \mathit{u.neighbors_{\graph}(\fld)} \texttt{]}} :: \sevalu{\sset}  \\
@@ -524,7 +524,7 @@ set.
     \text{ if } \mathit{ftype(u.type, \fkey)}  \neq list  \text{ and } \nexists v \text{ s.t. }  (u, \fld, v) \in \mathit{edges}(\graph) \\
     \end{cases}\\
     %inline fragment
-    & (4) & \sevalu{\ifrag{t}{\overline{\beta}}:: \sset} &= \begin{cases}
+    & (4) & \sevalu{\ifrag{t}{\overline{\beta}}:: \sset} &~=~ \begin{cases}
     \sevalu{\overline{\beta} \mdoubleplus \sset} & 
   	\text{ if }\mathit{fragment\_type\_applies (u.type, \texttt{t})}\\
     \sevalu{\sset} & \text{ otherwise}
