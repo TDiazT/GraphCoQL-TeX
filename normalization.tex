@@ -18,7 +18,7 @@
     % Nested field
     & (3) & \tnorm{\nfld{\overline{\beta}} :: \sset} &=
     \begin{cases}
-        \nfld{\norm{\mathit{\ftype{ts}{\fkey}}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{fkey}{\sset})}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
+        \nfld{\norm{\mathit{\ftype{ts}{\fkey}}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{\fkey}{\sset})}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
 	            \mathit{is\_object\_type (\ftype{ts}{\fkey})}\\
         %
     \nfld{\mathit{map}\; (\lambda t_{i}.\; \ifrag{$t_{i}$}{\norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{\fkey}{\sset})}}})\; \mathit{get\_possible\_types (ts)}} 
@@ -201,7 +201,7 @@ query {
 The left query is redundant for two reasons: it requests the field
 \texttt{name} twice to the same type, and it uses two fragments with
 the same type condition. If no collection and merger
-of fields is performed during the evaluation, this will produce two values with the key \texttt{name}. 
+of fields is performed during the evaluation, this will produce two (or three) values with the key \texttt{name}. 
 Conversely, the right query is non-redundant because it requests information about each type only once; only one fragment will actually be executed at a time, depending on the concrete object value that is used to evaluate the query.
 % It is important to notice that, even though it requests the field \texttt{name} in both, this is considered not redundant because 
 
@@ -359,11 +359,12 @@ query {
 query {
   goodboi {
     |$\ldots$| on Dog {
-    name
-  }
-  |$\ldots$| on Pig {
-    name
-} } }
+      name
+    }
+    |$\ldots$| on Pig {
+      name
+    }
+} }
 \end{minted} 
 \end{minipage}
 
@@ -451,7 +452,7 @@ Corollary normalized_query_is_in_nf
 \noindent The proof of the main lemma proceeds by well-founded
 induction over the size of the selection set and relies on some
 auxiliary lemmas about subtyping. Each of the two conditions
-(groundness and non-redundancy) is established separately.
+(groundedness and non-redundancy) are established separately.
 
 The second result states that the normalization procedure is {\em
   semantics-preserving} in that a normalized query has the same
