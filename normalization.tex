@@ -43,7 +43,7 @@
 
 To illustrate how \gcoql can be used to reason about query transformations, we study the {\em normalization} process proposed by Hartig and Pérez (\HP)~\cite{gqlph}, which is fundamental for the complexity results they prove.
 %
-Recall that these results are based on two premises: {\em a)} every query can be normalized to a semantically-equivalent query; {\em b)} on such queries, one can use a simplified evaluation function. For normalization,  \HP provide a set of equivalence rules to establish the existence of a normal form. However they do not provide an algorithm for query normalization, let alone prove it correct and semantics preserving. Likewise, they do not prove the equivalence of the simplified semantics when applied to normalized queries.
+These results are based on two premises: {\em a)} every query can be normalized to a semantically-equivalent query; {\em b)} on such queries, one can use a simplified evaluation function. For normalization,  \HP provide a set of equivalence rules to establish the existence of a normal form. However they do not provide an algorithm for query normalization, let alone prove it correct and semantics preserving. Likewise, they do not prove the equivalence of the simplified semantics when applied to normalized queries.
 
 In this section, we show how to define the property of being in \textit{normal form} in \gcoql, define a normalization procedure, and prove it both correct and semantics preserving. Finally, we define the simplified semantics given by \HP, and prove it equivalent to the original semantics (\S~\ref{subsec:semantics}) when applied to normalized queries.
 
@@ -458,7 +458,7 @@ The second result states that the normalization procedure is {\em
   semantics-preserving} in that a normalized query has the same
 evaluation semantics as the original query from which it was
 derived. Formally, this requires proving that evaluating a query and
-its normalized version from the root node of a graph yields both the
+its normalized version from the root node of a graph both yield the
 same result. To be able to establish this equivalence, we must however
 consider a generalized statement that quantifies over every node of the
 graph.
@@ -632,7 +632,7 @@ Corollary exec_query_eq_simpl_exec
  
 \subsection{Observations}\label{subsec:norm_lims}
 
-Mechanizing normalization and the simplified semantics, as well as their corresponding proofs, led us to identify some minor problems in \HP's definitions. While these are all minor, they confirm the value of mechanized formalization.
+Mechanizing normalization and the simplified semantics, as well as associated properties and proofs, led us to identify some issues in \HP's definitions. While these are admittedly minor, they confirm the value of mechanized formalization.
 % , ranging from minor issues with the definition of non-redundancy, unspecified or underspecified rules of equivalence, to limitations on the data model and semantics.
  % (\S\ref{subsec:discussion}). We describe these more thoroughly in \S\ref{subsec:norm_lims}.
 % We now discuss some discoveries made regarding \HP's definitions and how we solve them. In particular, we review the non-redundancy property and the set of equivalence rules they define to normalize queries.
@@ -653,7 +653,7 @@ which produces two repeated values. This occurs because \HP's definition of non-
 % considered non-redundant by \HP, but which would produce two repeated values. It is a very minor slip, which 
 % occurs because their definition of non-redundancy does not consider the cases of unaliased and aliased fields sharing the same response name. Our implementation addresses this by grouping fields by their response names.
 
-Secondly, we realized that using \HP's equivalence rules, some queries cannot be normalized.
+Second, using \HP's equivalence rules, some queries cannot be normalized.
  % (\cf \S3~\cite{gqlph}), 
  % \td{I just realized that the version of the paper we are citing does not include the equivalence rules}. 
 For instance:

@@ -23,7 +23,7 @@ model.
 Contrarily to traditional RESTful web services, where APIs may be defined with several endpoints, 
 \gql defines an API with a single endpoint and a schema, describing the service's type system and capabilities.
 The type system consists of a set of types and fields, describing how data is structured and how it may be queried.
-Indeed, as we will see, queries over a \gql API can only be done over
+Queries over a \gql API can only be done over
 the types and fields defined in the schema.
 
 \begin{figure}
@@ -80,7 +80,7 @@ schema {
     \label{fig:schema_ex}
 \end{figure}
 
-In our current scenario, we model the \goodbois dataset as shown in Figure~\ref{fig:schema_ex}. 
+Figure~\ref{fig:schema_ex} defines the schema for the \goodbois dataset.
 We define animals with the interface \texttt{Animal} and two object
 types, namely \texttt{Dog} and \texttt{Pig}, implementing the interface. 
 Both interface and object types describe sets of fields, which represent their relations and the data that may be requested on them. 
@@ -94,7 +94,7 @@ the disjoint union of three (object) types. % \texttt{Dog},  \texttt{Pig} and
 % \texttt{Toy}.\fo{If needed, here there is room for gaining some space (by removing
 %  these 2 enums).}
 Finally, we define the object type \texttt{Query} that represents the entry point from where users have to 
-start querying the API and explore the type system. In this API, a user may only access the \goodbois dataset by 
+start querying the API and explore the dataset. In this API, a user may only access the \goodbois dataset by 
 either requesting a particular animal (with a given goodness level) or by searching for an object in the union type \texttt{Search}.
 
 
@@ -171,23 +171,24 @@ information of its friends. The query starts by selecting the field
 \texttt{BESTBOI}. The type of this field is the interface
 \texttt{Animal}, therefore the query continues selecting the field
 \texttt{name}, with scalar type \texttt{String}, and the field
-\texttt{friends}, with type \texttt{[Animal]}.  Because the interface
-type \texttt{Animal} is implemented by two different object types,
+\texttt{friends}, with type \texttt{[Animal]}.  Because the {\em interface
+type} \texttt{Animal} is implemented by two different {\em object types},
 namely \texttt{Dog} and \texttt{Pig}, one can use more specific
 selections to further specify the fields that should be requested for
-each concrete type. This is achieved by the pair of selections
-\ifrag{Dog}{\texttt{favoriteToy \{ chewiness \} }} and \ifrag{Pig}{
+each object type. 
+This is achieved by the pair of selections (called {\em inline fragments})
+\ifrag{Dog}{\texttt{ favoriteToy \{ chewiness \} }} and \ifrag{Pig}{
   \texttt{loudness:oink} }, which indicate that in the case of a 
 dog, the query should request information about field
 \texttt{favoriteToy}, while in the case of a pig, the query should
 retrieve field \texttt{oink}. In this case, the field selection
-\texttt{loudness:oink} indicates that, instead of using the original
-field name \texttt{oink}, the resulting value should
-be renamed to \texttt{loudness} in the response. %\fo{Maybe introduce here ``inline
+\texttt{loudness:oink} is a {\em field alias}, which indicates that
+the resulting value should be renamed to \texttt{loudness} in the response, instead of using the original field name \texttt{oink}.  
+%\fo{Maybe introduce here ``inline
 %  fragment'', ``selection'', etc.}
 
 This query is then evaluated over the graph, resulting in the response
-depicted on the right of Figure~\ref{fig:qres_ex}, which closely
+depicted on the right of Figure~\ref{fig:qres_ex}, whose structure closely
 resembles the query.  The intuition behind the evaluation process is
 that the query indicates what edges to traverse in the graph and what
 properties to access on each node. In this manner, starting from the
@@ -267,7 +268,8 @@ query {
 
 %If we wanted to ask another the same query but now without the friends' names, we would only have to remove the \texttt{name} field and \textit{voilà}, that's it. We use the same endpoint as before and the \gql service handles the resolution of our fields.
 
-This concludes our brief introduction to \gql and we can now move onto the formalization.
-The key points to take from our example are that in order to define a \gql service it is necessary to define the schema, describing the service's type system,
-to which the underlying data model and the queries must adhere. \gql queries are selections over fields and types defined in the schema, and their responses closely match 
-the queries tree structure.
+To summarize,
+% This concludes our brief introduction to \gql and we can now move onto the formalization.
+% The key points to take from our example are that 
+in order to define a \gql service it is necessary to define the schema that describes the service's type system, 
+to which both the underlying dataset and the queries must adhere. \gql queries consist of {\em selections} over fields and types defined in the schema, and their responses closely match the queries tree structure.

@@ -18,7 +18,7 @@ mutations (\S2.3), subscriptions (\S2.3), fragments (\S2.8).\\
 
 % To address the trustworthiness of \gcoql, 
 We have striven to establish a direct ``eyeball correspondence'' between \gcoql and the \spec whenever possible---though this correspondence has not (yet) been as seriously and systematically established as in other language formalization efforts such as \jscert~\cite{jscert} and \coqr~\cite{coqr}. 
-In particular, the \gcoql definitions closely follow the algorithmic definitions of the \spec and, whenever it corresponds, we explicitly reference the specific sections in the \spec where the definitions are included. 
+In particular, the \gcoql definitions closely follow the algorithmic definitions of the \spec. Also, whenever it makes sense, we explicitly reference the corresponding specific sections from the \spec, inside of comments in the \coq definitions.
 % \et{how does this correspondence manifest? do you reference the spec sections explicitly in the Coq development?}\et{argue}\td{I had links and then removed them, but I can add them again}\{yes!}
 
 As mentioned earlier, \gcoql adopts a graph data model in order to give semantics to data access. This approach, which follows \HP, goes beyond what the \spec mandates. Indeed, the \spec defers to {\em resolvers} to give meaning to data accesses, which are essentially arbitrary pieces of code. However, reasoning about \gql requires some sensible data model. In this respect, \gcoql follows \HP almost literally, while the query evaluation algorithm of \gcoql can be traced closely to \spec.
@@ -46,7 +46,7 @@ and a coercion function to transform these values into the corresponding JSON fo
 
 First, we implement all of the examples used in the \spec validation section (\cf\S5~\cite{gqlspec}), for features that \gcoql currently supports.
 These correspond to tests over fields, such as valid definition in given types in scope, proper use of arguments and 
-whether they are are type-compatible and renaming-consistent. Also, the examples include validation over inline fragments and 
+whether they are are type-compatible and renaming-consistent. Also, the examples include validation of inline fragments and 
 whether they can be used in certain contexts. 
 
 %First, We implemented a subset of the examples used in the \spec validation section (\cf\S5~\cite{gqlspec}).
