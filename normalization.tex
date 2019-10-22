@@ -509,13 +509,13 @@ set.
     & (3) & % Nested field
     \sevalu{\nfld{\overline{\beta}} :: \sset} &~=~
     \begin{cases}
-      \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \seval{\overline{\beta}}{v_{i}})\; 
+      \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \texttt{\{} \seval{\overline{\beta}}{v_{i}} \texttt{\}})\; 
       \mathit{u.neighbors_{\graph}(\fld)} \texttt{]}} :: \sevalu{\sset}  \\
      \hfill \text{ if } 
             \mathit{ftype(u.type, \fkey)} = list \text{ and } \{v_{1}, \ldots, v_{k}\} = 
         \{v_{i} \mid (u, \fld, v_{i}) \in \mathit{edges}(\graph)\} \\
         % 
-      \resp{\{\seval{\subqueries{\beta}}{v}\})} :: \sevalu{\sset}  
+      \resp{\texttt{\{}\seval{\subqueries{\beta}}{v}\texttt{\}}} :: \sevalu{\sset}  
       \hfill \text{ if } 
         \mathit{ftype(u.type, \fkey)}  \neq list \text{ and } (u, \fld, v) \in \mathit{edges}(\graph) \\
         %

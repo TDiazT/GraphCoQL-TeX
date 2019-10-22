@@ -910,13 +910,13 @@ selection sets.
     % Nested field
     & (3) & \evalu{\nfld{\overline{\beta}} :: \sset} &~=~
     \begin{cases}
-        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \eval{\overline{\beta} \mdoubleplus \mathit{merge (\collect{u.type}{\fkey}{\sset})}}{v_{i}})\; \mathit{u.neighbors_{\graph}(\fld)} \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
+        \resp{\texttt{[} \mathit{map}\; (\lambda v_{i}.\; \texttt{\{} \eval{\overline{\beta} \mdoubleplus \mathit{merge (\collect{u.type}{\fkey}{\sset})}}{v_{i}} \texttt{\}})\; \mathit{u.neighbors_{\graph}(\fld)} \texttt{]}} :: \evalfilteru{\sset}{\fkey} \\  
              \qquad \qquad \qquad \qquad \qquad \qquad
 			 \text{ if } 
             \mathit{\ftype{u.type}{\fkey}} = \mathit{list} \text{ and } \{v_{1}, \ldots, v_{k}\} = 
         \{v_{i} \mid (u, \fkey[\alpha], v_{i}) \in \mathit{edges}(\graph)\} \\
         %
-    \fkey:\{\eval{\overline{\beta} \mdoubleplus \mathit{merge (\collect{u.type}{\fkey}{\sset})}}{v}\} ::  \evalfilteru{\sset}{\fkey}  \\
+    \fkey:\texttt{\{}\eval{\overline{\beta} \mdoubleplus \mathit{merge (\collect{u.type}{\fkey}{\sset})}}{v}\texttt{\}} ::  \evalfilteru{\sset}{\fkey}  \\
          \qquad \qquad \qquad \qquad \qquad \qquad \qquad
 		 \text{ if } 
         \mathit{\ftype{u.type}{\fkey}}  \neq \mathit{list} \text{ and } (u, \fkey[\alpha], v) \in \mathit{edges}(\graph) \\
