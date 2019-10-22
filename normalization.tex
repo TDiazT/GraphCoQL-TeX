@@ -601,13 +601,6 @@ form, both $\seval{\varphi}{}$ and $\eval{\varphi}{}$ produce the same response.
 % \et{any insight from the proofs?}\td{Not really? Once the normalization was ok the proof came out smoothly.}
 \td{These ones as well are parameterized by the coercion function + predicate for valid values}
 \begin{minted}[bgcolor=coqbg, escapeinside=||,mathescape=true]{coq}
-Theorem exec_query_eq_simpl_exec 
-  (s : wfGraphQLSchema) (g : conformedGraph s)
-  (|$\query$| : query) : 
-    is_in_normal_form s |$\query$| -> 
-    execute_query s |\vscalar| g coerce |$\query$| =
-    simpl_execute_query s |\vscalar| g coerce |$\query$|.
-    
 Lemma exec_sel_eq_simpl_exec
   (s : wfGraphQLSchema) (g : conformedGraph s) 
   (|$\sel$|s : seq Selection) (u : node) :
@@ -615,7 +608,16 @@ Lemma exec_sel_eq_simpl_exec
     execute_selection_set s |\vscalar| g coerce
       u |$\sel$|s = 
     simpl_execute_selection_set s |\vscalar| g coerce
-      u |$\sel$|s.     
+      u |$\sel$|s.   
+
+Corollary exec_query_eq_simpl_exec 
+  (s : wfGraphQLSchema) (g : conformedGraph s)
+  (|$\query$| : query) : 
+    is_in_normal_form s |$\query$| -> 
+    execute_query s |\vscalar| g coerce |$\query$| =
+    simpl_execute_query s |\vscalar| g coerce |$\query$|.
+    
+ 
 \end{minted}
 %\et{fix parentheses above}
 
