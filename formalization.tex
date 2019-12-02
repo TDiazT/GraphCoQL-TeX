@@ -11,7 +11,8 @@ In this section we describe our formalization of \gql in \coq. We start by defin
 We formalize schemas and type definitions following the \spec. A
 schema is represented as a record, containing a list of type
 definitions and a root query type that specifies the entry points to the
-dataset. %  available selections (\eg \texttt{Query} in the example from Figure \ref{fig:schema_ex}):
+dataset. A \texttt{Name} is simply a string but renamed to match the \spec.
+%  available selections (\eg \texttt{Query} in the example from Figure \ref{fig:schema_ex}):
 %
 
 \begin{minted}[bgcolor=coqbg]{coq}
