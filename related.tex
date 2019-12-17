@@ -22,7 +22,8 @@ The mechanized formalization of data management systems has received a lot of at
 % they might not, because of this tree form of queries and responses -- which differs completely from the list of tuples in other query languages}
 % \paragraph{Mechanization of graph data model.} 
 Doczkal and Pous~\cite{graphtheory} develop a mechanization of graph theory in \coq, including simple graphs, digraphs, and their properties. Their work could possibly be extended to deal with property graphs, and used for \gcoql.
-Bonifati \etal~\cite{graphviewmaint} study graph view maintenance. Their definition of graphs is tailored to handle regular Datalog queries and does not entirely fit the \gql setting; it could however serve as a base to extend \gcoql with mutation.
+Bonifati \etal~\cite{graphviewmaint} build a Coq incremental graph view maintenance and evaluation engine; they experimentally assessed it on synthetic graphs generated from real-world schemas. The engine supports Regular Datalog queries and does not entirely fit the GraphQL setting; it could however serve as a base to extend GraphCoQL with mutation.
+% Bonifati \etal~\cite{graphviewmaint} study graph view maintenance. Their definition of graphs is tailored to handle regular Datalog queries and does not entirely fit the \gql setting; it could however serve as a base to extend \gcoql with mutation.
 
 % There is also work on 
 % \td{They define a function that given a regexp returns a whole graph of the nodes that are connected via the regexp. Nodes are not typed, nor do they have properties I believe (not sure).}
