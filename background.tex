@@ -7,9 +7,9 @@
 
 We briefly introduce \gql by means of a running example that we use in
 the rest of the presentation.  The example is about a fictional
-dataset \goodbois containing information about animals, specifically
-dogs and pigs. We discuss the dataset schema and the underlying data
-model.
+dataset \goodbois, containing information about artists and the works of art in which they have participated, 
+specifically movies and books.
+We discuss the dataset schema and the underlying data model.
 
 % as well as the definition of an API to access
 % the dataset \td{The schema defines the API, so this sounds a bit weird}\fo{true}.  %, and discusses the definition of an API to access
@@ -20,11 +20,10 @@ model.
 
 \paragraph{\gql schema.}
 
-Contrarily to traditional RESTful web services, where APIs may be defined with several endpoints, 
-\gql defines an API with a single endpoint and a schema, describing the service's type system and capabilities.
+Contrarily to traditional RESTful web services, where APIs may be defined with several URLs, 
+\gql defines an API with a single URL and a schema, describing the service's type system and capabilities.
 The type system consists of a set of types and fields, describing how data is structured and how it may be queried.
-Queries over a \gql API can only be done over
-the types and fields defined in the schema.
+Queries over a \gql API can only be done over fields in the types defined in the schema.
 
 \begin{figure}
     \centering
@@ -56,6 +55,15 @@ type Animation implements Movie
   style: Style
 }
 
+enum Style {
+	2D
+	3D
+	STOPMOTION
+}
+    \end{minted}
+    \end{subfigure}%    
+    \begin{subfigure}{.5\linewidth}
+    \begin{minted}[fontsize=\scriptsize]{text}
 type Book
 {
   id: ID
@@ -63,25 +71,17 @@ type Book
   year: Int
   ISBN: String
 }
-    \end{minted}
-    \end{subfigure}%    
-    \begin{subfigure}{.5\linewidth}
-    \begin{minted}[fontsize=\scriptsize]{text}
+
+union Artwork = Book
+  | Fiction
+  | Animation 
+  
 enum Role { 
 	ACTOR
 	DIRECTOR
 	WRITER
 }
 
-enum Style {
-	2D
-	3D
-	STOPMOTION
-}
-
-union Artwork = Book
-  | Fiction
-  | Animation 
 
 type Artist
 {
@@ -107,6 +107,24 @@ schema {
 \end{figure}
 
 Figure~\ref{fig:schema_ex} defines the schema for the \goodbois dataset.
+We define movies with the interface \movies and two object types, namely
+\fiction and \animation, implementing the interface. 
+Both interface and object types describe sets of fields, which represent their relations and the data that may be requested on them. 
+For instance, all movies have an internal id, a title, a year of release and a cast. 
+Note how we model the cast members in the field \texttt{cast} with the type \texttt{[Cast]}.
+An object implementing an interface may add more fields, such as the field \texttt{style} in the type \animation, which
+represents the animation style of the movie. To model the animation style, we use the enum type \texttt{Style} containing
+three scalar values. 
+In a similar fashion, we define books with the object type \texttt{Book} which, for simplicity, 
+does not implement any interface.
+We can then define a work of art as the disjoint union of books, fictional movies and animations,
+which are included in the union type \artwork.
+An artist is then defined with the \artist object type, consisting
+of their id, their name and the list of works of art in which they have participated.
+Notice that the field \texttt{artworks} includes the argument \texttt{role}, 
+which serves to identify the role of the artist in the artworks.
+
+\iffalse
 We define animals with the interface \texttt{Animal} and two object
 types, namely \texttt{Dog} and \texttt{Pig}, implementing the interface. 
 Both interface and object types describe sets of fields, which represent their relations and the data that may be requested on them. 
@@ -119,9 +137,17 @@ The schema also includes the union type \texttt{Search}, consisting of
 the disjoint union of three (object) types. % \texttt{Dog},  \texttt{Pig} and
 % \texttt{Toy}.\fo{If needed, here there is room for gaining some space (by removing
 %  these 2 enums).}
-Finally, we define the object type \texttt{Query} that represents the entry point from where users have to 
+\fi 
+
+Finally, we define the schema's query type with the object type \texttt{Query}. 
+This type is the same as regular object types, however it is special in the sense 
+that it represents the entry point from where users have to 
 start querying the API and explore the dataset. In this API, a user may only access the \goodbois dataset by 
-either requesting a particular animal (with a given goodness level) or by searching for an object in the union type \texttt{Search}.
+either requesting a particular artist or movie (with a given id).
+
+% Finally, we define an special type \texttt{Query} that represents the entry point from where users have to 
+%start querying the API and explore the dataset. In this API, a user may only access the \goodbois dataset by 
+%either requesting a particular artist or movie (with a given id).
 
 
 
@@ -141,11 +167,12 @@ as defined in the schema; they are tagged with the corresponding
 object type and include a set of properties (key-value pairs) that
 describe the object's content. Edges between nodes are accompanied with
 a label that indicates the relationship they establish. For instance,
-the topmost node in the graph represents an object of type
-\texttt{Dog}. The node properties say that the dog is called
-Marle and is 4 years old. The node's outgoing edges say that the dog's
-favorite toy is represented by the graph's rightmost node and that the dog's
-(only) friend is represented by the graph's central node.
+the center node in the graph represents an object of type
+\artist. The node properties say that the artist is called Tom Hanks and his id is 1000.
+The node's outgoing edges indicate that the artist 
+was an actor in the movies \emph{Forrest Gump} and \emph{Toy Story}
+(leftmost and rightmost nodes, respectively), and
+that he was the writer of a book (bottom node).
 
 % Finally, observe
 % that the topmost node of type \texttt{Dog} include two properties, ref
@@ -185,19 +212,45 @@ favorite toy is represented by the graph's rightmost node and that the dog's
 \paragraph{\gql query and response.}
 
 With the schema and data defined, it is possible to query the service. 
-As previously hinted, \gql queries are performed over the types and fields defined in the schema.
+As previously hinted, \gql queries are simply requests over the fields of types defined in the schema.
 They have a tree structure, similar to \json, which follows the fields and relations established between the types
 in the type system.
 
 To illustrate this, we define the query in
-Figure~\ref{fig:qres_ex}. Intuitively, we request the name of the best
-animal in \goodbois, as well as the name and some additional
-information of its friends. The query starts by selecting the field
-\texttt{goodboi} of the \texttt{Query} type and providing the argument
-\texttt{BESTBOI}. The type of this field is the interface
-\texttt{Animal}, therefore the query continues selecting the field
-\texttt{name}, with scalar type \texttt{String}, and the field
-\texttt{friends}, with type \texttt{[Animal]}.  Because the {\em interface
+Figure~\ref{fig:qres_ex}. Intuitively, we request the name of the artist
+with id 1000 in \goodbois, as well as the title and some additional
+information of the artworks where they have performed as an actor.
+%The entry point for queries is 
+%the type \texttt{Query}, therefore any request must begin by selecting its fields. 
+The query starts with the keyword \texttt{query}, which simply indicates the beginning
+ of the field selection over the query type (the object type \texttt{Query}).
+In this case, the selection is over the field
+\texttt{hero}, providing the argument
+\texttt{id} with value 1000. 
+Because the type of the field is the object type \texttt{Artist}, 
+it is possible to continue making subselections over the fields of this type. 
+The query therefore continues with the field \texttt{name}, with scalar type \texttt{String}, and the field
+\texttt{artworks}, with type \texttt{[Artwork]}. The argument \texttt{role} is
+used to specify that it should obtain the artwork where the artist performed as an actor.  
+
+The {\em interface
+type} \texttt{Artwork} is defined by three different {\em object types},
+namely \texttt{Book}, \fiction and \animation, allowing to use more specific
+selections to further detail the fields that should be requested for
+each object type. 
+This is achieved by the pair of selections (called {\em inline fragments})
+\ifrag{Animation}{\texttt{ style }} and \ifrag{Fiction}{
+  \texttt{releaseYear:year} }, which indicate that in the case of an 
+  animated movie, the query is asking for information about the field
+\texttt{style}, while in the case of a fiction movie, it should
+retrieve the field \texttt{year}. In the latter case, the field selection
+\texttt{releaseYear:year} is a {\em field alias}, which indicates that
+the resulting value should be renamed to \texttt{releaseYear} in the response, instead of using the original field name \texttt{year}.
+This aliasing is relevant when validating and transforming queries, and, in particular, 
+is related to some of the imprecisions in \HP's definitions.
+
+\iffalse
+Because the {\em interface
 type} \texttt{Animal} is implemented by two different {\em object types},
 namely \texttt{Dog} and \texttt{Pig}, one can use more specific
 selections to further specify the fields that should be requested for
@@ -212,7 +265,9 @@ retrieve field \texttt{oink}. In this case, the field selection
 the resulting value should be renamed to \texttt{loudness} in the response, instead of using the original field name \texttt{oink}.  
 %\fo{Maybe introduce here ``inline
 %  fragment'', ``selection'', etc.}
+\fi
 
+\iffalse
 This query is then evaluated over the graph, resulting in the response
 depicted on the right of Figure~\ref{fig:qres_ex}, whose structure closely
 resembles the query.  The intuition behind the evaluation process is
@@ -225,6 +280,7 @@ field. The first step then takes the evaluation process to the central
 node, of type \texttt{Dog}.  From there, the query accesses the value
 of the node's property matching the field \texttt{name} and then
 continues navigating the graph in search of the dog's friends.
+\fi
 
 %As previously mentioned, the queries we perform over our system must be over the types and fields defined in the schema. Every query must start by requesting information from the \texttt{Query} type. That means that, in our setting, queries must all start with the \texttt{goodness} or \texttt{search} fields.
 
@@ -242,11 +298,11 @@ query {
     name
     artworks(role: ACTOR) {
       title
-      |$\ldots$| on Fiction {
-        releaseYear:year
-      }
       |$\ldots$| on Animation {
         style
+      }
+      |$\ldots$| on Fiction {
+        releaseYear:year
       }
     }
   }
@@ -261,13 +317,13 @@ query {
   "artist": {
     "name":"Tom Hanks",
     "artworks":[
+       {
+        "title": "Toy Story",
+        "style": "3D"
+      },
       {
         "title": "Forrest Gump",
         "releaseYear": 1994
-      },
-      {
-        "title": "Toy Story",
-        "style": "3D"
       }
     ]
   }
