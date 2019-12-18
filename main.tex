@@ -1,12 +1,10 @@
-\documentclass[sigplan,10pt,anonymous,screen,review,nonacm]{acmart}
-% \settopmatter{printfolios=true,printccs=false,printacmref=false}
+\documentclass[sigplan,screen]{acmart}
 \usepackage[utf8]{inputenc}
 \usepackage{subcaption}
 \usepackage{listings}
 \usepackage{multicol}
 \usepackage[cache=false]{minted}
 \usepackage{listings}
-%\usepackage{xcolor}
 \usepackage[nounderscore]{syntax}
 \usepackage{graphicx}
 \usepackage{xspace}
@@ -57,13 +55,13 @@
 \newcommand{\mynote}[3]
     {{\color{#3} \fbox{\bfseries\sffamily\scriptsize#1}
     {\small$\blacktriangleright$\textsf{\emph{#2}}$\blacktriangleleft$}}~}
-% \newcommand{\et}[1]{\mynote{ET}{#1}{purple}}
-% \newcommand{\fo}[1]{\mynote{FO}{#1}{brown}}
-% \newcommand{\td}[1]{\mynote{TD}{#1}{blue}}
+ \newcommand{\et}[1]{\mynote{ET}{#1}{purple}}
+ \newcommand{\fo}[1]{\mynote{FO}{#1}{brown}}
+ \newcommand{\td}[1]{\mynote{TD}{#1}{blue}}
 
-\newcommand{\et}[1]{}
-\newcommand{\fo}[1]{}
-\newcommand{\td}[1]{}
+% \newcommand{\et}[1]{}
+% \newcommand{\fo}[1]{}
+% \newcommand{\td}[1]{}
 
 
 \newcommand\mdoubleplus{\mathbin{+\mkern-5mu+}}
@@ -119,7 +117,7 @@
 \newcommand{\fld}{\texttt{f[}\args\texttt{]}}
 \newcommand{\afld}{\texttt{a:}\fld}
 
-\newcommand{\nfld}[1]{\fld\; \texttt{\{}#1\texttt{\}} }
+ \newcommand{\nfld}[1]{\fld\; \texttt{\{}#1\texttt{\}} }
 \newcommand{\anfld}[1]{\afld\; \texttt{\{}#1\texttt{\}} }
 
 \newcommand{\ifrag}[2]{\texttt{... on #1 \{}#2\texttt{\}}}
@@ -136,10 +134,24 @@
 \newcommand{\ie}{i.e.\@\xspace}
 \newcommand{\wrt}{w.r.t.\@\xspace}
 \newcommand{\eg}{e.g.\@\xspace}
-\newcommand{\cf}{cf.\@\xspace}
+\newcommand{\cf}{cf. \@\xspace}
 \newcommand{\viz}{viz.\@\xspace}
 \newcommand{\etal}{et al.\@\xspace}
 \newcommand{\vscalar}{check\_scalar}
+
+
+%\setcopyright{ACMUNKNOWN}
+\acmPrice{}
+\acmDOI{10.1145/3372885.3373822}
+\acmYear{2020}
+\copyrightyear{2020}
+\acmISBN{978-1-4503-7097-4/20/01}
+\acmConference[CPP '20]{Proceedings of the 9th ACM SIGPLAN International Conference on Certified Programs and Proofs}{January 20--21, 2020}{New Orleans, LA, USA}
+\acmBooktitle{Proceedings of the 9th ACM SIGPLAN International Conference on Certified Programs and Proofs (CPP '20), January 20--21, 2020, New Orleans, LA, USA}
+
+
+
+
 
 \begin{document}
 
@@ -153,15 +165,18 @@
 
 \author{Federico Olmedo}
 \affiliation{%<
-  \institution{University of Chile \& IMFD Chile}
-  \department{Computer Science Department (DCC)}
+  \institution{Computer Science Department, University of Chile \& IMFD}
+%  \department{Computer Science Department (DCC)}
+  % \institution{University of Chile \& IMFD Chile}
+  % \department{Computer Science Department (DCC)}
   \city{Santiago}
   \country{Chile}
 }
 \author{Éric Tanter}
 \affiliation{%
-  \institution{University of Chile \& IMFD Chile}
-  \department{Computer Science Department (DCC)}
+  \institution{Computer Science Department, University of Chile \& IMFD}
+  % \institution{University of Chile \& IMFD Chile}
+  % \department{Computer Science Department (DCC)}
   \city{Santiago}
   \country{Chile}
 }
@@ -178,6 +193,25 @@ We illustrate the application of \gcoql by formalizing the key query transformat
 We hope that \gcoql can serve as a solid formal baseline for both language design and verification efforts for \gql.
 \end{abstract}
 
+\begin{CCSXML}
+<ccs2012>
+<concept>
+<concept_id>10002951.10002952.10003197</concept_id>
+<concept_desc>Information systems~Query languages</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10003752.10010124</concept_id>
+<concept_desc>Theory of computation~Semantics and reasoning</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Information systems~Query languages}
+\ccsdesc[500]{Theory of computation~Semantics and reasoning}
+
+\keywords{\gql, \coq}
 
 \maketitle
 
