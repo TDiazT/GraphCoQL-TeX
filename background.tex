@@ -41,6 +41,23 @@ Queries over a \gql API can only be done over fields in the types defined in the
     \begin{subfigure}{.5\linewidth}
     
     \begin{minted}[fontsize=\scriptsize]{text}
+type Artist
+{
+  id: ID
+  name: String
+  artworks(role: Role): [Artwork]
+}
+
+enum Role { 
+	ACTOR
+	DIRECTOR
+	WRITER
+}
+
+union Artwork = Book
+  | Fiction
+  | Animation 
+
 interface Movie
 {
   id: ID		
@@ -56,7 +73,10 @@ type Fiction implements Movie
   year: Int
   cast: [Artist]
 }
-
+    \end{minted}
+    \end{subfigure}%    
+    \begin{subfigure}{.5\linewidth}
+    \begin{minted}[fontsize=\scriptsize]{text}
 type Animation implements Movie
 {
   id: ID		
@@ -71,10 +91,7 @@ enum Style {
 	3D
 	STOPMOTION
 }
-    \end{minted}
-    \end{subfigure}%    
-    \begin{subfigure}{.5\linewidth}
-    \begin{minted}[fontsize=\scriptsize]{text}
+
 type Book
 {
   id: ID
@@ -82,25 +99,6 @@ type Book
   year: Int
   ISBN: String
 }
-
-union Artwork = Book
-  | Fiction
-  | Animation 
-  
-enum Role { 
-	ACTOR
-	DIRECTOR
-	WRITER
-}
-
-
-type Artist
-{
-  id: ID
-  name: String
-  artworks(role: Role): [Artwork]
-}
-
 
 type Query {
   artist(id: ID): Artist
