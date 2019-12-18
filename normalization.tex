@@ -69,8 +69,11 @@ Informally, a query is in ground-typed normal form, or {\em grounded} for short,
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Not grounded query
 query {
-  goodboi {
-    name
+  movie(id:2000) {
+    title
+    |$\ldots$| on Fiction {
+	  year
+    }
   }
 }
 \end{minted}
@@ -79,19 +82,20 @@ query {
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Grounded query
 query {
-  goodboi {
-    |$\ldots$| on Dog {
-	  name
+  movie(id:2000) {
+    |$\ldots$| on Fiction {
+	  title
+	  year
     }
-    |$\ldots$| on Pig {
-      name
+    |$\ldots$| on Animation {
+      title
 } } }
 \end{minted} 
 \end{minipage}
 
 \medskip
 
-\noindent The left query is not grounded because the field \texttt{name} is selected on the abstract type \texttt{Animal} type. In contrast, the right query is grounded because it specifies the (concrete) object types \texttt{Dog} and \texttt{Pig} on which it requests the information.
+\noindent The left query is not grounded because the field \texttt{title} is directly selected on the abstract type \texttt{Movie} type. In contrast, the right query is grounded because it specifies the (concrete) object types \texttt{Film} and \texttt{Animation} on which it requests the information.
 %\et{verbose/repetitive} The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype. 
 
 % \td{Changing this definition}
@@ -168,29 +172,27 @@ For example, consider the two queries below:
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Redundant query
 query {
-    goodboi {
-        name
-        name
-        |$\ldots$| on Dog {
-            name
-        }
-        |$\ldots$| on Dog {
-            friends { |$\ldots$| }
-}  }  }
+  movie(id:2000) {
+    title
+    title
+    |$\ldots$| on Fiction {
+      title
+    }
+    |$\ldots$| on Fiction {
+      year
+}  }  }  }
 \end{minted}
 \end{minipage}%
 \begin{minipage}[t]{.25\textwidth}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Non-redundant query
 query {
-    goodboi {
-        |$\ldots$| on Dog {
-            name
-        }
-        |$\ldots$| on Pig {
-            name
-        }
-    } 
+  movie(id:2000) {
+    title
+    |$\ldots$| on Fiction {
+      year
+    }
+  }
 }
 \end{minted} 
 \end{minipage}
@@ -199,9 +201,9 @@ query {
 \bigskip
 
 The left query is redundant for two reasons: it requests the field
-\texttt{name} twice to the same type, and it uses two fragments with
+\texttt{title} twice to the same type, and it uses two fragments with
 the same type condition. If no collection and merger
-of fields is performed during the evaluation, this will produce two (or three) values with the key \texttt{name}. 
+of fields is performed during the evaluation, this will produce two (or three) values with the key \texttt{title}. 
 Conversely, the right query is non-redundant because it requests information about each type only once; only one fragment will actually be executed at a time, depending on the concrete object value that is used to evaluate the query.
 % It is important to notice that, even though it requests the field \texttt{name} in both, this is considered not redundant because 
 
@@ -344,12 +346,12 @@ the example below.
 // Query not in normal form
 query {
   |$\ldots$| on Query {
-    goodboi {
-      name
+    movie(id:2000) {
+      title
     }
   }
-  goodboi {
-    name
+  movie(id:2000) {
+    title
 } }
 \end{minted}
 \end{minipage}%
@@ -357,12 +359,12 @@ query {
 \begin{minted}[escapeinside=||, mathescape=true]{js}
 // Normalized query
 query {
-  goodboi {
-    |$\ldots$| on Dog {
-      name
+  movie(id:2000) {
+    |$\ldots$| on Fiction {
+      title
     }
-    |$\ldots$| on Pig {
-      name
+    |$\ldots$| on Animation {
+      title
     }
 } }
 \end{minted} 
@@ -371,8 +373,8 @@ query {
 \medskip
 
 \noindent On the left we have the original query and on the right its normalized
-version. Subselections from fragment with type condition \texttt{Query} are lifted and the multiple occurrences of field \texttt{goodboi} are merged into a single occurrence. 
-Since the type of the field \texttt{goodboi} is the abstract type \texttt{Animal}, the subselections are wrapped in fragments for each concrete object subtype, namely \texttt{Dog} and \texttt{Pig}. The normalized query is both non-redundant and in ground-typed normal form. 
+version. Subselections from fragment with type condition \texttt{Query} are lifted and the multiple occurrences of field \texttt{movie} are merged into a single occurrence. 
+Since the type of the field \texttt{movie} is the abstract type \texttt{Movie}, the subselections are wrapped in fragments for each concrete object subtype, namely \texttt{Fiction} and \texttt{Animation}. The normalized query is both non-redundant and in ground-typed normal form. 
 
 
 
@@ -642,8 +644,9 @@ First, some queries are considered non-redundant by \HP although they actually p
 A simple example is the following query:
 
 \begin{minted}{js}
-        query { name
-                name:name }
+        query {
+          movie(id:2000) { title }
+          movie:movie(id:2000) { title } }
 \end{minted}
 which produces two repeated values. This occurs because \HP's definition of non-redundancy does not consider the case when an unaliased field and an aliased field share the same response name. This cornercase is properly handled in \gcoql, by grouping fields by their response names. We discovered this case when proving the equivalence of the simplified semantics.
 % \et{do you remember when/how you discovered that? by proving which lemma/theorem?}
@@ -658,8 +661,9 @@ Second, using \HP's equivalence rules, some queries cannot be normalized.
  % \td{I just realized that the version of the paper we are citing does not include the equivalence rules}. 
 For instance:
 \begin{minted}[escapeinside=||, mathescape=true]{js}
-          query { name
-                  |$\ldots$| on Query { name } }
+          query {
+            movie(id:2000) { ... }
+            |$\ldots$| on Query { movie(id:2000) { ... } } }
 \end{minted}
 %\et{like above explain why this problem happens in HP}
 In \HP there are no rules that explicitly consider and use the type in scope to transform selections. In this example, by considering the \texttt{Query} type, either the fragment's contents could be lifted or the field could be wrapped in a fragment, and then the existing rules would apply. 

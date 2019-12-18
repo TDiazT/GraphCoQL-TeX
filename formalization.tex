@@ -477,14 +477,14 @@ which in turn requires the notion of \textit{type in scope}%
   \begin{flushright}
 \begin{minted}[escapeinside=||, mathescape=true]{js}
   query {
-    goodboi {
-      |$\ldots$| on Dog {
-        name
-        favoriteToy
+    movie(id: 2000) {
+      |$\ldots$| on Fiction {
+        title
+        style
       }
-      |$\ldots$| on Pig {
-        name
-        favoriteToy
+      |$\ldots$| on Animation {
+        title
+        style
   } } }
 \end{minted}    
   \end{flushright}
@@ -503,14 +503,14 @@ which in turn requires the notion of \textit{type in scope}%
 %\et{for space reason, we may want to take some liberties wrt the formatting of queries and responses (see some examples on this page)}
 %
 at a given selection location. % \footnote{The \spec refers to it as the \emph{type in scope} or \emph{parent type}. Some algorithmic descriptions make use of the types in scope but are not explicit in their signatures.} % Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied.
-To illustrate this, consider the query to the right with two occurrences of field \texttt{name}.
+To illustrate this, consider the query to the right with two occurrences of field \texttt{title}.
 \noindent In the first occurrence, the field is requesting information about the
-\texttt{Dog} type, while in the second it is requesting information
-about the \texttt{Pig} type. The distinction is important because some
+\texttt{Fiction} type, while in the second it is requesting information
+about the \texttt{Animation} type. The distinction is important because some
 field selections might be valid in some contexts but not in others. % 
 % \td{Better? I feel there is something wrong, but not sure what}\fo{I
 %  think it's good}
-For instance, this is the case of field \texttt{favoriteToy}, which is valid in the scope of the \texttt{Dog} type but it is invalid in the scope of the \texttt{Pig} type, as the \texttt{Pig} type does not contain any such field. %Similarly, the above query would also be invalid if \texttt{Pig} type contained a so-called field, but of type different from \texttt{Toy} ---the type of the same field in type \texttt{Dog}.
+For instance, this is the case of field \texttt{style}, which is valid in the scope of the \texttt{Animation} type but it is invalid in the scope of the \texttt{Fiction} type, as the \texttt{Fiction} type does not contain any such field. %Similarly, the above query would also be invalid if \texttt{Pig} type contained a so-called field, but of type different from \texttt{Toy} ---the type of the same field in type \texttt{Dog}.
 
 %Just as in the case of well-formedness of schemas or conformance of graphs, queries must go through a validation process. We define the property of \textit{conformance} of queries, based on validation rules scattered throughout the \textit{Validation} section of the \spec\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Validation}.
 
@@ -602,13 +602,13 @@ selection set to produce results of different types for the same key; \eg the fo
 \begin{minipage}[t]{.22\textwidth}
 \begin{minted}[escapeinside=||,mathescape=true]{js}
 query {
-  goodboi {
-    friends {
-      |$\ldots$| on Dog {
-        name
+  artist(id:1000) {
+    artworks(role:ACTOR) {
+      |$\ldots$| on Fiction {
+        title:year
      }
-     |$\ldots$| on Pig {
-       name:oink
+     |$\ldots$| on Animation {
+       title
 } } } }
 \end{minted}
 \end{minipage}%
@@ -616,11 +616,11 @@ query {
 \begin{minted}[escapeinside=||,mathescape=true]{js}
 // Possible invalid output
 {
-  "goodboi" : {
-       "friends" : [
-         { "name" : "Marle" },
-         { "name" : 9000 }
-     ]
+  "artist": {
+    "artworks": [
+    { "title": 1995 },
+    { "title": "Toy Story" }
+    ]
 } }
 \end{minted}
 \end{minipage}
@@ -628,7 +628,7 @@ query {
 \medskip
 
 \noindent is invalid because its evaluation produces results with the same key 
-(\texttt{name}) but associated to values of different types (\ie
+(\texttt{title}) but associated to values of different types (\ie
 string and integer).
 
 %\td{We are not exactly capturing that the fields can be inside fragments, is it ok?}\et{I don't get it}
@@ -646,14 +646,16 @@ the same response name refer to the same piece of
 information. Consider, for instance, the following query:
 % \td{This leaves a lot of empty space :/}
 \begin{minted}[escapeinside=||,mathescape=true]{js}
-query { goodboi {
-          age   
-          |$\ldots$| on Pig { age:oink } }
+query { 
+  movie(id:2000) {
+          title   
+          |$\ldots$| on Animation { title:style } 
+} }
 \end{minted}
 
-\noindent The query is considered invalid because the fields with response name \texttt{age} both refer to distinct pieces of information;
-the first occurrence refers to field \texttt{age} of an \texttt{Animal}, while the second
-occurrence refers to the field \texttt{oink} of a \texttt{Pig}.
+\noindent The query is considered invalid because the fields with response name \texttt{title} both refer to distinct pieces of information;
+the first occurrence refers to field \texttt{title} of a \texttt{Movie}, while the second
+occurrence refers to the field \texttt{style} of an \texttt{Animation}.
 
 %\fo{Add example and briefly explain} 
 

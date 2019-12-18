@@ -30,44 +30,70 @@ the types and fields defined in the schema.
     \centering
     \begin{subfigure}{.5\linewidth}
     
-    \begin{minted}[fontsize=\scriptsize]{js}
-interface Animal {		
-  name: String
-  age: Int
-  friends: [Animal]
+    \begin{minted}[fontsize=\scriptsize]{text}
+interface Movie
+{
+  id: ID		
+  title: String
+  year: Int
+  cast: [Artist]
 }
 
-type Dog implements Animal {
-  name: String
-  age: Int
-  friends: [Animal]
-  favoriteToy: Toy
+type Fiction implements Movie
+{
+  id: ID		
+  title: String
+  year: Int
+  cast: [Artist]
 }
 
-type Pig implements Animal {
-  name: String
-  age: Int
-  friends: [Animal]
-  oink: Int
+type Animation implements Movie
+{
+  id: ID		
+  title: String
+  year: Int
+  cast: [Artist]
+  style: Style
+}
+
+type Book
+{
+  id: ID
+  title: String
+  year: Int
+  ISBN: String
 }
     \end{minted}
     \end{subfigure}%    
     \begin{subfigure}{.5\linewidth}
-    \begin{minted}[fontsize=\scriptsize]{js}
-type Toy {
-  chewiness: Float
+    \begin{minted}[fontsize=\scriptsize]{text}
+enum Role { 
+	ACTOR
+	DIRECTOR
+	WRITER
 }
 
-enum Good { 
-  BESTBOI GOODBOI 
-  OKBOI BADBOI 
+enum Style {
+	2D
+	3D
+	STOPMOTION
 }
 
-union Search = Dog | Pig | Toy
+union Artwork = Book
+  | Fiction
+  | Animation 
+
+type Artist
+{
+  id: ID
+  name: String
+  artworks(role: Role): [Artwork]
+}
+
 
 type Query {
-  goodboi(goodness: Good): Animal
-  search(text: String): Search
+  artist(id: ID): Artist
+  movie(id: ID): Movie
 }
 
 schema {
@@ -141,7 +167,7 @@ favorite toy is represented by the graph's rightmost node and that the dog's
 
 \begin{figure}
     \centering
-    \includegraphics[scale=0.33]{imgs/graph.png}
+    \includegraphics[scale=0.32]{imgs/graph.png}
     \caption{Example of \gql graph.}
     \label{fig:graph_ex}
 \end{figure}
@@ -212,17 +238,15 @@ continues navigating the graph in search of the dog's friends.
 \begin{subfigure}{.25\textwidth}
 \begin{minted}[fontsize=\scriptsize, escapeinside=||,mathescape=true]{js}
 query {
-  goodboi(goodness:BESTBOI) {
+  artist(id: 1000) {
     name
-    friends {
-      name
-      |$\ldots$| on Dog {
-        favoriteToy {
-          chewiness
-        }
+    artworks(role: ACTOR) {
+      title
+      |$\ldots$| on Fiction {
+        releaseYear:year
       }
-      |$\ldots$| on Pig {
-        loudness:oink
+      |$\ldots$| on Animation {
+        style
       }
     }
   }
@@ -234,18 +258,16 @@ query {
 \begin{subfigure}{.25\textwidth}
 \begin{minted}[fontsize=\scriptsize]{json}
 {
-  "goodboi": {
-    "name":"Casel",
-    "friends":[
+  "artist": {
+    "name":"Tom Hanks",
+    "artworks":[
       {
-        "name": "Marle",
-        "favoriteToy": {
-          "chewiness": 23
-        },
+        "title": "Forrest Gump",
+        "releaseYear": 1994
       },
       {
-        "name": "Chris P. Bacon",
-        "loudness": 9000
+        "title": "Toy Story",
+        "style": "3D"
       }
     ]
   }
