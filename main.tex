@@ -146,15 +146,14 @@
 
 
 %\setcopyright{ACMUNKNOWN}
-\acmPrice{}
-\acmDOI{10.1145/3372885.3373822}
-\acmYear{2020}
-\copyrightyear{2020}
-\acmISBN{978-1-4503-7097-4/20/01}
+\copyrightyear{2020} 
+\acmYear{2020} 
+\setcopyright{acmlicensed}
 \acmConference[CPP '20]{Proceedings of the 9th ACM SIGPLAN International Conference on Certified Programs and Proofs}{January 20--21, 2020}{New Orleans, LA, USA}
 \acmBooktitle{Proceedings of the 9th ACM SIGPLAN International Conference on Certified Programs and Proofs (CPP '20), January 20--21, 2020, New Orleans, LA, USA}
-
-
+\acmPrice{15.00}
+\acmDOI{10.1145/3372885.3373822}
+\acmISBN{978-1-4503-7097-4/20/01}
 
 
 
@@ -164,27 +163,33 @@
 \author{Tomás Díaz}
 \affiliation{%
   \institution{IMFD Chile}
-  \city{Santiago}
-  \country{Chile}
+%  \city{Santiago}
+%  \country{Chile}
 }
+\email{tdiaz@imfd.cl}
 
 \author{Federico Olmedo}
 \affiliation{%<
-  \institution{Computer Science Department, University of Chile \& IMFD}
+  \institution{Computer Science Department, University of Chile \&
+    IMFD Chile}
 %  \department{Computer Science Department (DCC)}
   % \institution{University of Chile \& IMFD Chile}
   % \department{Computer Science Department (DCC)}
-  \city{Santiago}
-  \country{Chile}
+%  \city{Santiago}
+%  \country{Chile}
 }
+\email{folmedo@dcc.uchile.cl}
+
 \author{Éric Tanter}
 \affiliation{%
-  \institution{Computer Science Department, University of Chile \& IMFD}
+  \institution{Computer Science Department, University of Chile \&
+    IMFD Chile}
   % \institution{University of Chile \& IMFD Chile}
   % \department{Computer Science Department (DCC)}
-  \city{Santiago}
-  \country{Chile}
+%  \city{Santiago}
+%  \country{Chile}
 }
+\email{etanter@dcc.uchile.cl}
 
 \begin{abstract}
 \gql is a novel language for specifying and querying web APIs,
@@ -201,9 +206,14 @@ We hope that \gcoql can serve as a solid formal baseline for both language desig
 \begin{CCSXML}
 <ccs2012>
 <concept>
+<concept_id>10002951.10003260.10003304</concept_id>
+<concept_desc>Information systems~Web services</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
 <concept_id>10002951.10002952.10003197</concept_id>
 <concept_desc>Information systems~Query languages</concept_desc>
-<concept_significance>500</concept_significance>
+<concept_significance>300</concept_significance>
 </concept>
 <concept>
 <concept_id>10003752.10010124</concept_id>
@@ -213,10 +223,11 @@ We hope that \gcoql can serve as a solid formal baseline for both language desig
 </ccs2012>
 \end{CCSXML}
 
-\ccsdesc[500]{Information systems~Query languages}
+\ccsdesc[500]{Information systems~Web services}
+\ccsdesc[300]{Information systems~Query languages}
 \ccsdesc[500]{Theory of computation~Semantics and reasoning}
 
-\keywords{\gql, \coq}
+\keywords{\gql, mechanized metatheory, \coq.}
 
 \maketitle
 
