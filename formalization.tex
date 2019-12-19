@@ -11,7 +11,7 @@ In this section we describe our formalization of \gql in \coq. We start by defin
 We formalize schemas and type definitions following the \spec. A
 schema is represented as a record, containing a list of type
 definitions and a root query type that specifies the entry points to the
-dataset. A \texttt{Name} is simply a string but renamed to match the \spec.
+dataset. A \texttt{Name} is simply a string, according to the \spec.
 %  available selections (\eg \texttt{Query} in the example from Figure \ref{fig:schema_ex}):
 %
 
@@ -475,9 +475,9 @@ which in turn requires the notion of \textit{type in scope}%
 \begin{wrapfigure}[10]{r}{.20\textwidth}
   \vspace{-1.3ex}
   \begin{flushright}
-\begin{minted}[escapeinside=||, mathescape=true]{js}
+\begin{minted}[escapeinside=||, mathescape=true]{text}
   query {
-    movie(id: 2000) {
+    movie[id:2000] {
       |$\ldots$| on Fiction {
         title
         style
@@ -586,7 +586,7 @@ over a type in scope $\mathit{ts}$ if:
 
 
 The first rule ensures that every selection is well-formed on its own,
-\wrt the type in scope. This requirement depends on to the
+\wrt the type in scope. This requirement depends on the
 kind of selection. For instance, if the selection is a field, the rule
 checks that the field is part of the type in scope and that its
 arguments are correctly provided; if the selection is an inline
@@ -602,8 +602,8 @@ selection set to produce results of different types for the same key; \eg the fo
 \begin{minipage}[t]{.22\textwidth}
 \begin{minted}[escapeinside=||,mathescape=true]{js}
 query {
-  artist(id:1000) {
-    artworks(role:ACTOR) {
+  artist[id:1000] {
+    artworks[role:ACTOR] {
       |$\ldots$| on Fiction {
         title:year
      }
@@ -621,7 +621,8 @@ query {
     { "title": 1995 },
     { "title": "Toy Story" }
     ]
-} }
+  }
+}
 \end{minted}
 \end{minipage}
 
@@ -629,7 +630,7 @@ query {
 
 \noindent is invalid because its evaluation produces results with the same key 
 (\texttt{title}) but associated to values of different types (\ie
-string and integer).
+integer and string).
 
 %\td{We are not exactly capturing that the fields can be inside fragments, is it ok?}\et{I don't get it}
 Formally, the definition of field \emph{type-compatibility} is
@@ -647,14 +648,14 @@ information. Consider, for instance, the following query:
 % \td{This leaves a lot of empty space :/}
 \begin{minted}[escapeinside=||,mathescape=true]{js}
 query { 
-  movie(id:2000) {
+  movie[id:2000] {
           title   
           |$\ldots$| on Animation { title:style } 
 } }
 \end{minted}
 
 \noindent The query is considered invalid because the fields with response name \texttt{title} both refer to distinct pieces of information;
-the first occurrence refers to field \texttt{title} of a \texttt{Movie}, while the second
+the first occurrence refers to the field \texttt{title} of a \texttt{Movie}, while the second
 occurrence refers to the field \texttt{style} of an \texttt{Animation}.
 
 %\fo{Add example and briefly explain} 
@@ -1116,7 +1117,7 @@ We now discuss some design considerations that manifested when developing
 %The previously quoted definition actually matches the \textit{Type System} structure\footnote{https://graphql.github.io/graphql-spec/June2018/\#TypeSystemDefinition}. Our formalization follows the latter but rename it to schema to also match the quoted description.
 %\et{contrast with what you did, and the tradeoffs (what's convenient, what's not)}
 The definition of schemas in \HP relies on defining sets of field names, types and values, and using a number of functions to relate the different elements.
-For example, the object types of the schema from Figure~\ref{fig:schema_ex} are defined as the set $O_{T} = \{\mathit{Dog, Pig, Toy\}}$ and their fields are defined with a
+For example, the object types of the schema from Figure~\ref{fig:schema_ex} are defined as the set $O_{T} = \{\mathit{Artist, Fiction, Animation, Book, Query}\}$ and their fields are defined with a
 function $\mathit{fields}_{\schema} : O_{T} \to 2^{F}$, where $F$ is a set of field names.
 In contrast, \gcoql uses a more data-structure centric approach, in which schemas are records.
 While \HP's approach simplifies many validation rules, our approach is closer to the schema definition language from the \spec (which did not exist yet when \HP was published). 
@@ -1142,7 +1143,7 @@ of a schema given by \HP does not capture all the validation rules established b
  % (and~\cite{olafschema})
 % (and the recent extension~\cite{olafschema})\td{I wouldn't call it extension, since it only uses the schema DSL for graphs, it can provide a way to extend the formalization of \gql but it's not its goal.} 
 and \gcoql have a slightly limited graph model that does not entirely describe the universe of a \gql service: graphs cannot model {\em nested} lists, when the underlying type is an object or abstract type.\footnote{The situation is worse in \HP, which cannot model nested list types for scalar types.}
-For instance, these semantics cannot account for a selection over a field whose type is \texttt{[[Animal]]}.
+For instance, these semantics cannot account for a selection over a field whose type is \texttt{[[Artist]]}.
 %
 The underlying question is how to interpret such nested lists in a graph-based data model.
 % \et{the following might be too long/detailed---does the reader know what formatters/resolvers are?}\td{Yeah, I agree}
