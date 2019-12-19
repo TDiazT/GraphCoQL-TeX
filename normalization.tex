@@ -58,9 +58,15 @@ The notion of \textit{normal form} introduced by Hartig and Pérez consists of t
 %\et{skip/move} Similarly to what is described in Section~\ref{subsec:query}, the normalization process requires information on the type in context where the queries might be defined. This is crucial as it guides the process on how queries are transformed.
 
 % Throuhgout our development, we noticed that this definition given by \cite{gqlph} was too general when proving correctness of our normalization procedure. In particular, the definition states that the subqueries of a field selection can be either fields or fragments. This means that if there are two field selections with the same response name, one may have subqueries consisting of fields, while the other contains only inline fragments. This would cause issues when trying to remove redundancies in queries because one could not directly establish if the resulting queries satisfied the property.
+
 \paragraph{Ground-typed normal form.}
 %\et{should it be "groundedness"? (being bounded is boundedness, being rounded is roundedness, etc.)}
-Informally, a query is in ground-typed normal form, or {\em grounded} for short, if it is completely specified down to object types. Consider the queries below, based on the schema from Figure~\ref{fig:schema_ex}, which request the title of a movie: 
+Informally, a query is in ground-typed normal form, or {\em grounded}
+for short, if %
+any two selections within the same selection set are of the same kind,
+either field selections or inline fragments. 
+% it is completely specified down to object types.
+Consider for instance the queries below:
 %\td{Align to top or as it is? Aligning to top leaves a huge empty space :/}
 
 \smallskip
@@ -95,7 +101,11 @@ query {
 
 \medskip
 
-\noindent The left query is not grounded because the field \texttt{title} is directly selected on the abstract type \movies type. In contrast, the right query is grounded because it specifies the (concrete) object types \animation and \fiction on which it requests the information.
+\noindent The query on the left is not grounded because the selection
+set under field \texttt{movie} contains two selections of different
+kind. The query on the right represents a grounded version thereof. % on the right is
+% grounded because 
+% it specifies the (concrete) object types \animation and \fiction on which it requests the information.
 %\et{verbose/repetitive} The main idea is that if a query is performed over an object type then the query should only be composed of field selections. In contrast, if the query is over an abstract type, then it should only be composed of inline fragments that specify the selections down to the object subtypes. In the former case, it does not make sense to use fragments to further specify a query because it is not possible to be more specific when querying an object. Meanwhile, in the latter case the query should clearly state what is being requested from each concrete subtype. 
 
 % \td{Changing this definition}
@@ -158,12 +168,38 @@ Lemma are_grounded_in_ground_typed_nf (s : wfGraphQLSchema)
 
 %\et{why do we care about this lemma instead of the definition of is-grounded?}
 
-\paragraph{Non-redundancy.}
+\paragraph{Non-redundancy.} Informally, the notion of non-redundancy
+further constraints that of groundedness by forbidding queries that induce a repeated evaluation of selections. For example, consider the two queries below:
 
-Informally, 
-% \et{bad phrasing: what is "non-redundant" is a "query", not "whether there are no queries"} the notion of non-redundancy refers to whether there are no queries that may produce repeated results. 
-a non-redundant query is a query that does not produce repeated results.
-For example, consider the two queries below:
+
+% Informally, a query is non-redundant if it
+% contains neither repeated field selections under the same type nor
+% multiple inline fragments with the same type condition.
+
+% repeated  field selections under the same type in scope and 
+% multiple inline fragments with the same type condition under the same
+% type in scope.
+
+% ensuring that a naive evaluation of queries yield non-redundant
+% responses. 
+
+% orbidding repeated selections (allowing this way a simpler
+%  evaluation process).
+
+
+% The notion of non-redundancy further constraints that of ground-typed
+% by forbidding repeated selections (allowing this way a simpler
+% evaluation process).
+
+
+% Informally, a query is non-redundant if its naive evaluation (\ie
+% without the collecting, merging and filtering process) yields
+% a non-redundant response.
+
+% Informally, 
+% % \et{bad phrasing: what is "non-redundant" is a "query", not "whether there are no queries"} the notion of non-redundancy refers to whether there are no queries that may produce repeated results. 
+% a non-redundant query is a query that does not produce repeated results.
+
 %\td{Should this be another figure?}\et{do the same as you do for groundedness -- better to just inline if there are no references from other parts of the paper}\et{use the same trick with comments to indicate grounded/ungrounded}
 
 \smallskip
@@ -173,9 +209,8 @@ For example, consider the two queries below:
 // Redundant query
 query {
   movie[id:2000] {
-    title
-    title
     |$\ldots$| on Fiction {
+      title
       title
     }
     |$\ldots$| on Fiction {
@@ -188,8 +223,8 @@ query {
 // Non-redundant query
 query {
   movie[id:2000] {
-    title
     |$\ldots$| on Fiction {
+      title
       year
     }
   }
@@ -200,11 +235,11 @@ query {
 
 \bigskip
 
-The left query is redundant for two reasons: it requests the field
-\texttt{title} twice to the same type, and it uses two fragments with
-the same type condition. If no collection and merger
-of fields is performed during the evaluation, this will produce two (or three) values with the key \texttt{title}. 
-Conversely, the right query is non-redundant because it requests information about each type only once; only one fragment will actually be executed at a time, depending on the concrete object value that is used to evaluate the query.
+\noindent The query on the left is redundant for two reasons: it requests the field
+\texttt{title} twice, and it contains multiple fragments with
+the same type condition. % If no collection and merger
+% of fields is performed during the evaluation, this will produce two (or three) values with the key \texttt{title}. 
+Conversely, the query on the right is semantically equivalent and non-redundant. % because it requests information about each type only once; only one fragment will actually be executed at a time, depending on the concrete object value that is used to evaluate the query.
 % It is important to notice that, even though it requests the field \texttt{name} in both, this is considered not redundant because 
 
 % \td{Rewrote this definition a little bit}
