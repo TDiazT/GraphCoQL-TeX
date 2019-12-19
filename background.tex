@@ -24,15 +24,16 @@ The first step when defining a \gql API is to define the service's schema,
 describing the type system and its capabilities.
 The type system describes how data is structured and 
 precisely what can be requested and received. 
-It is created by defining a set of types and their fields \fo{This is
-confusing because not all types have fields, e.g. enumerations and
-unions don't}, which are in turn associated to user defined functions.
-These functions determine how the actual data is retrieved and are internal definitions that
-depend mostly on the user's choice and the associated backend technology.
-Queries over a \gql API can therefore only be done over fields in the
-types defined in the schema. \fo{This is true, but it can confuse the
-  reader because in the rest of the paper query evaluation is done by
-  traversing a graph.}
+A schema consists of a set of types, which can have declared fields. Only fields that are part of such type definitions can be accessed via a \gql query. In contrast to traditional data management systems, fields accesses in \gql are handled by the backend via user-defined functions (called resolvers).
+%\et{simplified paragraph above}
+% In \gql, fields are associated to user-defined functions that determine how the actual data is retrieved; 
+% these 
+% and are internal definitions that
+% depend mostly on the user's choice and the associated backend technology.
+% Queries over a \gql API can therefore only be done over fields in the
+% types defined in the schema. \fo{This is true, but it can confuse the
+%   reader because in the rest of the paper query evaluation is done by
+%   traversing a graph.}
 
 
 \iffalse
@@ -60,9 +61,9 @@ enum Role {
 	WRITER
 }
 
-union Artwork = Book
-  | Fiction
+union Artwork = Fiction
   | Animation 
+  | Book
 
 interface Movie
 {
@@ -123,29 +124,30 @@ schema {
 
 Figure~\ref{fig:schema_ex} depicts the schema for the \goodbois dataset, which contains
 artists and their works of art. The definition is done using the \gql
-Schema Definition Language (SDL) \fo{Introduce the abbreviation only
-  if you use it later; this abbreviation might also confuse the reader
-because it is very similar to DSL (Domain Specific Language), which is
-how we refer to it in the abstract}.
-We define artists as an object type with a set of fields, describing the artist and their relation
-to other types \fo{You mean to other }. An artist is then modeled with an id, a name and the list of artwork
-in which they have participated. Notice how we model the list of artwork with the type 
-\texttt{[Artwork]} and that the field may receive an argument. 
-This argument could serve to pattern match over the artist's related artwork, 
-recovering only those in which the artist had a given role, such as being the director of a movie. 
-The possible roles are modeled with the enum type \texttt{Role}, containing three scalar values.
-Meanwhile, we define an artwork as the disjoint union of fictional movies, animated movies and books,
-which are included in the union type \artwork.
+Schema Definition Language.
+% (SDL) \fo{Introduce the abbreviation only
+%   if you use it later; this abbreviation might also confuse the reader
+% because it is very similar to DSL (Domain Specific Language), which is
+% how we refer to it in the abstract}.
+% \et{right - commented out}
+The object type \texttt{Artist} declares three fields: 
+% describing the artist and their relation
+% to other types \fo{You mean to other }. 
+% An artist is then modeled with 
+an identifier, a name, and a list of artworks
+in which the artist has participated. The list of artworks is declared of type 
+\texttt{[Artwork]}. Note that the field may receive an argument, \texttt{role}, which can be used to select only those artworks for which the author plays a certain role, such as being the director. Possible roles are modeled with the enum type \texttt{Role}, containing three scalar values.
+% match the artist's related artwork, 
+% recovering only those in which the artist had a given role, such as being the director of a movie. 
+An \artwork is a disjoint union of fictional movies, animated movies and books.
 Both fictional and animated movies are defined as object types, namely \fiction and 
-\animation, implementing the interface type \movies. 
-Because all movies have an internal id, a title, a year of release and cast members, we 
-abstract them and define them as fields in the interface \movies\footnote{Note that \gql still requires objects to redefine the implemented fields.}.
-An object implementing an interface may add more fields, such as the field \texttt{style} in the type \animation, which
-represents the animation style of the movie. 
+\animation, implementing the same interface type \movies.\footnote{Note that \gql still requires objects to redeclare the implemented fields.}
+% Because all movies have an internal id, a title, a year of release and cast members, we 
+% abstract them and define them as fields in the interface \movies
+An object implementing an interface may add more fields, such as the field \texttt{style} in the type \animation. 
 To model the animation style, we use the enum type \texttt{Style} containing
 three scalar values. 
-In a similar fashion, we define books with the object type \texttt{Book} which, for simplicity, 
-does not implement any interface.
+We define books with the object type \texttt{Book} which, for simplicity, does not implement any interface.
 
 \iffalse
 We define movies with the interface \movies and two object types, namely
@@ -349,17 +351,16 @@ the resulting value should be renamed to \texttt{loudness} in the response, inst
 This query is then evaluated, resulting in the response
 depicted on the right of Figure~\ref{fig:qres_ex}. Observe that the
 response structure closely
-resembles the query, showcasing the \gql principle of getting back exactly the expected data 
-in the expected form. As previously mentioned, the actual evaluation depends on the
-internal resolver functions associated to each field, which can be any
-user defined piece of code.\fo{Again, this can confuse the reader.}
-However, the evaluation process can be intuitively understood by using a the graph data model, where
-the selections in a query indicate what edges to traverse in the graph and 
-what properties to access on each node. In this manner, starting from the
-node with type \texttt{Query}, the field \texttt{artist(id:1000)} indicates that 
+resembles the query, which is a key usability asset of \gql.
+% showcasing the \gql principle of getting back exactly the expected data 
+% in the expected form. 
+% As previously mentioned, the actual evaluation depends on the
+% internal resolver functions associated to each field, which can be any
+% user defined piece of code.\fo{Again, this can confuse the reader.}
+While data accesses are handled by resolvers in the backend, the query evaluation process of \gql can be intuitively understood by considering a graph data model. In such a model, the selections in a query indicate what edges to traverse in the graph and what properties to access on each node. In this manner, starting from the node with type \texttt{Query}, the field \texttt{artist(id:1000)} indicates that 
 we are looking for an adjacent node that can be reached after traversing an edge whose label matches the
 field and id. The first step then takes the evaluation process to the central
-node, of type \texttt{Artist}.  From there, it accesses the value
+node, of type \texttt{Artist}. From there, it accesses the value
 of the node's property matching the field \texttt{name} and then
 continues navigating the graph in search of the artist's artworks.
 
