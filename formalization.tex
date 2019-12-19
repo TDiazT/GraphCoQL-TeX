@@ -144,13 +144,6 @@ interface types contain at least one field. %Due to space limitations,
 % we omit the f
 Note that the \spec syntactically requires certain sets of elements to be non-empty (see the grammar on the left of
 Figure~\ref{fig:types_def}). This requirement is not enforced at the level of a type definition in \gcoql, but is instead part of the well-formedness check.
-
-% enforces this
-% requirement , we perform this validation when verifying
-% the (overall) well-formedness of schemas.     
-% \et{fix}For the corresponding type definitions to be valid, all
-% such three sets should be non-empty. While 
-
 Full definitions can be found in our
 \coq development. %file \texttt{SchemaWellFormedness.v}.
 
@@ -436,9 +429,9 @@ can be a single field with arguments ($\fld$), a field
 with arguments followed by a set of subselections
 ($\fld \texttt{\{} \sset \texttt{\}}$) or an inline fragment
 comprising a type condition and a set of subselections
-($\ifrag{t}{\sset}$). Fields can be aliased ($\afld$, $\afld \texttt{\{} \sset \texttt{\}}$). For
-notational simplicity, when a field selection contains an empty list
-of arguments, we omit it and simply write the field name.
+($\ifrag{t}{\sset}$). Fields can be aliased ($\afld$, $\afld \texttt{\{} \sset \texttt{\}}$). 
+%For notational simplicity, when a field selection contains an empty list
+%of arguments, we omit it and simply write the field name.
 
 
 
@@ -478,11 +471,11 @@ which in turn requires the notion of \textit{type in scope}%
 \begin{minted}[escapeinside=||, mathescape=true]{text}
   query {
     movie[id:2000] {
-      |$\ldots$| on Fiction {
+      |$\ldots$| on Animation {
         title
         style
       }
-      |$\ldots$| on Animation {
+      |$\ldots$| on Fiction {
         title
         style
   } } }
@@ -505,8 +498,8 @@ which in turn requires the notion of \textit{type in scope}%
 at a given selection location. % \footnote{The \spec refers to it as the \emph{type in scope} or \emph{parent type}. Some algorithmic descriptions make use of the types in scope but are not explicit in their signatures.} % Since queries are selections over the fields of types, it is important to know exactly to what type they are being applied.
 To illustrate this, consider the query to the right with two occurrences of field \texttt{title}.
 \noindent In the first occurrence, the field is requesting information about the
-\texttt{Fiction} type, while in the second it is requesting information
-about the \texttt{Animation} type. The distinction is important because some
+\animation type, while in the second it is requesting information
+about the \fiction type. The distinction is important because some
 field selections might be valid in some contexts but not in others. % 
 % \td{Better? I feel there is something wrong, but not sure what}\fo{I
 %  think it's good}
@@ -604,11 +597,11 @@ selection set to produce results of different types for the same key; \eg the fo
 query {
   artist[id:1000] {
     artworks[role:ACTOR] {
-      |$\ldots$| on Fiction {
-        title:year
+      |$\ldots$| on Animation {
+        title
      }
-     |$\ldots$| on Animation {
-       title
+     |$\ldots$| on Fiction {
+       title:year
 } } } }
 \end{minted}
 \end{minipage}%
@@ -618,8 +611,8 @@ query {
 {
   "artist": {
     "artworks": [
-    { "title": 1995 },
-    { "title": "Toy Story" }
+     { "title": "Toy Story" },
+     { "title": 1994 }
     ]
   }
 }
@@ -630,7 +623,7 @@ query {
 
 \noindent is invalid because its evaluation produces results with the same key 
 (\texttt{title}) but associated to values of different types (\ie
-integer and string).
+string and integer).
 
 %\td{We are not exactly capturing that the fields can be inside fragments, is it ok?}\et{I don't get it}
 Formally, the definition of field \emph{type-compatibility} is
