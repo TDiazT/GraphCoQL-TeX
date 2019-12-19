@@ -51,7 +51,7 @@ type Artist
 {
   id: ID
   name: String
-  artworks(role: Role): [Artwork]
+  artworks(role:Role): [Artwork]
 }
 
 enum Role { 
@@ -107,8 +107,8 @@ type Book
 }
 
 type Query {
-  artist(id: ID): Artist
-  movie(id: ID): Movie
+  artist(id:ID): Artist
+  movie(id:ID): Movie
 }
 
 schema {
@@ -390,9 +390,9 @@ continues navigating the graph in search of the dog's friends.
 \begin{subfigure}{.25\textwidth}
 \begin{minted}[fontsize=\scriptsize, escapeinside=||,mathescape=true]{js}
 query {
-  artist(id: 1000) {
+  artist[id:1000] {
     name
-    artworks(role: ACTOR) {
+    artworks[role: ACTOR] {
       title
       |$\ldots$| on Animation {
         style
