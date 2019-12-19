@@ -4,38 +4,37 @@
 \paragraph{Limitations.}
 
 Currently, \gcoql captures the core of \gql, but not the full specification. While this is already valuable to study key aspects of \gql---as illustrated in \S\ref{sec:norm}---more work is needed to fully cover the specification. 
-For the sake of exhaustiveness, we now list all missing features, referring to the \spec sections~\cite{gqlspec} where they are defined.\\
-- \emph{Executable definitions:}\ \ %
+For the sake of exhaustiveness, we now list all missing features, referring to the \spec sections~\cite{gqlspec} where they are defined:
+
+\begin{itemize}
+\item \emph{Executable definitions:}\ \ %
 % \et{meaning?}\td{That is just the name \gql gives to these features}: 
-mutations (\S2.3), subscriptions (\S2.3), fragments (\S2.8).\\
-- \emph{Types and type operations:}\ \ Non-null types (\S2.11-3.4.1-3.12), schema and type extensions (\S3.2.2-3.4.3), argument default values (\S3.6.1), input object types (\S3.10), directives (\S3.13).\\
-- \emph{Queries:}\ \ input object values (\S2.9.8), variables (\S2.10), variable and argument coercion (\S6.1.2-6.4.1), normal and serial execution (\S6.3.1), error handling (\S6.4.4).\\
-- \emph{Introspection:}\ \ fully unsupported (\S4). 
+mutations (\S2.3), subscriptions (\S2.3), fragments (\S2.8).
+\item \emph{Types and type operations:}\ \ Non-null types (\S2.11-3.4.1-3.12), schema and type extensions (\S3.2.2-3.4.3), argument default values (\S3.6.1), input object types (\S3.10), directives (\S3.13).
+\item \emph{Queries:}\ \ input object values (\S2.9.8), variables (\S2.10), variable and argument coercion (\S6.1.2-6.4.1), normal and serial execution (\S6.3.1), error handling (\S6.4.4).
+\item \emph{Introspection:}\ \ fully unsupported (\S4). 
+\end{itemize}
 
-\gcoql's current status should allow including some of the missing features in a fairly simple and straightforward manner, taking no more than a month or two of work.
-This includes features such as fragments, schema and type extensions, argument default values, input object types and values. 
-For directives, some of the builtin cases have a clear semantics and should be simple to include. 
-However, custom directives should be quite hard because they alter the semantics of queries in arbitrary ways.
-It is not entirely clear how these should be modeled and how normalization
-would be affected by it, regardless of \gcoql's current implementation. 
-
-In a similar fashion, it is not clear how mutation and subscription should be modeled, and
+Considering \gcoql's current status, integrating some of these missing features should be straightforward: fragments, schema and type extensions, argument default values, input object types and values. 
+For directives, some of the builtin cases have a clear semantics and should be simple to include as well. 
+However, custom directives would be quite hard to integrate because they arbitrarily alter the semantics of queries. It is not entirely clear how these should be modeled and how normalization would be affected by it, regardless of \gcoql's current implementation. 
+Similarly, it is not clear how mutation and subscription should be modeled, and
 what reasoning can be performed on these operations. 
-Their difficulty lies beyond the scope of this mechanization.  
+% Their difficulty lies beyond the scope of this mechanization.  
 
-Contrarily to custom directives, mutation and subscription, features such as variables, non-null values and error handling, can be properly modeled and implemented.
-Their implementation would require several changes to \gcoql, such as including environments, error propagation, among others. 
-However, these changes are still manageable with enough engineering power. 
-The main challenge may lay in properly handling normalization and the semantic preservation in the presence of errors.
+Contrarily to custom directives, mutation and subscription, features such as variables, non-null values and error handling, can be properly modeled and implemented, though at some engineering cost.
+Their implementation would require several changes to \gcoql, such as including environments and error propagation, among others.
+% However, these changes seem manageable with enough engineering power. 
+% The main challenge may lie in properly handling normalization and the semantic preservation in the presence of errors.
 
-With regards to introspection, its implementation would require a great amount of work, given by the amount
-of details to incorporate and functionalities to adjust. Many adjustments would probably be based on 
+Supporting introspection would be challenging, given the amount
+of details involved. Many adjustments would probably be based on 
 case analyzing string values in search of certain patterns, in order to identify introspection selections.
 
-Finally, many of the challenges in implementing these features arise from either the fact that it is not entirely clear
-how to model them (without recurring to generalizations that do not provide valuable reasoning), or that 
-most definitions require nested well-founded recursion as result of the tree structure of queries, possibly increasing the
-difficulty in reasoning about them. This is even more so when the definitions are composed between them. 
+Note that many of the challenges in implementing these features arise from either the fact that it is not entirely clear
+how to model them (without recurring to generalizations that might compromise valuable reasoning), or that most definitions require nested well-founded recursion as result of the tree structure of queries, possibly increasing the
+difficulty in reasoning about them. 
+% This is even more so when the definitions are composed between them. 
 
 
 
