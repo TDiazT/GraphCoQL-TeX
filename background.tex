@@ -123,7 +123,7 @@ schema {
 \end{figure}
 
 Figure~\ref{fig:schema_ex} depicts the schema for the \goodbois dataset, which contains
-artists and their works of art. The definition is done using the \gql
+artists and their artworks. The definition is done using the \gql
 Schema Definition Language.
 % (SDL) \fo{Introduce the abbreviation only
 %   if you use it later; this abbreviation might also confuse the reader
@@ -282,8 +282,8 @@ where the artist performed as an actor.  For such artworks, we request
 on one hand their title and on the other hand further information
 which depends on the concrete kind of artwork. (Recall that union type
 \texttt{Artwork} is composed by the object types \texttt{Book},
-\fiction and \animation). For animated movies, we request animation
-style, while for fiction movies, we request release year; for books,
+\fiction and \animation). For animated movies, we request the animation
+style, while for fictional movies, we request the year of release; for books,
 we require no related information. This is achieved by the pair of
 selections \ifrag{Animation}{\texttt{ style }} and \ifrag{Fiction}{
   \texttt{releaseYear:year} }, called {\em inline fragments}. In the
