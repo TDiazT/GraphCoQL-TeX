@@ -24,7 +24,7 @@ The first step when defining a \gql API is to define the service's schema,
 describing the type system and its capabilities.
 The type system describes how data is structured and 
 precisely what can be requested and received. 
-A schema consists of a set of types, which can have declared fields. Only fields that are part of such type definitions can be accessed via a \gql query. In contrast to traditional data management systems, fields accesses in \gql are handled by the backend via user-defined functions (called resolvers).
+A schema consists of a set of types, which can have declared fields. Only fields that are part of such type definitions can be accessed via a \gql query. In contrast to traditional data management systems, field accesses in \gql are handled by the backend via user-defined functions (called resolvers).
 %\et{simplified paragraph above}
 % In \gql, fields are associated to user-defined functions that determine how the actual data is retrieved; 
 % these 
@@ -311,7 +311,7 @@ query {
 To illustrate this, we define the query in
 Figure~\ref{fig:qres_ex}. Intuitively, the query is asking for the
 name of the artist with id 1000, as well as the title and some
-additional information of the artworks where they have performed as an
+additional information of the artworks where he has performed as an
 actor.  The request starts with the keyword \texttt{query}, which
 simply indicates the beginning of the field selection over the query
 type (the object type \texttt{Query}). \fo{This confuses to me. Is it

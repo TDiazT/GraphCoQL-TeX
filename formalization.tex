@@ -83,15 +83,7 @@ set of scalar values.
     \end{subfigure}
     \caption{Definition of \gql types: (left) \spec grammar; 
     (right) \gcoql definition.\newline
-    {\footnotesize The $(\cdot)^{?}$ notation denotes optional attributes.} 
-    % \td{Changed the optional bracket here also -- to $( )^{?}$}
-    % \td{Also changed $\overline{Field}$ bc the grammar specifies at least one}
-    % \et{overbar or * -- you are using both. any difference?}
-    % \td{No, just that I am not sure what to use}
-    % \et{can a union have only one name? (ie. should it be + instead of *?)}
-    % \td{Yep, it can have a single name (the thing is that each name is separated by a |)}
-    }
-    % \fo{In the grammar, I would push the scalar case to a new line, to match the \coq snippet on the right} \et{done}
+    {\footnotesize The $(\cdot)^{?}$ notation denotes optional attributes.}}
     \label{fig:types_def}
 \end{figure*}
 
@@ -363,7 +355,7 @@ graph contain full information about the represented
 objects. More precisely, a node need not provide values for all the fields
 in its type. For instance, in our running example in
 Figure~\ref{fig:graph_ex}, the bottommost node of type \texttt{Book} need not
-contain a property defining the book's title.
+contain a property defining the book title.
 
 
 % Finally, the conformance of edges validates that: (1) the label
