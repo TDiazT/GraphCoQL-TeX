@@ -18,7 +18,8 @@ dataset. A \texttt{Name} is simply a string, according to the \spec.
 \begin{minted}[bgcolor=coqbg]{coq}
 Record graphQLSchema := GraphQLSchema {
     query_type : Name;
-    type_definitions : seq TypeDefinition }.
+    type_definitions : seq TypeDefinition
+}.
 \end{minted}
 %
 Schemas may also include additional root types for specifying
@@ -30,7 +31,7 @@ an object type, which possibly implements a set of interfaces, an
 interface type, a union type or an enumeration type. Object and
 interface type definitions comprise a set of fields; union
 types are defined by a set of type names and enumeration types by a
-set of values. 
+set of scalar values. 
 
 %
 \setlength{\grammarparsep}{10pt plus 1pt minus 1pt} % increase separation between rules
@@ -116,7 +117,7 @@ validation rules (\cf~\cite[\S3]{gqlspec}). % , scattered throughout the
 %  % the \textbf{Type Validation} subsection of each type described in ..
 We refer to these rules as the \textit{well-formedness}
 condition of a \gql schema:\footnote{In \HP, this condition is
-  referred to as the {\em consistency} of graphs.}
+  referred to as the {\em consistency} of schemas.}
 
 \begin{definition}
 A \gql schema is \textit{well-formed} if: 
@@ -167,7 +168,8 @@ proof in a single structure.
 \begin{minted}[bgcolor=coqbg]{coq}
 Record wfGraphQLSchema := WFGraphQLSchema {
     schema : graphQLSchema;
-    _ : schema.(is_a_wf_schema); }.
+    _ : schema.(is_a_wf_schema);
+}.
 \end{minted}
 
 %\fo{Mention what \texttt{Vals} represents (used here for the first
@@ -572,8 +574,8 @@ over a type in scope $\mathit{ts}$ if:
 
 \item any two field selections in $\sset$
   are type-compatible and
-  renaming-consistent.\footnote{In the \spec, these two notions roughly correspond     to \emph{having-the-same-response-shape} and
-    \emph{fields-can-merge}, respectively (\cf~\cite[\S5.3.2]{gqlspec}).}
+  renaming-consistent.\footnote{In the \spec, these two notions roughly correspond to \emph{SameResponseShape} and
+    \emph{FieldsInSetCanMerge}, respectively (\cf~\cite[\S5.3.2]{gqlspec}).}
 \end{itemize}
 \end{definition}
 
@@ -643,8 +645,11 @@ information. Consider, for instance, the following query:
 query { 
   movie[id:2000] {
           title   
-          |$\ldots$| on Animation { title:style } 
-} }
+          |$\ldots$| on Animation { 
+            title:style
+          } 
+  }
+}
 \end{minted}
 
 \noindent The query is considered invalid because the fields with response name \texttt{title} both refer to distinct pieces of information;
