@@ -706,6 +706,10 @@ In \HP there are no rules that explicitly consider and use the type in scope to 
 
 %
 We uncovered this issue when working on the semantics preservation proof of the normalization function. In fact, at the time we were formalizing the query semantics following \HP's approach. Working on fixing this issue and the others discussed in \S\ref{subsec:discussion} led us to change the approach of the query semantics, and to adjust the definition of responses.
+
+Besides the difficulties posed by these issues, the fundamental challenge faced in our formalization in comparison to similar formalization efforts such as \cite{qcert, vesqlsemantics, certifdatalog} resides in the non-structural nature of most definitions related to queries. In particular, both query semantics and query normalization are defined by well-founded induction on the notion of query size presented at the end of \S~\ref{subsec:query}. 
+
+ 
 % Regarding the equivalence rules defined by \HP, we note that their current definition  fails to normalize queries.
 % For example, the following query cannot be normalized with the current set of rules.
 % \td{Another rule does not account for order, but is not mentioned and I'm not sure if it's ok with their formalization (I mentioned it in Zulip). I don't think it adds too much info tbh}
