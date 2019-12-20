@@ -261,6 +261,53 @@ As previously hinted, \gql queries are simply requests over the fields of types 
 They have a tree structure, similar to \json, which follows the fields and relations established between the types
 in the type system.
 
+\begin{figure}
+\centering
+\begin{subfigure}{.25\textwidth}
+\begin{minted}[fontsize=\scriptsize, escapeinside=||,mathescape=true]{js}
+query {
+  artist[id:1000] {
+    name
+    artworks[role: ACTOR] {
+      title
+      |$\ldots$| on Animation {
+        style
+      }
+      |$\ldots$| on Fiction {
+        releaseYear:year
+      }
+    }
+  }
+}
+
+\end{minted}
+\label{fig:query_ex}
+\end{subfigure}%
+\begin{subfigure}{.25\textwidth}
+\begin{minted}[fontsize=\scriptsize]{json}
+{
+  "artist": {
+    "name":"Tom Hanks",
+    "artworks":[
+       {
+        "title": "Toy Story",
+        "style": "3D"
+      },
+      {
+        "title": "Forrest Gump",
+        "releaseYear": 1994
+      }
+    ]
+  }
+}
+\end{minted}
+\label{fig:response_ex}
+\end{subfigure}
+\caption{\gql query (left) and its response (right).}
+\label{fig:qres_ex}
+\end{figure}
+
+
 To illustrate this, we define the query in
 Figure~\ref{fig:qres_ex}. Intuitively, the query is asking for the
 name of the artist with id 1000, as well as the title and some
@@ -385,52 +432,6 @@ continues navigating the graph in search of the dog's friends.
 
 %If we evaluate this query in the graph depicted in \ref{fig:graph_ex}, we would get the response shown in figure \ref{fig:qres_ex}. This response was obtained by navigating the graph and collecting the information contained in each of the relevant nodes. It is easy to see that the response has a structure very similar to the query's.
 
-
-\begin{figure}
-\centering
-\begin{subfigure}{.25\textwidth}
-\begin{minted}[fontsize=\scriptsize, escapeinside=||,mathescape=true]{js}
-query {
-  artist[id:1000] {
-    name
-    artworks[role: ACTOR] {
-      title
-      |$\ldots$| on Animation {
-        style
-      }
-      |$\ldots$| on Fiction {
-        releaseYear:year
-      }
-    }
-  }
-}
-
-\end{minted}
-\label{fig:query_ex}
-\end{subfigure}%
-\begin{subfigure}{.25\textwidth}
-\begin{minted}[fontsize=\scriptsize]{json}
-{
-  "artist": {
-    "name":"Tom Hanks",
-    "artworks":[
-       {
-        "title": "Toy Story",
-        "style": "3D"
-      },
-      {
-        "title": "Forrest Gump",
-        "releaseYear": 1994
-      }
-    ]
-  }
-}
-\end{minted}
-\label{fig:response_ex}
-\end{subfigure}
-\caption{\gql query (left) and its response (right).}
-\label{fig:qres_ex}
-\end{figure}
 
 % \td{We can probably skip this paragraph to save space}
 % As a final note, one of the appeals of \gql is that if we change our minds and no longer wish to request the friends's names, it would only suffice to remove the field selection 
