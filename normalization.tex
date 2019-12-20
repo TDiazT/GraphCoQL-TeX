@@ -236,7 +236,7 @@ query {
 \bigskip
 
 \noindent The query on the left is redundant for two reasons: it requests the field
-\texttt{title} twice, and it contains multiple fragments with
+\texttt{title} twice, and it contains multiple inline fragments with
 the same type condition. % If no collection and merger
 % of fields is performed during the evaluation, this will produce two (or three) values with the key \texttt{title}. 
 Conversely, the query on the right is semantically equivalent and non-redundant. % because it requests information about each type only once; only one fragment will actually be executed at a time, depending on the concrete object value that is used to evaluate the query.

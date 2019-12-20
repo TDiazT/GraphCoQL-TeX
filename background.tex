@@ -183,8 +183,10 @@ the disjoint union of three (object) types. % \texttt{Dog},  \texttt{Pig} and
 %  these 2 enums).}
 \fi 
 
-Finally, \gql requires that the schema includes a query type, which we define with the object type \texttt{Query}. 
-This type is the same as regular object types\footnote{It can also have any custom name and even implement interfaces. We name it this way for readability purposes.}, 
+Finally, \gql requires that the schema includes a query type, which,
+for convenience, we
+call \texttt{Query}. This type is the same as a regular object
+type\footnote{The query type can \eg have any custom name and even implement interfaces.}, 
 however it is special in the sense that it represents the entry point from where users have to 
 start querying the API and explore the dataset. In this API, a user may only access the \goodbois dataset by
 requesting a particular artist or movie (with a given id).
@@ -311,14 +313,21 @@ query {
 To illustrate this, we define the query in
 Figure~\ref{fig:qres_ex}. Intuitively, the query is asking for the
 name of the artist with id 1000, as well as the title and some
-additional information of the artworks where he has performed as an
-actor.  The request starts with the keyword \texttt{query}, which
-simply indicates the beginning of the field selection over the query
-type (the object type \texttt{Query}). \fo{This confuses to me. Is it
-  a keyword or just how we call the distinguished field in type
-  \texttt{Query}?}  In this case, the selection is over the field
-\texttt{artist}, including the value of argument \texttt{id} to
-indicate which artist we want to retrieve.  Because the field is of an
+additional information of the artworks where he performed as an
+actor. The request starts with the keyword \texttt{query}, which
+allows proceeding with any of (and as many as) the dataset entry points 
+declared by the query type \texttt{Query}. Concretely, we 
+select field \texttt{artist} and include the value of argument \texttt{id} to
+indicate which artist we want to retrieve. %
+%
+% simply indicates the beginning of the field selection over the query
+% type (the object type \texttt{Query}). \fo{This confuses to me. Is it
+%   a keyword or just how we call the distinguished field in type
+%   \texttt{Query}?}  In this case, the selection is over the field
+% \texttt{artist}, including the value of argument \texttt{id} to
+% indicate which artist we want to retrieve.
+%
+Because the field is of an
 object type, namely \texttt{Artist}, we can continue making requests
 over the fields of this type, precisely specifying the desired
 information about the fetched artist. In this case, the query
