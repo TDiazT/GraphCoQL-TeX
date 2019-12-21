@@ -1,45 +1,6 @@
 % !TEX root = ./main.tex
 \section{Case Study: Normalization}\label{sec:norm}
 
-\begin{figure*}[t]
-  \small
-  \begin{flushright}
-  \fbox{$\tnorm{\cdot} ~\colon~ \textit{seq Selection} \rightarrow  \textit{seq Selection}$}    
-  \end{flushright}  
-  \centering
-  \vspace{-1ex}
-    \begin{align*}
-    % Empty
-    &(1)& \tnorm{\cdot} &~=~ [\cdot] \\
-    % SingleField
-    &(2)& \tnorm{\fld :: \sset} &~=~ 
-       	\fld :: \tnorm{\filter{\sset}{\fkey}} \\      
-        %
-    % Nested field
-    &(3)& \tnorm{\nfld{\overline{\beta}} :: \sset} &~=~
-    \begin{cases}
-        \nfld{\norm{\mathit{\ftype{ts}{\fkey}}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{\fkey}{\sset})}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
-	            \mathit{is\_object\_type (\ftype{ts}{\fkey})}\\
-        %
-    \nfld{\mathit{map}\; (\lambda t_{i}.\; \ifrag{$t_{i}$}{\norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{\fkey}{\sset})}}})\; \mathit{get\_possible\_types (ts)}} 
-    		:: \tnorm{\filter{\sset}{\fkey}} \\
-		\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\; \text{ otherwise } 
-    \end{cases}\\
-    %inline fragment
-    &(4)& \tnorm{\ifrag{t}{\overline{\beta}} :: \sset} &~=~ 
-    \begin{cases}
-    \tnorm{\overline{\beta} \mdoubleplus \sset} & 
-    \text{if }\mathit{fragment\_type\_applies(ts, \texttt{t})}\\
-    \tnorm{\sset} & \text{otherwise}
-    \end{cases}
-    \end{align*}
-    \caption{Normalization procedure for \gql selections. 
-	% \td{Forgot to add the inline fragments in 2nd case of eq. 3 -- I reformat it but not sure if it is aligned o not}\et{? the 3rd line}
-    	\newline{\footnotesize 
-      $\mathit{is\_object\_type}$ checks whether the given type is an object type in the schema. $\mathit{get\_possible\_types}$ get all object subtypes of the given type.}
-    }
-\label{fig:normalize}
-\end{figure*}
 
 To illustrate how \gcoql can be used to reason about query transformations, we study the {\em normalization} process proposed by Hartig and Pérez (\HP)~\cite{gqlph}, which is fundamental for the complexity results they prove.
 %
@@ -268,6 +229,46 @@ A \gql selection set $\sset$ is \textit{non-redundant} if:
 %Our definition of non-redundancy assumes that the queries are grounded \et{maybe the Coq definition, but not the definition above!}, much like \HP, mainly to simplify the implementation. The difficulty arises from using inline fragments and comparing their contents appropriately. This difficulty is further increased by the fact that the \spec currently allows using fragments that can possibly span over several unrelated types\footnote{https://graphql.github.io/graphql-spec/June2018/\#sec-Fragment-spread-is-possible}\footnote{https://github.com/graphql/graphql-spec/issues/367}\footnote{Example of inline fragments spanning to unrelated types - https://tinyurl.com/y4uxz3gu}\td{Should we expand on this somewhere?}.
 
 \subsection{Defining Normalization}\label{subsec:normalization}
+
+\begin{figure*}[t]
+  \small
+  \begin{flushright}
+  \fbox{$\tnorm{\cdot} ~\colon~ \textit{seq Selection} \rightarrow  \textit{seq Selection}$}    
+  \end{flushright}  
+  \centering
+  \vspace{-1ex}
+    \begin{align*}
+    % Empty
+    &(1)& \tnorm{\cdot} &~=~ [\cdot] \\
+    % SingleField
+    &(2)& \tnorm{\fld :: \sset} &~=~ 
+       	\fld :: \tnorm{\filter{\sset}{\fkey}} \\      
+        %
+    % Nested field
+    &(3)& \tnorm{\nfld{\overline{\beta}} :: \sset} &~=~
+    \begin{cases}
+        \nfld{\norm{\mathit{\ftype{ts}{\fkey}}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{\fkey}{\sset})}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
+	            \mathit{is\_object\_type (\ftype{ts}{\fkey})}\\
+        %
+    \nfld{\mathit{map}\; (\lambda t_{i}.\; \ifrag{$t_{i}$}{\norm{t_{i}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{\fkey}{\sset})}}})\; \mathit{get\_possible\_types (ts)}} 
+    		:: \tnorm{\filter{\sset}{\fkey}} \\
+		\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\; \text{ otherwise } 
+    \end{cases}\\
+    %inline fragment
+    &(4)& \tnorm{\ifrag{t}{\overline{\beta}} :: \sset} &~=~ 
+    \begin{cases}
+    \tnorm{\overline{\beta} \mdoubleplus \sset} & 
+    \text{if }\mathit{fragment\_type\_applies(ts, \texttt{t})}\\
+    \tnorm{\sset} & \text{otherwise}
+    \end{cases}
+    \end{align*}
+    \caption{Normalization procedure for \gql selections. 
+	% \td{Forgot to add the inline fragments in 2nd case of eq. 3 -- I reformat it but not sure if it is aligned o not}\et{? the 3rd line}
+    	\newline{\footnotesize 
+      $\mathit{is\_object\_type}$ checks whether the given type is an object type in the schema. $\mathit{get\_possible\_types}$ get all object subtypes of the given type.}
+    }
+\label{fig:normalize}
+\end{figure*}
 
 % \begin{figure}[t]
 % \begin{minipage}[t]{.25\textwidth}

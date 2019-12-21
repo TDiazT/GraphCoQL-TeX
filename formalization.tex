@@ -33,59 +33,6 @@ interface type definitions comprise a set of fields; union
 types are defined by a set of type names and enumeration types by a
 set of scalar values. 
 
-%
-\setlength{\grammarparsep}{10pt plus 1pt minus 1pt} % increase separation between rules
-\begin{figure*}[h]
-    \centering
-    \begin{subfigure}{.5\textwidth}
-    \begin{displaymath}
-    \small
-	\begin{array}{rl}
-	\mathit{TypeDefinition} & ::= \\
-	 | & \texttt{scalar } \name  \\
-	 | & \texttt{type } \name\; (\texttt{implements } \name^{+})^{?} \texttt{ \{} \mathit{Field}^{+} \texttt{\}}\\
-	 | & \texttt{interface } \name \texttt{ \{} \mathit{Field}^{+} \texttt{\}}\\
-	 | & \texttt{union } \name \texttt{ = } \name\; (\texttt{|} \name)^{*}\\
-	 | & \texttt{enum } \name \texttt{ \{} \name^{+} \texttt{\}} \\
-	& \\[-1ex]
-	\mathit{Field} & ::= \name \texttt{ (} \mathit{Arg^{+}} \texttt{)}^{?} \texttt{ : } \mathit{Type}\\
-	& \\[-1ex]
-    \mathit{Arg} & ::= \name \texttt{ : } \mathit{Type}\\
-	& \\[-1ex]
-    \mathit{Type} & ::=\\ 
-     | & \name \\
- 	 | &  \texttt{[}  \mathit{Type} \texttt{]}
-	\end{array}
-	\end{displaymath}
-	
-    
-    %\fo{We may also want to use a less pompous grammar here}
-    \end{subfigure}%
-    \begin{subfigure}{.5\textwidth}
-    \begin{minted}[bgcolor=coqbg]{coq}
-    Inductive TypeDefinition : Type :=
-    | ScalarTypeDefinition (name : Name)
-    | ObjectTypeDefinition (name : Name)
-                           (interfaces : seq Name)
-                           (fields : seq FieldDefinition)
-    | InterfaceTypeDefinition (name : Name)
-                              (fields : seq FieldDefinition)
-    | UnionTypeDefinition (name : Name)
-                          (members : seq Name)
-    | EnumTypeDefinition (name : Name)
-                         (members : seq EnumValue).
-
-    Inductive type : Type :=
-    | NamedType : Name -> type
-    | ListType : type -> type.
-    \end{minted}
-
-    \end{subfigure}
-    \caption{Definition of \gql types: (left) \spec grammar; 
-    (right) \gcoql definition.\newline
-    {\footnotesize The $(\cdot)^{?}$ notation denotes optional attributes.}}
-    \label{fig:types_def}
-\end{figure*}
 
 
 % As can be seen from the figure, our implementation looses information about non-emptiness of fields, union and enum members. We push this validation to a posterior predicate, as well as the discussion about the reasons behind this decision, to the following paragraphs.
@@ -584,8 +531,6 @@ in arguments, similarly to the case of graphs.
 In the second rule, the type-compatibility requirement forbids the
 selection set to produce results of different types for the same key; \eg the following query
 
-\smallskip
-
 \begin{minipage}[t]{.22\textwidth}
 \begin{minted}[escapeinside=||,mathescape=true]{js}
 query {
@@ -633,22 +578,25 @@ Finally, the renaming-consistency condition ensures that fields with
 the same response name refer to the same piece of
 information. Consider, for instance, the following query:
 % \td{This leaves a lot of empty space :/}
+
 \begin{minted}[escapeinside=||,mathescape=true]{js}
 query { 
   movie[id:2000] {
           title   
           |$\ldots$| on Animation { 
             title:style
-          } 
-  }
-}
+} }       } 
 \end{minted}
+
+\medskip
 
 \noindent The query is considered invalid because the fields with response name \texttt{title} both refer to distinct pieces of information;
 the first occurrence refers to the field \texttt{title} of a \texttt{Movie}, while the second
 occurrence refers to the field \texttt{style} of an \texttt{Animation}.
 
+
 %\fo{Add example and briefly explain} 
+
 
 Formally, two field selections are \emph{renaming-consistent} if
 whenever they have the same response name and lie under types in scope
@@ -676,50 +624,6 @@ A \gql query $\query$ \textit{conforms} to a schema $\schema$ if its selection s
 \end{definition}
 
 %\et{this is the beginning of the problem I'm having with your statements about queries. There is the notion of *a query*, noted $\varphi$, yet from now on your statements are about *queries*. The definition below mixes "the content" (consistency, compatible response, etc.) with "the sequence" (all, list comprehension, etc). Worse, later on in the development, you use $\varphi$ as the variable name of type "seq Queries" (while fig6 uses a bar over). See also my later comments about your "plural formulations"}
-
-\begin{figure*}[t!]
-\centering
-\begin{subfigure}{.5\textwidth}
-
-  \begin{displaymath}
-	\begin{array}{rcl}
-	\response & ::= & \texttt{v}\\
-	& | & \texttt{\{} (\fkey : \response) \ldots (\fkey : \response) \texttt{\}} \\
-	& | & \texttt{[} \response \ldots \response \texttt{]}
-	\end{array}
-	\end{displaymath}
-	
-	
-\iffalse
-    \begin{grammar}
-    		<ResponseValue> ::= <value>
-		\alt \textbf{\texttt{\{}} (<name> \textbf{\texttt{:}} <ResponseValue>)* \textbf{\texttt{\}}}
-		\alt  \textbf{\texttt{[}} <ResponseValue>* \textbf{\texttt{]}}
- \end{grammar}
- \fi
- 
-  \end{subfigure}%
-  \begin{subfigure}{.5\textwidth}
-\begin{minted}[bgcolor=coqbg]{coq}
-Inductive ResponseValue : Type :=
-| Leaf : option Scalar -> ResponseValue
-| Object : seq (Name * ResponseValue) -> ResponseValue
-| Array : seq ResponseValue -> ResponseValue.
-  
-Definition GraphQLResponse := seq (Name * ResponseValue).
-\end{minted}
-   
-  \end{subfigure}
-  \caption{Definition of \gql responses:  (left) grammar à la
-    JSON; (right) \gcoql definition.
-  %\et{the @ sign here shouldn't be necessary since A is an explicit parameter (I suspect in your Coq dev it's implicit)}\et{wait, that definition of ResponseValue cannot possibly be correct: if A is an explicit parameter, you can't use those constructor signatures, so you should declare with curly brackets.}
-  %\et{Explain in the text what's going on with the parametrization over eqType.}
-   \newline{\footnotesize The keywords \texttt{v} and \fkey\  represent leaf values and keys in a key-value pair, respectively.}
-  }
-  \label{fig:response_def}
-
-\end{figure*}
-
 
 \noindent In \gcoql, this is captured by the following predicates:
 %\td{Updated}
@@ -754,6 +658,7 @@ The \emph{size} of a selection $\sel$ and selection set $\sset$, noted $\ssize{\
     \end{align*}
 \end{small}
 \end{definition} 
+
 
 % For the reminder of our presentation, we assume that queries conform to a given schema.
 
@@ -820,6 +725,49 @@ The \emph{size} of a selection $\sel$ and selection set $\sset$, noted $\ssize{\
 
  
 \subsection{Semantics}\label{subsec:semantics}
+
+\begin{figure*}[t!]
+\centering
+\begin{subfigure}{.5\textwidth}
+
+  \begin{displaymath}
+	\begin{array}{rcl}
+	\response & ::= & \texttt{v}\\
+	& | & \texttt{\{} (\fkey : \response) \ldots (\fkey : \response) \texttt{\}} \\
+	& | & \texttt{[} \response \ldots \response \texttt{]}
+	\end{array}
+	\end{displaymath}
+	
+	
+\iffalse
+    \begin{grammar}
+    		<ResponseValue> ::= <value>
+		\alt \textbf{\texttt{\{}} (<name> \textbf{\texttt{:}} <ResponseValue>)* \textbf{\texttt{\}}}
+		\alt  \textbf{\texttt{[}} <ResponseValue>* \textbf{\texttt{]}}
+ \end{grammar}
+ \fi
+ 
+  \end{subfigure}%
+  \begin{subfigure}{.5\textwidth}
+\begin{minted}[bgcolor=coqbg]{coq}
+Inductive ResponseValue : Type :=
+| Leaf : option Scalar -> ResponseValue
+| Object : seq (Name * ResponseValue) -> ResponseValue
+| Array : seq ResponseValue -> ResponseValue.
+  
+Definition GraphQLResponse := seq (Name * ResponseValue).
+\end{minted}
+   
+  \end{subfigure}
+  \caption{Definition of \gql responses:  (left) grammar à la
+    JSON; (right) \gcoql definition.
+  %\et{the @ sign here shouldn't be necessary since A is an explicit parameter (I suspect in your Coq dev it's implicit)}\et{wait, that definition of ResponseValue cannot possibly be correct: if A is an explicit parameter, you can't use those constructor signatures, so you should declare with curly brackets.}
+  %\et{Explain in the text what's going on with the parametrization over eqType.}
+   \newline{\footnotesize The keywords \texttt{v} and \fkey\  represent leaf values and keys in a key-value pair, respectively.}
+  }
+  \label{fig:response_def}
+
+\end{figure*}
 
 
 Now we have all the prerequisites to define the semantics of \gql queries and their selection sets. We begin by briefly examining the responses generated by executing queries and then we give an informal description of the semantics, finishing with the formal definition. %We finish by discussing some implementation choices and comparison with the \spec and \HP.
