@@ -15,7 +15,7 @@ mutations (\S2.3), subscriptions (\S2.3), fragments (\S2.8).
 \item \emph{Introspection:}\ \ fully unsupported (\S4). 
 \end{itemize}
 
-Considering \gcoql's current status, integrating some of these missing features should be straightforward: fragments, schema and type extensions, argument default values, input object types and values. 
+\noindent Considering \gcoql's current status, integrating some of these missing features should be straightforward: fragments, schema and type extensions, argument default values, input object types and values. 
 For directives, some of the builtin cases have a clear semantics and should be simple to include as well. 
 However, custom directives would be quite hard to integrate because they arbitrarily alter the semantics of queries. It is not entirely clear how these should be modeled and how normalization would be affected by it, regardless of \gcoql's current implementation. 
 Similarly, it is not clear how mutation and subscription should be modeled, and

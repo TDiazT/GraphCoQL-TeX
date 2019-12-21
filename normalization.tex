@@ -239,13 +239,13 @@ A \gql selection set $\sset$ is \textit{non-redundant} if:
   \vspace{-1ex}
     \begin{align*}
     % Empty
-    &(1)& \tnorm{\cdot} &~=~ [\cdot] \\
+    &(1)\! \! \!& \tnorm{\cdot} &= [\cdot] \\
     % SingleField
-    &(2)& \tnorm{\fld :: \sset} &~=~ 
+    &(2)\! \! \!& \tnorm{\fld :: \sset} &= 
        	\fld :: \tnorm{\filter{\sset}{\fkey}} \\      
         %
     % Nested field
-    &(3)& \tnorm{\nfld{\overline{\beta}} :: \sset} &~=~
+    &(3)\! \! \!& \tnorm{\nfld{\overline{\beta}} :: \sset} &=
     \begin{cases}
         \nfld{\norm{\mathit{\ftype{ts}{\fkey}}}{\overline{\beta} \mdoubleplus \mathit{merge (\collect{ts}{\fkey}{\sset})}}} :: \tnorm{\filter{\sset}{\fkey}} \hfill \text{ if } 
 	            \mathit{is\_object\_type (\ftype{ts}{\fkey})}\\
@@ -255,7 +255,7 @@ A \gql selection set $\sset$ is \textit{non-redundant} if:
 		\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\; \text{ otherwise } 
     \end{cases}\\
     %inline fragment
-    &(4)& \tnorm{\ifrag{t}{\overline{\beta}} :: \sset} &~=~ 
+    &(4)\! \! \!& \tnorm{\ifrag{t}{\overline{\beta}} :: \sset} &= 
     \begin{cases}
     \tnorm{\overline{\beta} \mdoubleplus \sset} & 
     \text{if }\mathit{fragment\_type\_applies(ts, \texttt{t})}\\
