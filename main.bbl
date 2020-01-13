@@ -1,0 +1,193 @@
+\begin{thebibliography}{10}
+
+\bibitem{qcert}
+{\sc Auerbach, J.~S., Hirzel, M., Mandel, L., Shinnar, A., and Sim{\'e}on, J.}
+\newblock Q*cert: A platform for implementing and verifying query compilers.
+\newblock In {\em Proceedings of the 2017 ACM International Conference on
+  Management of Data\/} (New York, NY, USA, 2017), SIGMOD '17, ACM,
+  pp.~1703--1706.
+
+\bibitem{vesqlsemantics}
+{\sc Benzaken, V., and Contejean, E.}
+\newblock A {Coq} mechanised formal semantics for realistic {SQL} queries:
+  formally reconciling {SQL} and bag relational algebra.
+\newblock In {\em Proceedings of the 8th {ACM} {SIGPLAN} International
+  Conference on Certified Programs and Proofs, {CPP} 2019, Cascais, Portugal,
+  January 14-15, 2019\/} (2019), pp.~249--261.
+
+\bibitem{relationalcoq}
+{\sc Benzaken, V., Contejean, E., and Dumbrava, S.}
+\newblock A {Coq} formalization of the relational data model.
+\newblock In {\em Programming Languages and Systems - 23rd European Symposium
+  on Programming, {ESOP} 2014, Held as Part of the European Joint Conferences
+  on Theory and Practice of Software, {ETAPS} 2014, Grenoble, France, April
+  5-13, 2014, Proceedings\/} (2014), pp.~189--208.
+
+\bibitem{certifdatalog}
+{\sc Benzaken, V., Contejean, E., and Dumbrava, S.}
+\newblock Certifying standard and stratified {Datalog} inference engines in
+  {Ssreflect}.
+\newblock In {\em Interactive Theorem Proving - 8th International Conference,
+  {ITP} 2017, Bras{\'{\i}}lia, Brazil, September 26-29, 2017, Proceedings\/}
+  (2017), pp.~171--188.
+
+\bibitem{vesqlengines}
+{\sc Benzaken, V., Contejean, E., Keller, C., and Martins, E.}
+\newblock A {Coq} formalisation of {SQL}'s execution engines.
+\newblock In {\em Interactive Theorem Proving - 9th International Conference,
+  {ITP} 2018, Held as Part of the Federated Logic Conference, FloC 2018,
+  Oxford, UK, July 9-12, 2018, Proceedings\/} (2018), pp.~88--107.
+
+\bibitem{jscert}
+{\sc Bodin, M., Chargu{\'{e}}raud, A., Filaretti, D., Gardner, P., Maffeis, S.,
+  Naudziuniene, D., Schmitt, A., and Smith, G.}
+\newblock A trusted mechanised {JavaScript} specification.
+\newblock In {\em The 41st Annual {ACM} {SIGPLAN-SIGACT} Symposium on
+  Principles of Programming Languages, {POPL} '14, San Diego, CA, USA, January
+  20-21, 2014\/} (2014), pp.~87--100.
+
+\bibitem{coqr}
+{\sc Bodin, M., Diaz, T., and Tanter, {\'{E}}.}
+\newblock A trustworthy mechanized formalization of {R}.
+\newblock In {\em Proceedings of the 14th {ACM} {SIGPLAN} International
+  Symposium on Dynamic Languages, {DLS} 2018, Boston, MA, USA, November 6,
+  2018\/} (2018), pp.~13--24.
+
+\bibitem{graphviewmaint}
+{\sc Bonifati, A., Dumbrava, S., and Arias, E. J.~G.}
+\newblock Certified graph view maintenance with regular {Datalog}.
+\newblock {\em {TPLP} 18}, 3-4 (2018), 372--389.
+
+\bibitem{schemaval}
+{\sc Bonifati, A., Furniss, P., Green, A., Harmer, R., Oshurko, E., and Voigt,
+  H.}
+\newblock Schema validation and evolution for graph databases.
+\newblock {\em CoRR abs/1902.06427\/} (2019).
+
+\bibitem{ehriapi}
+{\sc Bryant, M.}
+\newblock {GraphQL} for archival metadata: An overview of the {EHRI} {GraphQL}
+  {API}.
+\newblock In {\em 2017 IEEE International Conference on Big Data (Big Data)\/}
+  (2017), IEEE, pp.~2225--2230.
+
+\bibitem{sqlequiv}
+{\sc Chu, S., Cheung, A., and Suciu, D.}
+\newblock Axiomatic foundations and algorithms for deciding semantic
+  equivalences of {SQL} queries.
+\newblock {\em Proceedings of VLDB 11}, 11 (2018), 1482--1495.
+
+\bibitem{hottsql}
+{\sc Chu, S., Weitz, K., Cheung, A., and Suciu, D.}
+\newblock {HoTTSQL}: proving query rewrites with univalent {SQL} semantics.
+\newblock In {\em Proceedings of the 38th {ACM} {SIGPLAN} Conference on
+  Programming Language Design and Implementation, {PLDI} 2017, Barcelona,
+  Spain, June 18-23, 2017\/} (2017), pp.~510--524.
+
+\vfill\null
+\pagebreak
+
+\bibitem{Coq}
+{\sc development team, T.~C.}
+\newblock The {Coq} proof assistant.
+\newblock \url{https://coq.inria.fr/}, 1984.
+\newblock [Online; accessed 2019].
+
+\bibitem{graphtheory}
+{\sc Doczkal, C., and Pous, D.}
+\newblock Graph theory in {Coq}: Minors, treewidth, and isomorphisms, May 2019.
+\newblock Available at \url{https://hal.archives-ouvertes.fr/hal-02127698}.
+
+\bibitem{ssreflect}
+{\sc Gonthier, G., Mahboubi, A., and Tassi, E.}
+\newblock A small scale reflection extension for the {Coq} system.
+\newblock Research Report RR-6455, {Inria Saclay Ile de France}, 2016.
+
+\bibitem{gqlspec}
+{\sc {GraphQL Foundation}}.
+\newblock {GraphQL} specification.
+\newblock \url{https://graphql.github.io/graphql-spec/June2018/}, 2018.
+
+\bibitem{olafschema}
+{\sc Hartig, O., and Hidders, J.}
+\newblock Defining schemas for property graphs by using the {GraphQL} schema
+  definition language.
+\newblock In {\em Proceedings of the 2nd Joint International Workshop on Graph
+  Data Management Experiences \& Systems (GRADES) and Network Data Analytics
+  (NDA)\/} (2019), ACM, p.~6.
+
+\bibitem{gqlph}
+{\sc Hartig, O., and P{\'e}rez, J.}
+\newblock Semantics and complexity of {GraphQL}.
+\newblock In {\em Proceedings of the 2018 World Wide Web Conference\/}
+  (Republic and Canton of Geneva, Switzerland, 2018), WWW '18, International
+  World Wide Web Conferences Steering Committee, pp.~1155--1164.
+
+\bibitem{empiricalapi}
+{\sc Kim, Y.~W., Consens, M.~P., and Hartig, O.}
+\newblock An empirical analysis of {GraphQL} {API} schemas in open code
+  repositories and package registries.
+\newblock In {\em AMW\/} (2019).
+
+\bibitem{mathcomp}
+{\sc Mahboubi, A., and Tassi, E.}
+\newblock Mathematical components.
+\newblock \url{https://math-comp.github.io/mcb/}, 2018.
+
+\bibitem{restful}
+{\sc Richardson, L., Amundsen, M., Amundsen, M., and Ruby, S.}
+\newblock {\em RESTful Web APIs: Services for a Changing World}.
+\newblock " O'Reilly Media, Inc.", 2013.
+
+\bibitem{equations}
+{\sc Sozeau, M., and Mangin, C.}
+\newblock Equations reloaded: High-level dependently-typed functional
+  programming and proving in {Coq}.
+\newblock {\em Proc. ACM Program. Lang. 3}, ICFP (Aug. 2019), 86:1--86:29.
+
+\bibitem{gqlsparql}
+{\sc Taelman, R., Sande, M.~V., and Verborgh, R.}
+\newblock {GraphQL-LD}: Linked data querying with {GraphQL}.
+\newblock In {\em Proceedings of the {ISWC} 2018 Posters {\&} Demonstrations,
+  Industry and Blue Sky Ideas Tracks co-located with 17th International
+  Semantic Web Conference {(ISWC} 2018), Monterey, USA, October 8th - to -
+  12th, 2018.\/} (2018).
+
+\bibitem{gqldeviation}
+{\sc Vargas, D.~M., Blanco, A.~F., Vidaurre, A.~C., Alcocer, J. P.~S., Torres,
+  M.~M., Bergel, A., and Ducasse, S.}
+\newblock Deviation testing: A test case generation technique for {GraphQL
+  APIs}.
+
+\bibitem{improvingoeeu}
+{\sc V{\'a}zquez-Ingelmo, A., Cruz-Benito, J., and Garc{\'\i}a-Pe{\~n}alvo,
+  F.~J.}
+\newblock Improving the {OEEU}'s data-driven technological ecosystem's
+  interoperability with {GraphQL}.
+\newblock In {\em Proceedings of the 5th International Conference on
+  Technological Ecosystems for Enhancing Multiculturality\/} (2017), ACM,
+  p.~89.
+
+\bibitem{gqlexperiences}
+{\sc Vogel, M., Weber, S., and Zirpins, C.}
+\newblock Experiences on migrating {REST}ful web services to {GraphQL}.
+\newblock In {\em International Conference on Service-Oriented Computing\/}
+  (2017), Springer, pp.~283--295.
+
+\bibitem{empiricalgql}
+{\sc Wittern, E., Cha, A., Davis, J.~C., Baudart, G., and Mandel, L.}
+\newblock An empirical study of {GraphQL} schemas, 2019.
+
+\bibitem{migratingapi}
+{\sc Wittern, E., Cha, A., and Laredo, J.~A.}
+\newblock Generating {GraphQL}-wrappers for {REST}(-like) {API}s.
+\newblock In {\em Web Engineering\/} (Cham, 2018), T.~Mikkonen, R.~Klamma, and
+  J.~Hern{\'a}ndez, Eds., Springer International Publishing, pp.~65--83.
+
+\bibitem{xingalg}
+{\sc XING}.
+\newblock {GraphQL}: Overlapping fields can be merged fast.
+\newblock \url{https://tinyurl.com/y3wqmnrw}, 2019.
+\newblock [Online; accessed 20-Sept-2019].
+
+\end{thebibliography}
