@@ -272,11 +272,12 @@ query {
   artist[id:1000] {
     name
     artworks[role: ACTOR] {
-      title
       |$\ldots$| on Animation {
+        title
         style
       }
       |$\ldots$| on Fiction {
+        title
         releaseYear:year
       }
     }
@@ -336,14 +337,15 @@ continues with the field \texttt{name} and the field
 \texttt{artworks}. The argument \texttt{role} of field
 \texttt{artworks} is used to restrict the search to those artworks
 where the artist performed as an actor.  For such artworks, we request
-on one hand their title and on the other hand further information
-which depends on the concrete kind of artwork. (Recall that union type
+%on one hand their title and on the other hand further information
+further information depending on the concrete kind of artwork. (Recall that union type
+%which depends on the concrete kind of artwork. (Recall that union type
 \texttt{Artwork} is composed by the object types \texttt{Book},
-\fiction and \animation). For animated movies, we request the animation
-style, while for fictional movies, we request the year of release; for books,
+\fiction and \animation). For animated movies, we request the movie's title and animation
+style, while for fictional movies, we request the title and year of release; for books,
 we require no related information. This is achieved by the pair of
-selections \ifrag{Animation}{\texttt{ style }} and \ifrag{Fiction}{
-  \texttt{releaseYear:year}~}, called {\em inline fragments}. In the
+selections \ifrag{Animation}{\texttt{ title; style }} and \ifrag{Fiction}{
+  \texttt{title; releaseYear:year}~}, called {\em inline fragments}. In the
 latter, the field selection \texttt{releaseYear:year} introduces a
 {\em field alias}, indicating that in the response the original field
 \texttt{year} should be renamed to \texttt{releaseYear}. Field
